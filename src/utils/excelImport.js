@@ -42,7 +42,8 @@ const RAPOR5_MAP = {
   'parti'              : 'parti',
   'durum'              : 'durum',
   'palet adet'         : 'adet1',
-  'palet tip'          : 'ambalaj',
+  'palet tip'          : 'paletTip',  // palet kodu (CP3 vb.) — ambalaj değil
+  'birim 1'            : 'ambalaj',   // VARIL, IBC, BIDON vb. — gerçek ambalaj
   // Birincil miktar: Son Kırılım (gerçek stok miktarı)
   'son kırılım miktar' : 'sayim',
   'son kirilim miktar' : 'sayim',
