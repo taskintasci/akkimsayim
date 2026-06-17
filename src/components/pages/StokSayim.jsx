@@ -55,7 +55,8 @@ export default function StokSayim({ onNavigate }) {
       {rows.length === 0 && (
         <div className="mb-6">
           <FileDropZone
-            label="Sku_Sayım_Listesi.xlsx dosyasını yükleyin"
+            label="RAPOR5.xls veya Sku_Sayım_Listesi.xlsx yükleyin"
+            accept=".xlsx,.xls"
             onFile={importRows}
           />
         </div>
