@@ -74,13 +74,13 @@ const PrintSheet = forwardRef(function PrintSheet(
             <th style={thStyle({ textAlign: 'center', width: 22 })}>#</th>
             <th style={thStyle({ textAlign: 'left',   width: 124 })}>ADRES</th>
             <th style={thStyle({ textAlign: 'left',   width: 124 })}>KOD</th>
-            <th style={thStyle({ textAlign: 'left',   width: 350 })}>AD</th>
+            <th style={thStyle({ textAlign: 'left',   width: 300 })}>AD</th>
             <th style={thStyle({ textAlign: 'center', width: 124 })}>PARTİ</th>
-            <th style={thStyle({ textAlign: 'center', width: 38 })}>DURUM</th>
-            <th style={thStyle({ textAlign: 'right',  width: 24 })}>ADET</th>
-            <th style={thStyle({ textAlign: 'center', width: 62 })}>AMBALAJ</th>
-            <th style={thStyle({ textAlign: 'center', width: 62, background: '#1d4ed8' })}>SAYIM MİKTARI</th>
-            <th style={thStyle({ textAlign: 'center', width: 26 })}>BİRİM</th>
+            <th style={thStyle({ textAlign: 'center', width: 70 })}>DURUM</th>
+            <th style={thStyle({ textAlign: 'right',  width: 70 })}>ADET</th>
+            <th style={thStyle({ textAlign: 'center', width: 70 })}>AMBALAJ</th>
+            <th style={thStyle({ textAlign: 'center', width: 70, background: '#1d4ed8' })}>SAYIM MİKTARI</th>
+            <th style={thStyle({ textAlign: 'center', width: 70 })}>BİRİM</th>
             <th style={thStyle({ textAlign: 'left'              })}>NOT</th>
           </tr>
         </thead>
