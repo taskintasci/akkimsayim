@@ -36,9 +36,6 @@ const PrintSheet = forwardRef(function PrintSheet(
 
   return (
     <div ref={ref} id="print-area">
-      {/* Sayfa numarası: thead dışında fixed → counter(page) çalışır */}
-      <div id="print-pg"><span className="print-page-num" /></div>
-
       {/* ── Tek tablo — tarayıcı otomatik paginate eder ── */}
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '7pt' }}>
 
@@ -64,7 +61,7 @@ const PrintSheet = forwardRef(function PrintSheet(
                 </div>
                 <div style={{ textAlign: 'right', minWidth: 80 }}>
                   <p style={{ fontSize: '6.5pt', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'monospace' }}>SAYFA</p>
-                  <p style={{ fontSize: '16pt', fontWeight: 800, color: '#2563eb', lineHeight: 1 }} id="print-pg-placeholder">—</p>
+                  <p style={{ fontSize: '16pt', fontWeight: 800, color: '#2563eb', lineHeight: 1 }}>—</p>
                   <p style={{ fontSize: '6pt', color: '#94a3b8', fontFamily: 'monospace', marginTop: 3 }}>Baskı: {printDate}</p>
                   <p style={{ fontSize: '6pt', color: '#94a3b8', fontFamily: 'monospace' }}>{printTime} · {rows.length} kalem</p>
                 </div>
@@ -120,10 +117,13 @@ const PrintSheet = forwardRef(function PrintSheet(
           })}
         </tbody>
 
-        {/* tfoot: her sayfanın altında imza kutuları */}
+        {/* tfoot: her sayfanın altında imza + sayfa numarası */}
         <tfoot>
           <tr>
             <td colSpan={11} style={{ padding: '3px 0 0', border: 'none' }}>
+              <div style={{ textAlign: 'right', paddingBottom: '1mm', fontFamily: 'monospace', fontSize: '6.5pt', color: '#94a3b8' }}>
+                Sayfa <span className="print-page-num" style={{ fontWeight: 700, color: '#2563eb', fontSize: '8pt' }} />
+              </div>
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(4, 1fr)',
