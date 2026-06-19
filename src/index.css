@@ -63,7 +63,8 @@ body.hide-sayilan .sayilan-col { opacity: 0; pointer-events: none; }
 
 /* Print */
 @media print {
-  @page { size: A4 landscape; margin: 8mm; }
+  /* Üst marj: header (30mm) + boşluk. Alt marj: footer (28mm) + boşluk */
+  @page { size: A4 landscape; margin: 34mm 8mm 32mm 8mm; }
 
   body * { visibility: hidden; }
   #print-area, #print-area * { visibility: visible; }
@@ -71,7 +72,23 @@ body.hide-sayilan .sayilan-col { opacity: 0; pointer-events: none; }
 
   .no-print { display: none !important; }
 
-  /* Tablo: thead her sayfada tekrar eder, satırlar bölünmez */
+  /* Başlık: her sayfanın üstüne sabitlenir (Word üst bilgi) */
+  #print-header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 30mm;
+    background: white;
+    padding: 4mm 8mm 3mm;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1.5px solid #1e293b;
+  }
+
+  /* Sayfa numarası: sadece print context'te counter çalışır */
+  .print-page-num::after { content: counter(page) " / " counter(pages); }
+
+  /* Tablo: sadece sütun başlıkları thead'de tekrar eder */
   table { border-collapse: collapse; width: 100%; font-size: 7pt; }
   thead { display: table-header-group; }
   tfoot { display: table-footer-group; }
@@ -79,7 +96,4 @@ body.hide-sayilan .sayilan-col { opacity: 0; pointer-events: none; }
 
   th, td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   th { background: #1e293b !important; color: #ffffff !important; }
-
-  /* CSS page counter: "1 / 4" formatı */
-  .print-page-num::after { content: counter(page) " / " counter(pages); }
 }
