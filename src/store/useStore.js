@@ -59,6 +59,11 @@ const useStore = create((set, get) => ({
   korCodes: [],
   korMatched: [],
 
+  // ── Navigation filter ──────────────────────────────────────────────────────
+  pendingKodFilter: null,
+  setPendingKodFilter: (kod) => set({ pendingKodFilter: kod }),
+  clearPendingKodFilter: () => set({ pendingKodFilter: null }),
+
   // =========================================================================
   // ACTIONS
   // =========================================================================

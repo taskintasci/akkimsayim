@@ -1,8 +1,8 @@
 import useStore from '../../store/useStore'
-import { exportResults } from '../../utils/excelExport'
+import { exportRaporFarklar } from '../../utils/excelExport'
 
-export default function Rapor() {
-  const { rows, results, session } = useStore()
+export default function Rapor({ onNavigate }) {
+  const { rows, results, session, setPendingKodFilter } = useStore()
 
   const counted = rows.filter(r => results[r.id]?.miktar !== undefined && results[r.id]?.miktar !== '')
   const discrepancies = rows
@@ -31,7 +31,7 @@ export default function Rapor() {
             <span className="ms" style={{ fontSize: 16 }}>print</span> Yazdır
           </button>
           <button
-            onClick={() => exportResults(rows, results, session)}
+            onClick={() => exportRaporFarklar(discrepancies, session)}
             className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-300 rounded-lg text-[13px] font-medium text-slate-700 hover:bg-slate-50"
           >
             <span className="ms" style={{ fontSize: 16 }}>download</span> Excel İndir
@@ -113,7 +113,10 @@ export default function Rapor() {
                     {row.fark > 0 ? '+' : ''}{row.fark.toLocaleString('tr', { maximumFractionDigits: 2 })} <span className="opacity-60 text-[11px]">{row.birim}</span>
                   </td>
                   <td className="px-3 py-1.5 text-center">
-                    <button className="text-[12px] text-blue-600 hover:underline font-medium">İncele</button>
+                    <button
+                      onClick={() => { setPendingKodFilter(row.kod); onNavigate('sayim') }}
+                      className="text-[12px] text-blue-600 hover:underline font-medium"
+                    >İncele</button>
                   </td>
                 </tr>
               ))}

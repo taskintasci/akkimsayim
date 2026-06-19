@@ -1,3 +1,64 @@
+export async function exportRaporFarklar(discrepancies, session) {
+  const { default: ExcelJS } = await import('exceljs')
+
+  const workbook = new ExcelJS.Workbook()
+  workbook.creator = 'Akkim Sayım'
+  workbook.created = new Date()
+
+  const ws = workbook.addWorksheet('Mutabakat Raporu')
+
+  ws.columns = [
+    { header: 'Sıra No.',        key: 'siraNo',   width: 8  },
+    { header: 'Kod',             key: 'kod',      width: 16 },
+    { header: 'Ad',              key: 'ad',       width: 35 },
+    { header: 'Adres',           key: 'adres',    width: 14 },
+    { header: 'Parti',           key: 'parti',    width: 14 },
+    { header: 'Sistem Mikt.',    key: 'sayim',    width: 14 },
+    { header: 'Sayılan',         key: 'sayilan',  width: 14 },
+    { header: 'Fark',            key: 'fark',     width: 12 },
+    { header: 'Birim',           key: 'birim',    width: 8  },
+  ]
+
+  ws.getRow(1).eachCell(cell => {
+    cell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1A1C1E' } }
+    cell.font      = { color: { argb: 'FFFFFFFF' }, bold: true, size: 10 }
+    cell.alignment = { vertical: 'middle', horizontal: 'center' }
+  })
+  ws.getRow(1).height = 18
+
+  discrepancies.forEach((row, i) => {
+    const sistem  = row.sayim  !== '' ? Number(String(row.sayim).replace(',', '.'))   : null
+    const sayilan = row.sayilan !== undefined ? Number(String(row.sayilan).replace(',', '.')) : null
+    const fark    = sayilan !== null && sistem !== null ? sayilan - sistem : null
+
+    const wsRow = ws.addRow({
+      siraNo: row.siraNo, kod: row.kod, ad: row.ad, adres: row.adres,
+      parti: row.parti, sayim: sistem, sayilan, fark, birim: row.birim,
+    })
+
+    const fillArgb = fark !== null && fark < 0 ? 'FFFFF3CD' : fark > 0 ? 'FFD4EDDA' : 'FFF3F4F6'
+    wsRow.eachCell(cell => {
+      cell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: i % 2 === 1 ? 'FFF3F4F6' : 'FFFFFFFF' } }
+      cell.alignment = { vertical: 'middle' }
+    })
+    const farkCell = wsRow.getCell('fark')
+    farkCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillArgb } }
+    farkCell.font = { bold: true, color: { argb: fark < 0 ? 'FF991B1B' : 'FF166534' } }
+  })
+
+  ws.views = [{ state: 'frozen', ySplit: 1 }]
+
+  const tarih = session?.tarih ? new Date(session.tarih).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10)
+  const buffer = await workbook.xlsx.writeBuffer()
+  const blob   = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+  const url    = URL.createObjectURL(blob)
+  const a      = document.createElement('a')
+  a.href       = url
+  a.download   = `Akkim_Mutabakat_Raporu_${tarih}.xlsx`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 export async function exportAnalizi(rows, results, session) {
   const { default: ExcelJS } = await import('exceljs')
 
