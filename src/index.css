@@ -80,5 +80,13 @@ body.hide-sayilan .sayilan-col { opacity: 0; pointer-events: none; }
   th, td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   th { background: #1e293b !important; color: #ffffff !important; }
 
+  /* Sayfa numarası: tablo dışında fixed elemanda counter çalışır */
+  #print-pg {
+    position: fixed;
+    top: 4mm; right: 8mm;
+    font-size: 16pt; font-weight: 800; color: #2563eb;
+    font-family: 'Inter', sans-serif; line-height: 1;
+  }
   .print-page-num::after { content: counter(page); }
+  #print-pg-placeholder { display: none; }
 }

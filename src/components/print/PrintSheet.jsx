@@ -36,6 +36,9 @@ const PrintSheet = forwardRef(function PrintSheet(
 
   return (
     <div ref={ref} id="print-area">
+      {/* Sayfa numarası: thead dışında fixed → counter(page) çalışır */}
+      <div id="print-pg"><span className="print-page-num" /></div>
+
       {/* ── Tek tablo — tarayıcı otomatik paginate eder ── */}
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '7pt' }}>
 
@@ -61,9 +64,7 @@ const PrintSheet = forwardRef(function PrintSheet(
                 </div>
                 <div style={{ textAlign: 'right', minWidth: 80 }}>
                   <p style={{ fontSize: '6.5pt', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'monospace' }}>SAYFA</p>
-                  <p style={{ fontSize: '16pt', fontWeight: 800, color: '#2563eb', lineHeight: 1 }}>
-                    <span className="print-page-num" />
-                  </p>
+                  <p style={{ fontSize: '16pt', fontWeight: 800, color: '#2563eb', lineHeight: 1 }} id="print-pg-placeholder">—</p>
                   <p style={{ fontSize: '6pt', color: '#94a3b8', fontFamily: 'monospace', marginTop: 3 }}>Baskı: {printDate}</p>
                   <p style={{ fontSize: '6pt', color: '#94a3b8', fontFamily: 'monospace' }}>{printTime} · {rows.length} kalem</p>
                 </div>
