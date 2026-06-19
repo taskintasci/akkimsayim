@@ -36,40 +36,40 @@ const PrintSheet = forwardRef(function PrintSheet(
 
   return (
     <div ref={ref} id="print-area">
-
-      {/* ── Üst bilgi: position fixed → Word üst bilgi gibi her sayfada ── */}
-      <div id="print-header">
-        {/* Orta: firma + başlık */}
-        <div style={{ textAlign: 'center', flex: 1 }}>
-          <p style={{ fontSize: '11pt', fontWeight: 700, color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
-            AKKİM KİMYA SAN. TİC. A.Ş.
-          </p>
-          <div style={{ width: 40, height: 2.5, background: '#f59e0b', margin: '3px auto' }} />
-          <p style={{ fontSize: '10pt', fontWeight: 600, textTransform: 'uppercase', color: '#334155' }}>
-            {session.sayimBasligi || session.type || 'YIL SONU SAYIM'}
-          </p>
-          <p style={{ fontSize: '7.5pt', color: '#94a3b8', marginTop: 2, fontFamily: 'monospace' }}>
-            {session.tur ? `Tur ${session.tur} · ` : ''}
-            {tarihStr}
-            {session.depoAdi ? ` · ${session.depoAdi}` : ''}
-            {blindMode ? ' · KÖR SAYIM' : ''}
-          </p>
-        </div>
-        {/* Sağ: sayfa numarası */}
-        <div style={{ textAlign: 'right', minWidth: 90 }}>
-          <p style={{ fontSize: '6.5pt', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'monospace' }}>SAYFA / TOPLAM</p>
-          <p style={{ fontSize: '16pt', fontWeight: 800, color: '#2563eb', lineHeight: 1 }}>
-            <span className="print-page-num" />
-          </p>
-          <p style={{ fontSize: '6pt', color: '#94a3b8', fontFamily: 'monospace', marginTop: 3 }}>Baskı: {printDate}</p>
-          <p style={{ fontSize: '6pt', color: '#94a3b8', fontFamily: 'monospace' }}>{printTime} · {rows.length} kalem</p>
-        </div>
-      </div>
-
-      {/* ── Tablo: thead sadece sütun başlıkları, tfoot imzalar ── */}
+      {/* ── Tek tablo — tarayıcı otomatik paginate eder ── */}
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '7pt' }}>
 
+        {/* thead: her sayfada başlık tekrar eder */}
         <thead>
+          <tr>
+            <td colSpan={11} style={{ border: 'none', padding: '0 0 5px 0' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: 4, borderBottom: '1.5px solid #1e293b' }}>
+                <div style={{ textAlign: 'center', flex: 1 }}>
+                  <p style={{ fontSize: '11pt', fontWeight: 700, color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
+                    AKKİM KİMYA SAN. TİC. A.Ş.
+                  </p>
+                  <div style={{ width: 40, height: 2.5, background: '#f59e0b', margin: '3px auto' }} />
+                  <p style={{ fontSize: '10pt', fontWeight: 600, textTransform: 'uppercase', color: '#334155' }}>
+                    {session.sayimBasligi || session.type || 'YIL SONU SAYIM'}
+                  </p>
+                  <p style={{ fontSize: '7.5pt', color: '#94a3b8', marginTop: 2, fontFamily: 'monospace' }}>
+                    {session.tur ? `Tur ${session.tur} · ` : ''}
+                    {tarihStr}
+                    {session.depoAdi ? ` · ${session.depoAdi}` : ''}
+                    {blindMode ? ' · KÖR SAYIM' : ''}
+                  </p>
+                </div>
+                <div style={{ textAlign: 'right', minWidth: 80 }}>
+                  <p style={{ fontSize: '6.5pt', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'monospace' }}>SAYFA / TOPLAM</p>
+                  <p style={{ fontSize: '16pt', fontWeight: 800, color: '#2563eb', lineHeight: 1 }}>
+                    <span className="print-page-num" />
+                  </p>
+                  <p style={{ fontSize: '6pt', color: '#94a3b8', fontFamily: 'monospace', marginTop: 3 }}>Baskı: {printDate}</p>
+                  <p style={{ fontSize: '6pt', color: '#94a3b8', fontFamily: 'monospace' }}>{printTime} · {rows.length} kalem</p>
+                </div>
+              </div>
+            </td>
+          </tr>
           <tr style={{ background: '#1e293b', color: 'white' }}>
             <th style={thStyle({ textAlign: 'center', width: 22 })}>#</th>
             <th style={thStyle({ textAlign: 'left',   width: 52 })}>ADRES</th>
@@ -119,7 +119,7 @@ const PrintSheet = forwardRef(function PrintSheet(
           })}
         </tbody>
 
-        {/* Alt bilgi: tfoot → Word alt bilgi gibi her sayfada */}
+        {/* tfoot: her sayfanın altında imza kutuları */}
         <tfoot>
           <tr>
             <td colSpan={11} style={{ padding: '3px 0 0', border: 'none' }}>
