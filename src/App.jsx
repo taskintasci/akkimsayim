@@ -1,25 +1,95 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState, useEffect } from 'react'
+import { onAuthStateChanged } from 'firebase/auth'
+import { auth } from './firebase/index'
+import useStore from './store/useStore'
 import Sidebar from './components/layout/Sidebar'
 import TopBar from './components/layout/TopBar'
-import StokSayim from './components/pages/StokSayim'
-import KorSayim from './components/pages/KorSayim'
-import Raporlar from './components/pages/Raporlar'
-import Ayarlar from './components/pages/Ayarlar'
+
+const Login           = lazy(() => import('./components/pages/Login'))
+const Giris           = lazy(() => import('./components/pages/Giris'))
+const Panel           = lazy(() => import('./components/pages/Panel'))
+const ExcelYukle      = lazy(() => import('./components/pages/ExcelYukle'))
+const StokSayim       = lazy(() => import('./components/pages/StokSayim'))
+const KorSayim        = lazy(() => import('./components/pages/KorSayim'))
+const Rapor           = lazy(() => import('./components/pages/Rapor'))
+const SayimAnalizi    = lazy(() => import('./components/pages/SayimAnalizi'))
+const KorSayimAnalizi = lazy(() => import('./components/pages/KorSayimAnalizi'))
+const KorSayimRapor   = lazy(() => import('./components/pages/KorSayimRapor'))
+const Ayarlar         = lazy(() => import('./components/pages/Ayarlar'))
+
+const PAGES = {
+  panel:     { Component: Panel,            fullHeight: false },
+  upload:    { Component: ExcelYukle,       fullHeight: false },
+  sayim:     { Component: StokSayim,        fullHeight: true  },
+  analiz:    { Component: SayimAnalizi,     fullHeight: false },
+  rapor:     { Component: Rapor,            fullHeight: false },
+  kor:       { Component: KorSayim,         fullHeight: true  },
+  koranaliz: { Component: KorSayimAnalizi,  fullHeight: false },
+  korrapor:  { Component: KorSayimRapor,    fullHeight: false },
+  ayarlar:   { Component: Ayarlar,          fullHeight: false },
+}
+
+function Spinner() {
+  return (
+    <div className="h-screen flex items-center justify-center"
+      style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0f172a 100%)' }}>
+      <span className="ms text-blue-400 animate-spin" style={{ fontSize: 40 }}>progress_activity</span>
+    </div>
+  )
+}
 
 export default function App() {
+  // undefined = henüz kontrol edilmedi, null = giriş yok, object = giriş yapılmış
+  const [firebaseUser, setFirebaseUser] = useState(undefined)
+  const { setCurrentUser, activeSessionId } = useStore()
   const [activePage, setActivePage] = useState('panel')
 
-  const pages = { panel: StokSayim, 'kor-sayim': KorSayim, raporlar: Raporlar, ayarlar: Ayarlar }
-  const PageComponent = pages[activePage] || StokSayim
+  useEffect(() => {
+    return onAuthStateChanged(auth, user => {
+      setFirebaseUser(user)
+      setCurrentUser(user)
+    })
+  }, [])
+
+  // Auth durumu henüz belli değil
+  if (firebaseUser === undefined) return <Spinner />
+
+  // Giriş yapılmamış
+  if (!firebaseUser) {
+    return (
+      <Suspense fallback={<Spinner />}>
+        <Login />
+      </Suspense>
+    )
+  }
+
+  // Giriş yapılmış ama oturum seçilmemiş
+  if (!activeSessionId) {
+    return (
+      <Suspense fallback={<Spinner />}>
+        <Giris onNavigate={setActivePage} />
+      </Suspense>
+    )
+  }
+
+  const { Component: PageComponent, fullHeight } = PAGES[activePage] || PAGES.panel
 
   return (
-    <div className="h-screen flex overflow-hidden bg-background text-on-background" style={{fontFamily: 'Inter, sans-serif'}}>
+    <div className="h-screen flex overflow-hidden bg-slate-100">
       <Sidebar activePage={activePage} onNavigate={setActivePage} />
-      <div className="flex-1 flex flex-col h-full overflow-hidden">
-        <TopBar />
-        <main className="flex-1 overflow-y-auto p-8">
-          <PageComponent onNavigate={setActivePage} />
-        </main>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <TopBar activePage={activePage} />
+        <Suspense fallback={<div className="flex-1 flex items-center justify-center text-slate-400 text-[13px]">Yükleniyor…</div>}>
+          {fullHeight ? (
+            <div className="flex-1 overflow-hidden flex flex-col">
+              <PageComponent onNavigate={setActivePage} />
+            </div>
+          ) : (
+            <div className="flex-1 overflow-y-auto p-6">
+              <PageComponent onNavigate={setActivePage} />
+            </div>
+          )}
+        </Suspense>
       </div>
     </div>
   )

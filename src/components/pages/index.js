@@ -1,1 +1,8 @@
-﻿// components\pages
+export { default as Giris } from './Giris'
+export { default as Panel } from './Panel'
+export { default as ExcelYukle } from './ExcelYukle'
+export { default as StokSayim } from './StokSayim'
+export { default as KorSayim } from './KorSayim'
+export { default as Rapor } from './Rapor'
+export { default as SayimAnalizi } from './SayimAnalizi'
+export { default as Ayarlar } from './Ayarlar'

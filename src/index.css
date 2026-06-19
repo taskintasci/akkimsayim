@@ -1,26 +1,98 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-.zebra-stripe:nth-child(even) { background-color: #F3F4F6; }
-.hard-shadow { box-shadow: 0 4px 0px 0px rgba(0,0,0,0.1); }
+* { font-family: 'Inter', sans-serif; }
 
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+.ms {
+  font-family: 'Material Symbols Rounded';
+  font-size: 20px;
+  line-height: 1;
+  user-select: none;
+  font-style: normal;
+  display: inline-block;
+}
+
+.badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 500; }
+.badge-normal { background: #f1f5f9; color: #475569; }
+.badge-bloke { background: #fef3c7; color: #92400e; }
+.badge-sktg { background: #fee2e2; color: #991b1b; }
+
+.input-count {
+  width: 80px; border: 1.5px solid #cbd5e1; border-radius: 6px;
+  padding: 4px 8px; text-align: right;
+  font-family: 'JetBrains Mono', monospace; font-size: 13px;
+  transition: border-color .15s;
+}
+.input-count:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px #bfdbfe44; }
+.input-diff { border-color: #f87171; color: #dc2626; font-weight: 600; }
+.input-ok { border-color: #86efac; }
+
+.toggle-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: 7px; border: 1px solid #e2e8f0;
+  background: white; font-size: 12px; font-weight: 500; color: #475569;
+  cursor: pointer; transition: all .15s;
+}
+.toggle-btn:hover { background: #f8fafc; border-color: #cbd5e1; }
+.toggle-btn.active-hide { background: #1e293b; border-color: #1e293b; color: white; }
+
+.fsel {
+  border: 1px solid #e2e8f0; border-radius: 7px; padding: 4px 8px;
+  font-size: 12px; color: #334155; background: white; cursor: pointer;
+}
+.fsel:focus { outline: none; border-color: #93c5fd; }
+
+/* Sistem gizle */
+.sistem-col { transition: opacity .2s; }
+body.hide-sistem .sistem-col { opacity: 0; pointer-events: none; }
+
+/* Sayilan gizle */
+.sayilan-col { transition: opacity .2s; }
+body.hide-sayilan .sayilan-col { opacity: 0; pointer-events: none; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f8fafc; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+/* Print */
 @media print {
-  @page { size: A4 landscape; margin: 8mm; }
+  /* Alt kenar boşluğu imza kutularına yer açar */
+  @page { size: A4 landscape; margin: 8mm 8mm 26mm 8mm; }
+
   body * { visibility: hidden; }
   #print-area, #print-area * { visibility: visible; }
-  #print-area { position: absolute; left: 0; top: 0; width: 100%; }
+  #print-area { position: absolute; top: 0; left: 0; width: 100%; }
+
   .no-print { display: none !important; }
-  .page-break { page-break-after: always; break-after: page; }
-  table { border-collapse: collapse; width: 100%; font-size: 7.5pt; page-break-inside: auto; }
-  tr { page-break-inside: avoid; page-break-after: auto; }
-  th {
-    background: #1a1c1e !important;
-    color: #ffffff !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+  .page-break { display: none; } /* artık kullanılmıyor */
+
+  /* Tablo: thead her sayfada tekrar eder, satırlar bölünmez */
+  table { border-collapse: collapse; width: 100%; font-size: 7pt; }
+  thead { display: table-header-group; }
+  tbody tr { page-break-inside: avoid; }
+
+  th, td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  th { background: #1e293b !important; color: #ffffff !important; }
+
+  /* İmza — her sayfanın alt kenar boşluğuna sabitlenir */
+  #print-signature {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 22mm;
+    background: white;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4mm;
+    padding: 2mm 8mm 3mm;
+    border-top: 1.5px solid #e2e8f0;
   }
-  td, th { border: 1px solid #c2c6d4; padding: 1.5mm 2mm; }
+  /* CSS page counter */
+  .print-page-num::after { content: counter(page); }
 }

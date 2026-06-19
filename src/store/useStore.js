@@ -1,52 +1,226 @@
 import { create } from 'zustand'
+import {
+  collection, doc, addDoc, getDocs, updateDoc, setDoc,
+  onSnapshot, orderBy, query, serverTimestamp, writeBatch, limit,
+} from 'firebase/firestore'
+import { db } from '../firebase/index'
 import { parseExcelFile } from '../utils/excelImport'
+import { uploadRows, downloadRows } from '../firebase/rowStorage'
+
+// ─── Debounce map: keystroke → Firestore write ────────────────────────────
+const writeTimers = new Map()
+
+// ─── Real-time results unsubscribe handle ─────────────────────────────────
+let resultsUnsub = null
 
 const useStore = create((set, get) => ({
-  // Yüklenen Excel satırları
-  rows: [],
-  importFormat: null, // 'rapor5' | 'sku'
+  // ── Auth ──────────────────────────────────────────────────────────────────
+  currentUser: null,
+  setCurrentUser: (user) => set({ currentUser: user }),
 
-  // Sayım sonuçları: { [rowId]: { miktar, notlar, status } }
+  // ── Sessions ──────────────────────────────────────────────────────────────
+  sessions: [],
+  activeSessionId: null,
+  sessionsLoading: false,
+
+  loadSessions: async () => {
+    set({ sessionsLoading: true })
+    try {
+      const snap = await getDocs(
+        query(collection(db, 'sessions'), orderBy('createdAt', 'desc'), limit(30))
+      )
+      set({ sessions: snap.docs.map(d => ({ id: d.id, ...d.data() })) })
+    } catch (err) {
+      console.error('Sessions yüklenemedi:', err)
+    } finally {
+      set({ sessionsLoading: false })
+    }
+  },
+
+  // ── Excel rows (yerel bellek + Storage) ───────────────────────────────────
+  rows: [],
+  importFormat: null,
+  rowsLoading: false,
+
+  // ── Sayım sonuçları ───────────────────────────────────────────────────────
   results: {},
 
-  // Sayım oturumu bilgileri
+  // ── Aktif session bilgisi ─────────────────────────────────────────────────
   session: {
-    depoAdi: '901 ALİŞAN DEPO',
+    type: 'Yıl Sonu Sayımı',
+    depoAdi: '',
     sayimBasligi: 'YIL SONU SAYIM',
     tarih: new Date().toISOString().slice(0, 10),
     sorumlu: '',
     tur: 1,
   },
 
-  // Excel import — hem RAPOR5.xls hem Sku_Sayım_Listesi.xlsx desteklenir
+  // ── Kör Sayım listesi ─────────────────────────────────────────────────────
+  korCodes: [],
+  korMatched: [],
+
+  // =========================================================================
+  // ACTIONS
+  // =========================================================================
+
+  setActiveSession: async (id) => {
+    if (resultsUnsub) { resultsUnsub(); resultsUnsub = null }
+
+    set({ activeSessionId: id, rows: [], results: {}, korCodes: [], korMatched: [], rowsLoading: true })
+
+    const sessionData = get().sessions.find(s => s.id === id)
+    if (sessionData) {
+      set({
+        session: {
+          type:         sessionData.type || 'Yıl Sonu Sayımı',
+          depoAdi:      sessionData.depoAdi || '',
+          sayimBasligi: sessionData.sayimBasligi || sessionData.type || 'YIL SONU SAYIM',
+          tarih:        sessionData.tarih || new Date().toISOString().slice(0, 10),
+          sorumlu:      '',
+          tur:          sessionData.tur || 1,
+        },
+      })
+
+      if (sessionData.rowsUploaded) {
+        const rows = await downloadRows(id)
+        set({ rows })
+      }
+    }
+
+    set({ rowsLoading: false })
+
+    // Real-time results listener
+    resultsUnsub = onSnapshot(
+      collection(db, 'sessions', id, 'results'),
+      (snap) => {
+        const results = {}
+        snap.forEach(d => { results[d.id] = d.data() })
+        set({ results })
+      },
+      (err) => console.error('Results listener hatası:', err)
+    )
+  },
+
+  createSession: async (partial) => {
+    const { currentUser } = get()
+    const data = {
+      type:         partial.type || 'Yıl Sonu Sayımı',
+      depoAdi:      partial.depoAdi || '',
+      sayimBasligi: partial.type || 'YIL SONU SAYIM',
+      tarih:        partial.tarih || new Date().toISOString().slice(0, 10),
+      durum:        'Devam',
+      kalemSayisi:  0,
+      tamamlanan:   0,
+      fark:         0,
+      tur:          1,
+      rowsUploaded: false,
+      createdBy:    currentUser?.uid || null,
+      createdAt:    serverTimestamp(),
+    }
+
+    const docRef = await addDoc(collection(db, 'sessions'), data)
+
+    const newSession = { id: docRef.id, ...data, createdAt: new Date() }
+    set(state => ({
+      sessions:      [newSession, ...state.sessions],
+      activeSessionId: docRef.id,
+      rows:          [],
+      results:       {},
+      korCodes:      [],
+      korMatched:    [],
+      session: {
+        type:         data.type,
+        depoAdi:      data.depoAdi,
+        sayimBasligi: data.sayimBasligi,
+        tarih:        data.tarih,
+        sorumlu:      '',
+        tur:          1,
+      },
+    }))
+
+    return docRef.id
+  },
+
+  // ── Excel import → parse + Storage upload ─────────────────────────────────
   importRows: async (file) => {
     if (!file) {
-      set({ rows: [], results: {} })
+      set({ rows: [], results: {}, importFormat: null })
       return
     }
     try {
       const { rows, format } = await parseExcelFile(file)
       set({ rows, results: {}, importFormat: format })
+
+      const { activeSessionId } = get()
+      if (activeSessionId) {
+        await uploadRows(activeSessionId, rows)
+        await updateDoc(doc(db, 'sessions', activeSessionId), {
+          rowsUploaded: true,
+          kalemSayisi:  rows.length,
+          importFormat: format,
+          updatedAt:    serverTimestamp(),
+        })
+        set(state => ({
+          sessions: state.sessions.map(s =>
+            s.id === activeSessionId
+              ? { ...s, rowsUploaded: true, kalemSayisi: rows.length }
+              : s
+          ),
+        }))
+      }
     } catch (err) {
       console.error('Excel import hatası:', err)
       alert('Excel dosyası okunamadı.\nDesteklenen formatlar: RAPOR5.xls veya Sku_Sayım_Listesi.xlsx')
     }
   },
 
-  // Tek satır sonucu güncelle
-  updateResult: (id, partial) =>
+  // ── Tek satır güncelle (debounced Firestore write) ────────────────────────
+  updateResult: (id, partial) => {
     set(state => ({
-      results: {
-        ...state.results,
-        [id]: { ...state.results[id], ...partial },
-      },
-    })),
+      results: { ...state.results, [id]: { ...state.results[id], ...partial } },
+    }))
 
-  // Session güncelle
+    const { activeSessionId, currentUser } = get()
+    if (!activeSessionId) return
+
+    if (writeTimers.has(id)) clearTimeout(writeTimers.get(id))
+    writeTimers.set(id, setTimeout(async () => {
+      const result = get().results[id] || {}
+      await setDoc(
+        doc(db, 'sessions', activeSessionId, 'results', id),
+        { ...result, updatedBy: currentUser?.uid || null, updatedAt: serverTimestamp() },
+        { merge: true }
+      )
+      writeTimers.delete(id)
+    }, 600))
+  },
+
+  // ── Sistem miktarından toplu doldur ───────────────────────────────────────
+  fillFromSistem: async (targetRows) => {
+    const { activeSessionId, currentUser } = get()
+
+    set(state => {
+      const next = { ...state.results }
+      targetRows.forEach(r => { next[r.id] = { ...next[r.id], miktar: r.sayim } })
+      return { results: next }
+    })
+
+    if (activeSessionId && targetRows.length > 0) {
+      const batch = writeBatch(db)
+      targetRows.forEach(r => {
+        batch.set(
+          doc(db, 'sessions', activeSessionId, 'results', r.id),
+          { miktar: r.sayim, updatedBy: currentUser?.uid || null, updatedAt: serverTimestamp() },
+          { merge: true }
+        )
+      })
+      await batch.commit()
+    }
+  },
+
   setSession: (partial) =>
     set(state => ({ session: { ...state.session, ...partial } })),
 
-  // Toplu durum güncelle
   bulkSetStatus: (ids, status) =>
     set(state => {
       const next = { ...state.results }
@@ -54,8 +228,23 @@ const useStore = create((set, get) => ({
       return { results: next }
     }),
 
-  // Reset
-  reset: () => set({ rows: [], results: {} }),
+  addKorCodes: (newCodes) => set(state => {
+    const merged  = [...new Set([...state.korCodes, ...newCodes.map(c => c.trim()).filter(Boolean)])]
+    const matched = state.rows.filter(r => merged.includes(r.kod))
+    return { korCodes: merged, korMatched: matched }
+  }),
+  removeKorCode: (code) => set(state => {
+    const updated = state.korCodes.filter(c => c !== code)
+    const matched = state.rows.filter(r => updated.includes(r.kod))
+    return { korCodes: updated, korMatched: matched }
+  }),
+  setKorMatched: (rows) => set({ korMatched: rows }),
+  clearKor:      () => set({ korCodes: [], korMatched: [] }),
+
+  reset: () => {
+    if (resultsUnsub) { resultsUnsub(); resultsUnsub = null }
+    set({ rows: [], results: {}, korCodes: [], korMatched: [] })
+  },
 }))
 
 export default useStore

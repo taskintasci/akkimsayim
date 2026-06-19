@@ -1,0 +1,133 @@
+import useStore from '../../store/useStore'
+
+const RECENT = [
+  { icon: 'upload_file', text: 'RAPOR5_18062026.xls yüklendi', sub: '240 kalem · bugün 09:14', badge: 'Tamamlandı', badgeCls: 'bg-emerald-50 text-emerald-700', iconBg: 'bg-blue-50', iconColor: 'text-blue-500' },
+  { icon: 'print', text: 'Kör sayım listesi yazdırıldı', sub: '150 kalem · 12 sayfa · bugün 09:32', badge: 'A4 Yazdır', badgeCls: 'bg-slate-100 text-slate-600', iconBg: 'bg-violet-50', iconColor: 'text-violet-500' },
+  { icon: 'warning', text: '47 kalemde sayım farkı tespit edildi', sub: 'bugün 11:05', badge: 'İncelenmeli', badgeCls: 'bg-red-50 text-red-600', iconBg: 'bg-red-50', iconColor: 'text-red-500' },
+]
+
+export default function Panel({ onNavigate }) {
+  const { rows, results, session } = useStore()
+
+  const counted = rows.filter(r => results[r.id]?.miktar !== undefined && results[r.id]?.miktar !== '')
+  const diff = rows.filter(r => {
+    const m = results[r.id]?.miktar
+    return m !== undefined && m !== '' && String(m) !== String(r.sayim)
+  })
+  const approved = rows.filter(r => results[r.id]?.status === 'Onaylandı')
+  const pct = rows.length > 0 ? Math.round(counted.length / rows.length * 100) : 0
+
+  const tarihStr = session.tarih
+    ? new Date(session.tarih).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })
+    : ''
+
+  return (
+    <div className="flex flex-col gap-5">
+      {/* Başlık */}
+      <div>
+        <h1 className="text-xl font-bold text-slate-900">Sayım Paneli</h1>
+        <p className="text-[13px] text-slate-500 mt-0.5">
+          {session.type}{session.depoAdi ? ` · ${session.depoAdi}` : ''}{tarihStr ? ` · ${tarihStr}` : ''}
+        </p>
+      </div>
+
+      {/* 4 İstatistik Kartı */}
+      <div className="grid grid-cols-4 gap-4">
+        {/* Toplam SKU */}
+        <div className="bg-white rounded-xl border border-slate-200 p-4">
+          <p className="text-[11px] text-slate-400 mono uppercase tracking-wide mb-2">Toplam SKU</p>
+          <p className="text-3xl font-bold text-slate-900">{rows.length.toLocaleString('tr')}</p>
+          <p className="text-[12px] text-slate-400 mt-1">Tüm stok kalemleri</p>
+        </div>
+        {/* Sayılan */}
+        <div className="bg-white rounded-xl border border-slate-200 p-4">
+          <p className="text-[11px] text-slate-400 mono uppercase tracking-wide mb-2">Sayılan</p>
+          <div className="flex items-end gap-2">
+            <p className="text-3xl font-bold text-blue-600">{counted.length.toLocaleString('tr')}</p>
+            {rows.length > 0 && <p className="text-[13px] text-slate-400 mb-1">/ {rows.length.toLocaleString('tr')}</p>}
+          </div>
+          {rows.length > 0 && (
+            <>
+              <div className="mt-2 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: pct + '%' }} />
+              </div>
+              <p className="text-[11px] text-slate-400 mt-1">%{pct} tamamlandı</p>
+            </>
+          )}
+        </div>
+        {/* Farklılık */}
+        <div className="bg-white rounded-xl border border-slate-200 p-4">
+          <p className="text-[11px] text-slate-400 mono uppercase tracking-wide mb-2">Farklılık</p>
+          <p className="text-3xl font-bold text-red-500">{diff.length.toLocaleString('tr')}</p>
+          <p className="text-[12px] text-slate-400 mt-1">İncelenmeli</p>
+        </div>
+        {/* Onaylanan */}
+        <div className="bg-white rounded-xl border border-slate-200 p-4">
+          <p className="text-[11px] text-slate-400 mono uppercase tracking-wide mb-2">Onaylanan</p>
+          <p className="text-3xl font-bold text-emerald-600">{approved.length.toLocaleString('tr')}</p>
+          <p className="text-[12px] text-slate-400 mt-1">Mutabık</p>
+        </div>
+      </div>
+
+      {/* Hızlı Başlat */}
+      <div>
+        <p className="text-[13px] font-semibold text-slate-700 mb-3">Hızlı Başlat</p>
+        <div className="grid grid-cols-3 gap-3">
+          <button onClick={() => onNavigate('upload')} className="bg-white rounded-xl border border-slate-200 p-4 text-left hover:border-blue-300 hover:shadow-sm transition-all group">
+            <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center mb-3 group-hover:bg-blue-100 transition-colors">
+              <span className="ms text-blue-600" style={{ fontSize: 22 }}>upload_file</span>
+            </div>
+            <p className="text-[13.5px] font-semibold text-slate-800">RAPOR5 Yükle</p>
+            <p className="text-[12px] text-slate-400 mt-0.5">Excel'den stok verisi aktar</p>
+          </button>
+          <button onClick={() => onNavigate('kor')} className="bg-white rounded-xl border border-slate-200 p-4 text-left hover:border-blue-300 hover:shadow-sm transition-all group">
+            <div className="w-9 h-9 rounded-lg bg-violet-50 flex items-center justify-center mb-3 group-hover:bg-violet-100 transition-colors">
+              <span className="ms text-violet-600" style={{ fontSize: 22 }}>visibility_off</span>
+            </div>
+            <p className="text-[13.5px] font-semibold text-slate-800">Kör Sayım Başlat</p>
+            <p className="text-[12px] text-slate-400 mt-0.5">Kod gir, liste oluştur, yazdır</p>
+          </button>
+          <button onClick={() => onNavigate('rapor')} className="bg-white rounded-xl border border-slate-200 p-4 text-left hover:border-blue-300 hover:shadow-sm transition-all group">
+            <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center mb-3 group-hover:bg-emerald-100 transition-colors">
+              <span className="ms text-emerald-600" style={{ fontSize: 22 }}>analytics</span>
+            </div>
+            <p className="text-[13.5px] font-semibold text-slate-800">Mutabakat Raporu</p>
+            <p className="text-[12px] text-slate-400 mt-0.5">Fark analizi ve onay</p>
+          </button>
+        </div>
+      </div>
+
+      {/* Son İşlemler */}
+      <div className="bg-white rounded-xl border border-slate-200">
+        <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+          <p className="text-[13px] font-semibold text-slate-700">Son İşlemler</p>
+          <button className="text-[12px] text-blue-600 hover:underline">Tümü</button>
+        </div>
+        <div className="divide-y divide-slate-50">
+          {RECENT.map((r, i) => (
+            <div key={i} className="px-4 py-3 flex items-center gap-3">
+              <div className={'w-8 h-8 rounded-full flex items-center justify-center shrink-0 ' + r.iconBg}>
+                <span className={'ms ' + r.iconColor} style={{ fontSize: 16 }}>{r.icon}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-medium text-slate-700">{r.text}</p>
+                <p className="text-[11px] text-slate-400 mono">{r.sub}</p>
+              </div>
+              <span className={'badge ' + r.badgeCls}>{r.badge}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Sayım ilerlemesi — sadece veri yüklüyse */}
+      {rows.length > 0 && (
+        <div className="flex justify-end">
+          <button onClick={() => onNavigate('sayim')} className="flex items-center gap-1.5 text-[13px] font-semibold text-blue-600 hover:text-blue-700">
+            Sayıma Devam Et
+            <span className="ms" style={{ fontSize: 17 }}>arrow_forward</span>
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}

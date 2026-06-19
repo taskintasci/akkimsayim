@@ -1,5 +1,3 @@
-import * as XLSX from 'xlsx'
-
 function makeId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2)
 }
@@ -13,74 +11,67 @@ function toNum(val) {
   return String(val).replace(',', '.')
 }
 
-// ─── Format 1: Sku_Sayım_Listesi ────────────────────────────────────────────
+// ─── SKU_Sayım_Listesi sütun haritası ───────────────────────────────────────
 const SKU_MAP = {
-  'sira no.' : 'siraNo',
-  'sıra no.' : 'siraNo',
-  'adres'    : 'adres',
-  'kod'      : 'kod',
-  'ad'       : 'ad',
-  'parti'    : 'parti',
-  'durum'    : 'durum',
-  'adet1'    : 'adet1',
-  'adet 1'   : 'adet1',
-  'ambalaj'  : 'ambalaj',
-  'sayım'    : 'sayim',
-  'sayim'    : 'sayim',
-  'birim'    : 'birim',
-  'birim 1'  : 'birim',
-  'açıklama' : 'aciklama',
-  'aciklama' : 'aciklama',
+  'sira no.'  : 'siraNo',
+  'sıra no.'  : 'siraNo',
+  'adres'     : 'adres',
+  'kod'       : 'kod',
+  'ad'        : 'ad',
+  'parti'     : 'parti',
+  'durum'     : 'durum',
+  'adet1'     : 'adet1',
+  'adet 1'    : 'adet1',
+  'ambalaj'   : 'ambalaj',
+  'sayım'     : 'sayim',
+  'sayim'     : 'sayim',
+  'birim'     : 'birim',
+  'birim 1'   : 'birim',
+  'açıklama'  : 'aciklama',
+  'aciklama'  : 'aciklama',
 }
 
-// ─── Format 2: RAPOR5 ───────────────────────────────────────────────────────
-// RAPOR5 sütunları → iç alan adı
+// ─── RAPOR5 sütun haritası ───────────────────────────────────────────────────
 const RAPOR5_MAP = {
   'adres'              : 'adres',
   'kod'                : 'kod',
   'ad'                 : 'ad',
   'parti'              : 'parti',
   'durum'              : 'durum',
-  'palet adet'         : 'adet1',
-  'birim 1'            : 'ambalaj',   // VARIL, IBC, BIDON vb.
-  // Birincil miktar: Son Kırılım (gerçek stok miktarı)
+  'adet 1'             : 'adet1',
+  'birim 1'            : 'ambalaj',
   'son kırılım miktar' : 'sayim',
   'son kirilim miktar' : 'sayim',
   'son kırılım birim'  : 'birim',
   'son kirilim birim'  : 'birim',
-  // Yedek: Son Kırılım yoksa Adet 2 / Birim 2
   'adet 2'             : 'sayim_yedek',
   'birim 2'            : 'birim_yedek',
-  // Açıklama olarak barkod
   'barkod'             : 'aciklama',
 }
 
-// RAPOR5 tespiti: "Depo Kod", "Palet Tip" veya "Son Kırılım" sütunu varsa
-function detectFormat(headerValues) {
-  const norms = headerValues.map(norm)
-  if (
-    norms.some(h => h.includes('depo kod')) ||
-    norms.some(h => h.includes('palet tip')) ||
-    norms.some(h => h.includes('son k'))
-  ) return 'rapor5'
-  return 'sku'
+// RAPOR5 ayırt edici başlıkları
+const RAPOR5_SIGNATURES = ['depo kod', 'palet tip', 'son k', 'son kırılım', 'son kirilim']
+
+function isRapor5(headers) {
+  const norms = headers.map(norm)
+  return RAPOR5_SIGNATURES.some(sig => norms.some(h => h.includes(sig)))
 }
 
-// Excel başlık satırı → { excelKey: internalField } haritası
-function buildColMap(headerRow, fieldMap) {
-  const result = {}
-  Object.keys(headerRow).forEach(excelKey => {
-    const field = fieldMap[norm(headerRow[excelKey])]
-    if (field) result[excelKey] = field
+// Her iki format için: header adı → internal field
+function buildColMap(headers, fieldMap) {
+  const colMap = {}
+  headers.forEach((header, colIdx) => {
+    const field = fieldMap[norm(header)]
+    if (field) colMap[colIdx] = field
   })
-  return result
+  return colMap
 }
 
-function mapRow(rawRow, colMap, index, format) {
-  const mapped = { id: makeId(), siraNo: index + 1 }
+function mapDataRow(rowArr, colMap, siraNo) {
+  const mapped = { id: makeId(), siraNo }
 
-  Object.entries(colMap).forEach(([excelKey, field]) => {
-    const val = rawRow[excelKey] ?? ''
+  Object.entries(colMap).forEach(([colIdxStr, field]) => {
+    const val = rowArr[Number(colIdxStr)] ?? ''
 
     if (field === 'sayim_yedek') {
       if (!mapped.sayim) mapped.sayim = toNum(val)
@@ -88,17 +79,12 @@ function mapRow(rawRow, colMap, index, format) {
       if (!mapped.birim) mapped.birim = String(val)
     } else if (field === 'sayim' || field === 'adet1') {
       mapped[field] = toNum(val)
+    } else if (field === 'siraNo') {
+      mapped.siraNo = val ? Number(val) || siraNo : siraNo
     } else {
       mapped[field] = String(val)
     }
   })
-
-  // Sıra no SKU formatında satırdan gelebilir
-  if (format === 'sku' && mapped.siraNo && mapped.siraNo !== index + 1) {
-    // koru
-  } else {
-    mapped.siraNo = index + 1
-  }
 
   return mapped
 }
@@ -106,33 +92,71 @@ function mapRow(rawRow, colMap, index, format) {
 export function parseExcelFile(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
+        const XLSX = await import('xlsx')
         const wb = XLSX.read(e.target.result, {
           type: 'array',
-          cellDates: true,
-          bookVBA: false,
+          cellDates: false,
+          raw: false,
         })
 
         const ws = wb.Sheets[wb.SheetNames[0]]
-        const raw = XLSX.utils.sheet_to_json(ws, { defval: '', raw: false })
 
-        if (raw.length === 0) {
-          reject(new Error('Excel dosyası boş'))
+        // 2D dizi olarak al — her satır string dizisi
+        const rawArr = XLSX.utils.sheet_to_json(ws, {
+          header: 1,
+          defval: '',
+          raw: false,
+        })
+
+        if (rawArr.length < 2) {
+          reject(new Error('Excel dosyası boş veya çok az satır içeriyor'))
           return
         }
 
-        const headerValues = Object.values(raw[0])
-        const format = detectFormat(headerValues)
-        const fieldMap = format === 'rapor5' ? RAPOR5_MAP : SKU_MAP
-        const colMap = buildColMap(raw[0], fieldMap)
+        // Başlık satırını bul: ilk N satır içinde en çok alan map eden satır
+        let headerRowIdx = 0
+        let bestScore = 0
+        let bestFormat = 'sku'
+        let bestFieldMap = SKU_MAP
 
-        const rows = raw
-          .map((rawRow, i) => mapRow(rawRow, colMap, i, format))
-          // Kodu olmayan satırları filtrele (RAPOR5'te başlık tekrarları olabilir)
+        for (let i = 0; i < Math.min(rawArr.length, 6); i++) {
+          const row = rawArr[i]
+          const headers = row.map(v => norm(String(v ?? '')))
+
+          const isR5 = isRapor5(headers)
+          const fieldMap = isR5 ? RAPOR5_MAP : SKU_MAP
+
+          const score = headers.filter(h => fieldMap[h]).length
+          if (score > bestScore) {
+            bestScore = score
+            headerRowIdx = i
+            bestFormat = isR5 ? 'rapor5' : 'sku'
+            bestFieldMap = fieldMap
+          }
+        }
+
+        if (bestScore === 0) {
+          reject(new Error(
+            'Tanınan sütun bulunamadı. Lütfen RAPOR5.xls veya Sku_Sayım_Listesi.xlsx yükleyin.'
+          ))
+          return
+        }
+
+        const headerRow = rawArr[headerRowIdx]
+        const colMap = buildColMap(headerRow, bestFieldMap)
+
+        let rowNum = 0
+        const rows = rawArr
+          .slice(headerRowIdx + 1)        // başlık satırından sonraki satırlar
+          .map(rowArr => {
+            rowNum++
+            return mapDataRow(rowArr, colMap, rowNum)
+          })
           .filter(r => r.kod && String(r.kod).trim())
 
-        resolve({ rows, format })
+        resolve({ rows, format: bestFormat })
       } catch (err) {
         reject(err)
       }
