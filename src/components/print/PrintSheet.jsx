@@ -60,7 +60,7 @@ const PrintSheet = forwardRef(function PrintSheet(
                   </p>
                 </div>
                 <div style={{ textAlign: 'right', minWidth: 80 }}>
-                  <p style={{ fontSize: '6.5pt', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'monospace' }}>SAYFA / TOPLAM</p>
+                  <p style={{ fontSize: '6.5pt', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'monospace' }}>SAYFA</p>
                   <p style={{ fontSize: '16pt', fontWeight: 800, color: '#2563eb', lineHeight: 1 }}>
                     <span className="print-page-num" />
                   </p>

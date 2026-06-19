@@ -80,6 +80,5 @@ body.hide-sayilan .sayilan-col { opacity: 0; pointer-events: none; }
   th, td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   th { background: #1e293b !important; color: #ffffff !important; }
 
-  /* CSS page counter: "1 / 4" formatı */
-  .print-page-num::after { content: counter(page) " / " counter(pages); }
+  .print-page-num::after { content: counter(page); }
 }
