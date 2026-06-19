@@ -64,6 +64,12 @@ const useStore = create((set, get) => ({
   setPendingKodFilter: (kod) => set({ pendingKodFilter: kod }),
   clearPendingKodFilter: () => set({ pendingKodFilter: null }),
 
+  // ── Son İşlemler event logu (in-memory) ───────────────────────────────────
+  events: [],
+  addEvent: (event) => set(state => ({
+    events: [{ ...event, time: new Date() }, ...state.events].slice(0, 20),
+  })),
+
   // =========================================================================
   // ACTIONS
   // =========================================================================
@@ -91,6 +97,15 @@ const useStore = create((set, get) => ({
         const korCodes = sessionData.korCodes || []
         const korMatched = korCodes.length > 0 ? rows.filter(r => korCodes.includes(r.kod)) : []
         set({ rows, korCodes, korMatched })
+        get().addEvent({
+          icon: 'inventory_2',
+          text: `Oturum açıldı: ${sessionData.type || 'Sayım'}`,
+          sub: `${rows.length} kalem yüklendi`,
+          badge: 'Oturum',
+          badgeCls: 'bg-blue-50 text-blue-600',
+          iconBg: 'bg-blue-50',
+          iconColor: 'text-blue-500',
+        })
       }
     }
 
@@ -157,6 +172,16 @@ const useStore = create((set, get) => ({
     try {
       const { rows, format } = await parseExcelFile(file)
       set({ rows, results: {}, importFormat: format })
+
+      get().addEvent({
+        icon: 'upload_file',
+        text: `Excel dosyası yüklendi`,
+        sub: `${rows.length} kalem · ${format || ''}`,
+        badge: 'Tamamlandı',
+        badgeCls: 'bg-emerald-50 text-emerald-700',
+        iconBg: 'bg-blue-50',
+        iconColor: 'text-blue-500',
+      })
 
       const { activeSessionId } = get()
       if (activeSessionId) {
@@ -257,6 +282,51 @@ const useStore = create((set, get) => ({
     set({ korCodes: [], korMatched: [] })
     if (activeSessionId)
       updateDoc(doc(db, 'sessions', activeSessionId), { korCodes: [] }).catch(console.error)
+  },
+
+  approveSession: async () => {
+    const { activeSessionId, rows, results, currentUser } = get()
+    if (!activeSessionId) return
+
+    const countedRows = rows.filter(r => results[r.id]?.miktar !== undefined && results[r.id]?.miktar !== '')
+    if (countedRows.length === 0) return
+
+    const batch = writeBatch(db)
+    countedRows.forEach(r => {
+      batch.set(
+        doc(db, 'sessions', activeSessionId, 'results', r.id),
+        { ...results[r.id], status: 'Onaylandı', updatedBy: currentUser?.uid || null, updatedAt: serverTimestamp() },
+        { merge: true }
+      )
+    })
+    await batch.commit()
+
+    await updateDoc(doc(db, 'sessions', activeSessionId), {
+      durum: 'Tamamlandı',
+      tamamlanan: countedRows.length,
+      updatedAt: serverTimestamp(),
+    })
+
+    set(state => {
+      const next = { ...state.results }
+      countedRows.forEach(r => { next[r.id] = { ...next[r.id], status: 'Onaylandı' } })
+      return {
+        results: next,
+        sessions: state.sessions.map(s =>
+          s.id === activeSessionId ? { ...s, durum: 'Tamamlandı', tamamlanan: countedRows.length } : s
+        ),
+      }
+    })
+
+    get().addEvent({
+      icon: 'check_circle',
+      text: 'Sayım onaylandı',
+      sub: `${countedRows.length} kalem onaylandı`,
+      badge: 'Onaylandı',
+      badgeCls: 'bg-emerald-50 text-emerald-700',
+      iconBg: 'bg-emerald-50',
+      iconColor: 'text-emerald-500',
+    })
   },
 
   reset: () => {

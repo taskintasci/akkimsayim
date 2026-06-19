@@ -1,8 +1,30 @@
+import { useState } from 'react'
 import useStore from '../../store/useStore'
 import { exportRaporFarklar } from '../../utils/excelExport'
 
 export default function Rapor({ onNavigate }) {
-  const { rows, results, session, setPendingKodFilter } = useStore()
+  const { rows, results, session, setPendingKodFilter, approveSession } = useStore()
+  const [approving, setApproving] = useState(false)
+  const [approved, setApproved] = useState(false)
+
+  async function handleApprove() {
+    const counted = rows.filter(r => results[r.id]?.miktar !== undefined && results[r.id]?.miktar !== '')
+    if (counted.length === 0) {
+      alert('Henüz sayım yapılmamış. Onaylamak için en az bir kalem sayılmış olmalı.')
+      return
+    }
+    const ok = window.confirm(
+      `${counted.length} sayılan kalem "Onaylandı" olarak işaretlenecek ve sayım tamamlanacak.\n\nDevam edilsin mi?`
+    )
+    if (!ok) return
+    setApproving(true)
+    try {
+      await approveSession()
+      setApproved(true)
+    } finally {
+      setApproving(false)
+    }
+  }
 
   const counted = rows.filter(r => results[r.id]?.miktar !== undefined && results[r.id]?.miktar !== '')
   const discrepancies = rows
@@ -36,9 +58,20 @@ export default function Rapor({ onNavigate }) {
           >
             <span className="ms" style={{ fontSize: 16 }}>download</span> Excel İndir
           </button>
-          <button className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white rounded-lg text-[13px] font-bold hover:bg-emerald-700">
-            <span className="ms" style={{ fontSize: 16 }}>check_circle</span> Onayla
-          </button>
+          {approved ? (
+            <div className="flex items-center gap-1.5 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg text-[13px] font-bold">
+              <span className="ms" style={{ fontSize: 16 }}>check_circle</span> Onaylandı
+            </div>
+          ) : (
+            <button
+              onClick={handleApprove}
+              disabled={approving}
+              className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white rounded-lg text-[13px] font-bold hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              <span className="ms" style={{ fontSize: 16 }}>{approving ? 'hourglass_empty' : 'check_circle'}</span>
+              {approving ? 'Onaylanıyor…' : 'Onayla'}
+            </button>
+          )}
         </div>
       </div>
 

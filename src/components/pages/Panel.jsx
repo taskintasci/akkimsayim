@@ -1,13 +1,13 @@
 import useStore from '../../store/useStore'
 
-const RECENT = [
-  { icon: 'upload_file', text: 'RAPOR5_18062026.xls yüklendi', sub: '240 kalem · bugün 09:14', badge: 'Tamamlandı', badgeCls: 'bg-emerald-50 text-emerald-700', iconBg: 'bg-blue-50', iconColor: 'text-blue-500' },
-  { icon: 'print', text: 'Kör sayım listesi yazdırıldı', sub: '150 kalem · 12 sayfa · bugün 09:32', badge: 'A4 Yazdır', badgeCls: 'bg-slate-100 text-slate-600', iconBg: 'bg-violet-50', iconColor: 'text-violet-500' },
-  { icon: 'warning', text: '47 kalemde sayım farkı tespit edildi', sub: 'bugün 11:05', badge: 'İncelenmeli', badgeCls: 'bg-red-50 text-red-600', iconBg: 'bg-red-50', iconColor: 'text-red-500' },
-]
+function formatTime(date) {
+  if (!date) return ''
+  const d = date instanceof Date ? date : new Date(date)
+  return d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
+}
 
 export default function Panel({ onNavigate }) {
-  const { rows, results, session } = useStore()
+  const { rows, results, session, events } = useStore()
 
   const counted = rows.filter(r => results[r.id]?.miktar !== undefined && results[r.id]?.miktar !== '')
   const diff = rows.filter(r => {
@@ -101,21 +101,31 @@ export default function Panel({ onNavigate }) {
       <div className="bg-white rounded-xl border border-slate-200">
         <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
           <p className="text-[13px] font-semibold text-slate-700">Son İşlemler</p>
-          <button className="text-[12px] text-blue-600 hover:underline">Tümü</button>
+          {events.length > 0 && (
+            <span className="text-[11px] text-slate-400 mono">{events.length} kayıt</span>
+          )}
         </div>
         <div className="divide-y divide-slate-50">
-          {RECENT.map((r, i) => (
-            <div key={i} className="px-4 py-3 flex items-center gap-3">
-              <div className={'w-8 h-8 rounded-full flex items-center justify-center shrink-0 ' + r.iconBg}>
-                <span className={'ms ' + r.iconColor} style={{ fontSize: 16 }}>{r.icon}</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-medium text-slate-700">{r.text}</p>
-                <p className="text-[11px] text-slate-400 mono">{r.sub}</p>
-              </div>
-              <span className={'badge ' + r.badgeCls}>{r.badge}</span>
+          {events.length === 0 ? (
+            <div className="px-4 py-8 text-center">
+              <span className="ms text-slate-300 block mb-2" style={{ fontSize: 32 }}>history</span>
+              <p className="text-[12px] text-slate-400">Henüz işlem yok</p>
+              <p className="text-[11px] text-slate-300 mt-0.5">Excel yükleyince burada görünür</p>
             </div>
-          ))}
+          ) : (
+            events.slice(0, 5).map((r, i) => (
+              <div key={i} className="px-4 py-3 flex items-center gap-3">
+                <div className={'w-8 h-8 rounded-full flex items-center justify-center shrink-0 ' + r.iconBg}>
+                  <span className={'ms ' + r.iconColor} style={{ fontSize: 16 }}>{r.icon}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-medium text-slate-700">{r.text}</p>
+                  <p className="text-[11px] text-slate-400 mono">{r.sub}{r.time ? ` · ${formatTime(r.time)}` : ''}</p>
+                </div>
+                <span className={'badge ' + r.badgeCls}>{r.badge}</span>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
