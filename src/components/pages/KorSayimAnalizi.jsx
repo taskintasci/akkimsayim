@@ -1,5 +1,13 @@
+import { useRef } from 'react'
+import { useReactToPrint } from 'react-to-print'
 import useStore from '../../store/useStore'
 import { exportResults } from '../../utils/excelExport'
+
+const PRINT_STYLE = `
+  @page { size: A4 landscape; margin: 8mm; }
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .no-print { display: none !important; }
+`
 
 function AccBar({ pct }) {
   return (
@@ -54,6 +62,9 @@ export default function KorSayimAnalizi({ onNavigate }) {
 
   const fmt = (n) => n.toLocaleString('tr', { maximumFractionDigits: 2 })
 
+  const printRef = useRef()
+  const handlePrint = useReactToPrint({ contentRef: printRef, pageStyle: PRINT_STYLE })
+
   if (rows.length === 0) {
     return (
       <div className="flex flex-col gap-5">
@@ -74,7 +85,7 @@ export default function KorSayimAnalizi({ onNavigate }) {
   }
 
   return (
-    <div className="flex flex-col gap-5">
+    <div ref={printRef} className="flex flex-col gap-5">
       {/* Başlık */}
       <div className="flex items-center justify-between">
         <div>
@@ -84,7 +95,7 @@ export default function KorSayimAnalizi({ onNavigate }) {
           </p>
         </div>
         <div className="flex gap-2 no-print">
-          <button className="flex items-center gap-1.5 px-4 py-2 bg-white border border-slate-300 rounded-lg text-[13px] font-medium text-slate-700 hover:bg-slate-50">
+          <button onClick={handlePrint} className="flex items-center gap-1.5 px-4 py-2 bg-white border border-slate-300 rounded-lg text-[13px] font-medium text-slate-700 hover:bg-slate-50">
             <span className="ms" style={{ fontSize: 16 }}>print</span> Yazdır
           </button>
           <button onClick={() => exportResults(rows, results, session)} className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white rounded-lg text-[13px] font-bold hover:bg-emerald-700">
