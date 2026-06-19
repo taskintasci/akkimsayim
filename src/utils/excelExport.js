@@ -1,3 +1,153 @@
+export async function exportAnalizi(rows, results, session) {
+  const { default: ExcelJS } = await import('exceljs')
+
+  // --- hesaplamalar ---
+  const counted = rows.filter(r => results[r.id]?.miktar !== undefined && results[r.id]?.miktar !== '')
+  const discrepancies = rows.filter(r => {
+    const m = results[r.id]?.miktar
+    return m !== undefined && m !== '' && String(m) !== String(r.sayim)
+  })
+  const hatasizLokasyon = counted.length - discrepancies.length
+  const hataliLokasyon  = discrepancies.length
+
+  const adresPct = counted.length > 0 ? +(hatasizLokasyon / counted.length * 100).toFixed(4) : 0
+
+  const sistemToplam = rows.reduce((s, r) => s + (parseFloat(String(r.sayim).replace(',', '.')) || 0), 0)
+  const fizikiToplam = rows.reduce((s, r) => {
+    const m = results[r.id]?.miktar
+    return s + (m !== undefined && m !== '' ? parseFloat(String(m).replace(',', '.')) || 0 : 0)
+  }, 0)
+  const stokFark     = fizikiToplam - sistemToplam
+  const stokMuafiyet = sistemToplam * 0.001
+  const stokPct      = sistemToplam > 0 ? +(fizikiToplam / sistemToplam * 100).toFixed(4) : 0
+  const muafiyetKullanim = stokMuafiyet > 0 ? +(stokFark / stokMuafiyet / 1000 * 100).toFixed(4) : 0
+
+  const uniqueSkuSistem  = [...new Set(rows.map(r => r.kod))].length
+  const uniqueSkuHatasiz = [...new Set(
+    rows.filter(r => {
+      const m = results[r.id]?.miktar
+      return m !== undefined && m !== '' && String(m) === String(r.sayim)
+    }).map(r => r.kod)
+  )].length
+  const hataliSku = uniqueSkuSistem - uniqueSkuHatasiz
+  const skuPct    = uniqueSkuSistem > 0 ? +(uniqueSkuHatasiz / uniqueSkuSistem * 100).toFixed(4) : 0
+  const genelPct  = +((adresPct + stokPct + skuPct) / 3).toFixed(4)
+
+  // --- workbook ---
+  const workbook = new ExcelJS.Workbook()
+  workbook.creator = 'Akkim Sayım'
+  workbook.created = new Date()
+
+  const ws = workbook.addWorksheet('Sayım Analizi')
+
+  const DARK   = 'FF1A1C1E'
+  const WHITE  = 'FFFFFFFF'
+  const YELLOW = 'FFFFFF00'
+  const RED    = 'FFFFE0E0'
+
+  const headers = [
+    { header: 'Depo Adı',                              key: 'depo',            width: 14 },
+    { header: 'Müşteri Adı',                           key: 'musteri',         width: 14 },
+    { header: 'Sayılan\nLokasyon',                     key: 'sayilan',         width: 12 },
+    { header: 'Hatalı\nLokasyon',                      key: 'hatali',          width: 12 },
+    { header: 'Hatasız\nLokasyon',                     key: 'hatasiz',         width: 12 },
+    { header: 'Adres\nDoğruluk',                       key: 'adresPct',        width: 12 },
+    { header: 'Toplam Sistem\nAdet/Kg/Litre',          key: 'sistem',          width: 20 },
+    { header: 'Fiziki Sayılan\nAdet/Kg/Litre',         key: 'fiziki',          width: 20 },
+    { header: 'Stok Sayım\nMuafiyeti * (%0,1)',        key: 'muafiyet',        width: 18 },
+    { header: 'Stok Farkı',                            key: 'fark',            width: 16 },
+    { header: 'Stok Muafiyeti\nKullanma Oranı',        key: 'muafiyetKull',    width: 18 },
+    { header: 'Sayım\nDoğruluk',                       key: 'stokPct',         width: 12 },
+    { header: 'Sayılan\nSKU',                          key: 'sayilanSku',      width: 10 },
+    { header: 'Hatalı\nSKU',                           key: 'hataliSku',       width: 10 },
+    { header: 'Hatasız\nSKU',                          key: 'hatasizSku',      width: 10 },
+    { header: 'SKU Sayım\nDoğruluk Oranı',             key: 'skuPct',          width: 16 },
+    { header: 'Sayım Genel\nDoğruluk',                 key: 'genelPct',        width: 14 },
+  ]
+  ws.columns = headers
+
+  // başlık satırı
+  const hRow = ws.getRow(1)
+  hRow.height = 30
+  hRow.eachCell(cell => {
+    cell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: DARK } }
+    cell.font      = { color: { argb: WHITE }, bold: true, size: 9 }
+    cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }
+    cell.border    = { bottom: { style: 'thin', color: { argb: 'FF444444' } } }
+  })
+
+  // veri satırı
+  const dataRow = ws.addRow({
+    depo:         session.depoAdi   || '',
+    musteri:      session.musteriAdi || 'Akkim',
+    sayilan:      counted.length,
+    hatali:       hataliLokasyon,
+    hatasiz:      hatasizLokasyon,
+    adresPct:     adresPct / 100,
+    sistem:       sistemToplam,
+    fiziki:       fizikiToplam,
+    muafiyet:     stokMuafiyet,
+    fark:         stokFark,
+    muafiyetKull: muafiyetKullanim / 100,
+    stokPct:      stokPct / 100,
+    sayilanSku:   uniqueSkuSistem,
+    hataliSku:    hataliSku,
+    hatasizSku:   uniqueSkuHatasiz,
+    skuPct:       skuPct / 100,
+    genelPct:     genelPct / 100,
+  })
+  dataRow.height = 22
+  dataRow.eachCell({ includeEmpty: true }, cell => {
+    cell.alignment = { vertical: 'middle', horizontal: 'center' }
+    cell.border    = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } }
+  })
+
+  // sayı formatları
+  const pctFmt  = '0.00%'
+  const numFmt  = '#,##0.000'
+  const intFmt  = '#,##0'
+  ;['adresPct','stokPct','skuPct','genelPct','muafiyetKull'].forEach(k => {
+    dataRow.getCell(headers.findIndex(h => h.key === k) + 1).numFmt = pctFmt
+  })
+  ;['sistem','fiziki','muafiyet','fark'].forEach(k => {
+    dataRow.getCell(headers.findIndex(h => h.key === k) + 1).numFmt = numFmt
+  })
+  ;['sayilan','hatali','hatasiz','sayilanSku','hataliSku','hatasizSku'].forEach(k => {
+    dataRow.getCell(headers.findIndex(h => h.key === k) + 1).numFmt = intFmt
+  })
+
+  // sarı vurgu: Adres%, SKU%, Genel%
+  ;['adresPct','skuPct','genelPct'].forEach(k => {
+    const cell = dataRow.getCell(headers.findIndex(h => h.key === k) + 1)
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: YELLOW } }
+    cell.font = { bold: true, size: 10 }
+  })
+  // kırmızı vurgu: Stok Farkı (negatifse)
+  if (stokFark < 0) {
+    const farkCell = dataRow.getCell(headers.findIndex(h => h.key === 'fark') + 1)
+    farkCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: RED } }
+    farkCell.font = { bold: true, color: { argb: 'FF990000' }, size: 10 }
+  }
+
+  // dipnot
+  ws.addRow([])
+  const noteRow = ws.addRow(['(*) Sözleşme Gereği Sayım muafiyeti toplam stok oranının %0,1\'idir.'])
+  noteRow.getCell(1).font      = { italic: true, size: 9, color: { argb: 'FF666666' } }
+  noteRow.getCell(1).alignment = { horizontal: 'left' }
+  ws.mergeCells(`A${noteRow.number}:Q${noteRow.number}`)
+
+  ws.views = [{ state: 'frozen', ySplit: 1 }]
+
+  const buffer = await workbook.xlsx.writeBuffer()
+  const blob   = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+  const url    = URL.createObjectURL(blob)
+  const a      = document.createElement('a')
+  a.href       = url
+  a.download   = `Akkim_Sayim_Analizi_${new Date().toISOString().slice(0, 10)}.xlsx`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 export async function exportResults(rows, results, session) {
   const { default: ExcelJS } = await import('exceljs')
 
