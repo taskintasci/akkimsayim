@@ -56,8 +56,7 @@ const PrintSheet = forwardRef(function PrintSheet(
               <p style={{ fontSize: '11pt', fontWeight: 700, color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
                 AKKİM KİMYA SAN. TİC. A.Ş.
               </p>
-              <div style={{ width: 40, height: 2.5, background: '#f59e0b', margin: '3px auto' }} />
-              <p style={{ fontSize: '10pt', fontWeight: 600, textTransform: 'uppercase', color: '#334155' }}>
+<p style={{ fontSize: '10pt', fontWeight: 600, textTransform: 'uppercase', color: '#334155' }}>
                 {session.sayimBasligi || session.type || 'YIL SONU SAYIM'}
                 {sayimTuru && (
                   <span style={{ color: '#94a3b8', fontWeight: 400, margin: '0 6px' }}>·</span>
