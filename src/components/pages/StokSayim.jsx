@@ -121,9 +121,6 @@ export default function StokSayim({ onNavigate }) {
             >
               <span className="ms" style={{ fontSize: 15 }}>content_copy</span> Sistemden Doldur
             </button>
-            <button onClick={() => onNavigate('upload')} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-[12.5px] font-semibold hover:bg-blue-700">
-              <span className="ms" style={{ fontSize: 15 }}>upload_file</span> RAPOR5 Yükle
-            </button>
           </div>
         </div>
 

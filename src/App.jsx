@@ -43,7 +43,7 @@ function Spinner() {
 export default function App() {
   // undefined = henüz kontrol edilmedi, null = giriş yok, object = giriş yapılmış
   const [firebaseUser, setFirebaseUser] = useState(undefined)
-  const { setCurrentUser, activeSessionId } = useStore()
+  const { setCurrentUser, activeSessionId, rows, rowsLoading } = useStore()
   const [activePage, setActivePage] = useState('panel')
 
   useEffect(() => {
@@ -52,6 +52,15 @@ export default function App() {
       setCurrentUser(user)
     })
   }, [])
+
+  // Oturum değiştiğinde satır yoksa upload sayfasına yönlendir
+  useEffect(() => {
+    if (!activeSessionId) return
+    if (rowsLoading) return
+    if (rows.length === 0) {
+      setActivePage('upload')
+    }
+  }, [activeSessionId, rowsLoading, rows.length])
 
   // Auth durumu henüz belli değil
   if (firebaseUser === undefined) return <Spinner />

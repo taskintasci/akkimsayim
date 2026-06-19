@@ -6,13 +6,16 @@ export default function ExcelYukle({ onNavigate }) {
   const inputRef = useRef()
   const [dragging, setDragging] = useState(false)
 
+  const locked = rows.length > 0
+
   function handleFile(file) {
-    if (!file) return
+    if (!file || locked) return
     importRows(file)
   }
 
   function onDrop(e) {
     e.preventDefault()
+    if (locked) return
     setDragging(false)
     const file = e.dataTransfer.files[0]
     if (file) handleFile(file)
@@ -20,6 +23,7 @@ export default function ExcelYukle({ onNavigate }) {
 
   function onDragOver(e) {
     e.preventDefault()
+    if (locked) return
     setDragging(true)
   }
 
@@ -37,22 +41,22 @@ export default function ExcelYukle({ onNavigate }) {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="text-2xl font-bold text-slate-800 mb-1">Excel Yükle</h1>
-      <p className="text-sm text-slate-500 mb-6">RAPOR5.xls veya Sku_Sayım_Listesi.xlsx formatındaki dosyanızı yükleyin.</p>
+      <h1 className="text-2xl font-bold text-slate-800 mb-1">RAPOR5 Yükle</h1>
+      <p className="text-sm text-slate-500 mb-6">Her sayım için bir kez RAPOR5 yükleyin. Değiştirmek için Panel sayfasını kullanın.</p>
 
       {/* Drop zone */}
       <div
         onDrop={onDrop}
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
-        onClick={() => inputRef.current?.click()}
+        onClick={() => { if (!locked) inputRef.current?.click() }}
         className={
-          'border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all mb-6 ' +
-          (dragging
-            ? 'border-blue-500 bg-blue-50'
-            : rows.length > 0
-            ? 'border-green-400 bg-green-50'
-            : 'border-slate-300 bg-white hover:border-blue-400 hover:bg-blue-50/30')
+          'border-2 border-dashed rounded-2xl p-10 text-center transition-all mb-6 ' +
+          (locked
+            ? 'border-green-400 bg-green-50 cursor-default'
+            : dragging
+            ? 'border-blue-500 bg-blue-50 cursor-pointer'
+            : 'border-slate-300 bg-white hover:border-blue-400 hover:bg-blue-50/30 cursor-pointer')
         }
       >
         <input
@@ -61,11 +65,12 @@ export default function ExcelYukle({ onNavigate }) {
           accept=".xlsx,.xls"
           className="hidden"
           onChange={onInputChange}
+          disabled={locked}
         />
-        {rows.length > 0 ? (
+        {locked ? (
           <>
             <div className="w-14 h-14 rounded-2xl bg-green-100 flex items-center justify-center mx-auto mb-3">
-              <span className="ms text-green-600" style={{ fontSize: 28 }}>check_circle</span>
+              <span className="ms text-green-600" style={{ fontSize: 28 }}>lock</span>
             </div>
             <div className="text-lg font-bold text-green-700 mb-1">
               {rows.length.toLocaleString('tr')} satır yüklendi
@@ -73,7 +78,7 @@ export default function ExcelYukle({ onNavigate }) {
             <div className="text-sm text-slate-500">
               Format: <span className="font-semibold text-slate-700">{formatLabel}</span>
             </div>
-            <div className="mt-4 text-xs text-slate-400">Farklı bir dosya yüklemek için tıklayın veya sürükleyin</div>
+            <div className="mt-4 text-xs text-slate-400">Değiştirmek için Panel → RAPOR5 Yönetimi bölümünü kullanın</div>
           </>
         ) : (
           <>
@@ -113,7 +118,7 @@ export default function ExcelYukle({ onNavigate }) {
       </div>
 
       {/* Actions */}
-      {rows.length > 0 && (
+      {locked && (
         <div className="flex gap-3 mt-6">
           <button
             onClick={() => onNavigate('sayim')}
@@ -123,10 +128,10 @@ export default function ExcelYukle({ onNavigate }) {
             Stok Sayımına Geç
           </button>
           <button
-            onClick={() => importRows(null)}
+            onClick={() => onNavigate('panel')}
             className="px-4 py-3 border border-slate-300 text-slate-600 hover:bg-slate-50 rounded-xl text-sm font-medium transition-colors"
           >
-            Temizle
+            Panele Git
           </button>
         </div>
       )}

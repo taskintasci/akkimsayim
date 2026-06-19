@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import useStore from '../../store/useStore'
 
 function formatTime(date) {
@@ -7,7 +8,13 @@ function formatTime(date) {
 }
 
 export default function Panel({ onNavigate }) {
-  const { rows, results, session, events } = useStore()
+  const { rows, results, session, events, importFormat, clearRows } = useStore()
+  const [confirmClear, setConfirmClear] = useState(false)
+
+  async function handleClearRows() {
+    await clearRows()
+    setConfirmClear(false)
+  }
 
   const counted = rows.filter(r => results[r.id]?.miktar !== undefined && results[r.id]?.miktar !== '')
   const diff = rows.filter(r => {
@@ -73,13 +80,51 @@ export default function Panel({ onNavigate }) {
       <div>
         <p className="text-[13px] font-semibold text-slate-700 mb-3">Hızlı Başlat</p>
         <div className="grid grid-cols-3 gap-3">
-          <button onClick={() => onNavigate('upload')} className="bg-white rounded-xl border border-slate-200 p-4 text-left hover:border-blue-300 hover:shadow-sm transition-all group">
-            <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center mb-3 group-hover:bg-blue-100 transition-colors">
-              <span className="ms text-blue-600" style={{ fontSize: 22 }}>upload_file</span>
+          {rows.length === 0 ? (
+            <button onClick={() => onNavigate('upload')} className="bg-white rounded-xl border border-slate-200 p-4 text-left hover:border-blue-300 hover:shadow-sm transition-all group">
+              <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center mb-3 group-hover:bg-blue-100 transition-colors">
+                <span className="ms text-blue-600" style={{ fontSize: 22 }}>upload_file</span>
+              </div>
+              <p className="text-[13.5px] font-semibold text-slate-800">RAPOR5 Yükle</p>
+              <p className="text-[12px] text-slate-400 mt-0.5">Excel'den stok verisi aktar</p>
+            </button>
+          ) : (
+            <div className="bg-white rounded-xl border border-green-200 p-4 text-left">
+              <div className="flex items-center justify-between mb-2">
+                <div className="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center">
+                  <span className="ms text-green-600" style={{ fontSize: 22 }}>check_circle</span>
+                </div>
+                <span className="text-[10px] font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded-full uppercase tracking-wide">Yüklendi</span>
+              </div>
+              <p className="text-[13.5px] font-semibold text-slate-800">RAPOR5 Yönetimi</p>
+              <p className="text-[12px] text-slate-400 mt-0.5">{rows.length.toLocaleString('tr')} kalem · {importFormat === 'rapor5' ? 'RAPOR5' : importFormat === 'sku' ? 'SKU Listesi' : 'Bilinmiyor'}</p>
+              {!confirmClear ? (
+                <button
+                  onClick={() => setConfirmClear(true)}
+                  className="mt-3 flex items-center gap-1 text-[11.5px] text-red-500 hover:text-red-700 font-medium"
+                >
+                  <span className="ms" style={{ fontSize: 14 }}>delete</span>
+                  Sil, Yenisini Yükle
+                </button>
+              ) : (
+                <div className="mt-3 flex items-center gap-2">
+                  <button
+                    onClick={handleClearRows}
+                    className="flex items-center gap-1 px-2.5 py-1 bg-red-500 hover:bg-red-600 text-white text-[11.5px] font-semibold rounded-lg"
+                  >
+                    <span className="ms" style={{ fontSize: 13 }}>delete</span>
+                    Evet, Sil
+                  </button>
+                  <button
+                    onClick={() => setConfirmClear(false)}
+                    className="text-[11.5px] text-slate-500 hover:text-slate-700"
+                  >
+                    İptal
+                  </button>
+                </div>
+              )}
             </div>
-            <p className="text-[13.5px] font-semibold text-slate-800">RAPOR5 Yükle</p>
-            <p className="text-[12px] text-slate-400 mt-0.5">Excel'den stok verisi aktar</p>
-          </button>
+          )}
           <button onClick={() => onNavigate('kor')} className="bg-white rounded-xl border border-slate-200 p-4 text-left hover:border-blue-300 hover:shadow-sm transition-all group">
             <div className="w-9 h-9 rounded-lg bg-violet-50 flex items-center justify-center mb-3 group-hover:bg-violet-100 transition-colors">
               <span className="ms text-violet-600" style={{ fontSize: 22 }}>visibility_off</span>

@@ -329,6 +329,23 @@ const useStore = create((set, get) => ({
     })
   },
 
+  clearRows: async () => {
+    const { activeSessionId } = get()
+    set({ rows: [], results: {}, importFormat: null })
+    if (activeSessionId) {
+      await updateDoc(doc(db, 'sessions', activeSessionId), {
+        rowsUploaded: false,
+        kalemSayisi: 0,
+        updatedAt: serverTimestamp(),
+      })
+      set(state => ({
+        sessions: state.sessions.map(s =>
+          s.id === activeSessionId ? { ...s, rowsUploaded: false, kalemSayisi: 0 } : s
+        ),
+      }))
+    }
+  },
+
   reset: () => {
     if (resultsUnsub) { resultsUnsub(); resultsUnsub = null }
     set({ rows: [], results: {}, korCodes: [], korMatched: [] })
