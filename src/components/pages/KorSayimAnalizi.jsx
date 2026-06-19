@@ -220,7 +220,7 @@ export default function KorSayimAnalizi({ onNavigate }) {
             <div className="flex justify-between items-center py-2 border-b border-slate-50">
               <p className="text-[12.5px] text-slate-500">Muafiyet Kullanım</p>
               <p className={`text-[13px] font-bold mono ${stokFark < 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
-                {stokMuafiyet > 0 ? (stokFark / stokMuafiyet / 1000).toFixed(6) : '—'}
+                {stokMuafiyet > 0 ? '%' + (stokFark / stokMuafiyet / 1000 * 100).toFixed(4) : '—'}
               </p>
             </div>
             <div className="pt-1">
