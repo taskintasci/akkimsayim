@@ -72,10 +72,10 @@ const PrintSheet = forwardRef(function PrintSheet(
           </tr>
           <tr style={{ background: '#1e293b', color: 'white' }}>
             <th style={thStyle({ textAlign: 'center', width: 22 })}>#</th>
-            <th style={thStyle({ textAlign: 'left',   width: 52 })}>ADRES</th>
-            <th style={thStyle({ textAlign: 'left',   width: 62 })}>KOD</th>
+            <th style={thStyle({ textAlign: 'left',   width: 124 })}>ADRES</th>
+            <th style={thStyle({ textAlign: 'left',   width: 124 })}>KOD</th>
             <th style={thStyle({ textAlign: 'left',   width: 350 })}>AD</th>
-            <th style={thStyle({ textAlign: 'center', width: 54 })}>PARTİ</th>
+            <th style={thStyle({ textAlign: 'center', width: 124 })}>PARTİ</th>
             <th style={thStyle({ textAlign: 'center', width: 38 })}>DURUM</th>
             <th style={thStyle({ textAlign: 'right',  width: 24 })}>ADET</th>
             <th style={thStyle({ textAlign: 'center', width: 62 })}>AMBALAJ</th>
