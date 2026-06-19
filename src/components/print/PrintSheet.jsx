@@ -59,17 +59,18 @@ const PrintSheet = forwardRef(function PrintSheet(
               <div style={{ width: 40, height: 2.5, background: '#f59e0b', margin: '3px auto' }} />
               <p style={{ fontSize: '10pt', fontWeight: 600, textTransform: 'uppercase', color: '#334155' }}>
                 {session.sayimBasligi || session.type || 'YIL SONU SAYIM'}
+                {sayimTuru && (
+                  <span style={{ color: '#94a3b8', fontWeight: 400, margin: '0 6px' }}>·</span>
+                )}
+                {sayimTuru && (
+                  <span style={{ color: '#1d4ed8' }}>{sayimTuru}</span>
+                )}
               </p>
               <p style={{ fontSize: '7.5pt', color: '#94a3b8', marginTop: 2, fontFamily: 'monospace' }}>
                 {session.tur ? `Tur ${session.tur} · ` : ''}
                 {tarihStr}
                 {session.depoAdi ? ` · ${session.depoAdi}` : ''}
               </p>
-              {sayimTuru && (
-                <p style={{ fontSize: '7pt', fontWeight: 700, color: '#1e293b', marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: 'monospace' }}>
-                  — {sayimTuru} —
-                </p>
-              )}
             </div>
             <div style={{ textAlign: 'right', minWidth: 90 }}>
               <p style={{ fontSize: '6.5pt', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'monospace' }}>SAYFA</p>
