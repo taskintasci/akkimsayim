@@ -1,6 +1,6 @@
 import { forwardRef } from 'react'
 
-const ROWS_PER_PAGE = 28
+const ROWS_PER_PAGE = 25
 
 const PrintSheet = forwardRef(function PrintSheet(
   { rows, results, session, mode = 'sayim', hideSayilan = false },
