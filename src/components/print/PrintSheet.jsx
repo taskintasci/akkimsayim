@@ -72,15 +72,15 @@ const PrintSheet = forwardRef(function PrintSheet(
           </tr>
           <tr style={{ background: '#1e293b', color: 'white' }}>
             <th style={thStyle({ textAlign: 'center', width: 22 })}>#</th>
-            <th style={thStyle({ textAlign: 'left',   width: 124 })}>ADRES</th>
-            <th style={thStyle({ textAlign: 'left',   width: 124 })}>KOD</th>
+            <th style={thStyle({ textAlign: 'left',   width: 100 })}>ADRES</th>
+            <th style={thStyle({ textAlign: 'left',   width: 100 })}>KOD</th>
             <th style={thStyle({ textAlign: 'left',   width: 300 })}>AD</th>
-            <th style={thStyle({ textAlign: 'center', width: 124 })}>PARTİ</th>
-            <th style={thStyle({ textAlign: 'center', width: 70 })}>DURUM</th>
-            <th style={thStyle({ textAlign: 'right',  width: 70 })}>ADET</th>
-            <th style={thStyle({ textAlign: 'center', width: 70 })}>AMBALAJ</th>
-            <th style={thStyle({ textAlign: 'center', width: 70, background: '#1d4ed8' })}>SAYIM MİKTARI</th>
-            <th style={thStyle({ textAlign: 'center', width: 70 })}>BİRİM</th>
+            <th style={thStyle({ textAlign: 'center', width: 100 })}>PARTİ</th>
+            <th style={thStyle({ textAlign: 'center', width: 65 })}>DURUM</th>
+            <th style={thStyle({ textAlign: 'right',  width: 65 })}>ADET</th>
+            <th style={thStyle({ textAlign: 'center', width: 65 })}>AMBALAJ</th>
+            <th style={thStyle({ textAlign: 'center', width: 65, background: '#1d4ed8' })}>SAYIM MİKTARI</th>
+            <th style={thStyle({ textAlign: 'center', width: 65 })}>BİRİM</th>
             <th style={thStyle({ textAlign: 'left'              })}>NOT</th>
           </tr>
         </thead>
