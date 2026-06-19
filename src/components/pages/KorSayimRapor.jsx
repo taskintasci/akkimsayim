@@ -133,7 +133,7 @@ export default function KorSayimRapor({ onNavigate }) {
                   </td>
                   <td className="px-3 py-1.5 text-center">
                     <button
-                      onClick={() => { setPendingKodFilter(row.kod); onNavigate('kor') }}
+                      onClick={() => { setPendingKodFilter(row.kod); onNavigate('sayim') }}
                       className="text-[12px] text-blue-600 hover:underline font-medium"
                     >İncele</button>
                   </td>
