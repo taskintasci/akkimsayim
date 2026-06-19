@@ -63,36 +63,23 @@ body.hide-sayilan .sayilan-col { opacity: 0; pointer-events: none; }
 
 /* Print */
 @media print {
-  /* Alt kenar boşluğu imza kutularına yer açar */
-  @page { size: A4 landscape; margin: 8mm 8mm 26mm 8mm; }
+  @page { size: A4 landscape; margin: 8mm; }
 
   body * { visibility: hidden; }
   #print-area, #print-area * { visibility: visible; }
   #print-area { position: absolute; top: 0; left: 0; width: 100%; }
 
   .no-print { display: none !important; }
-  .page-break { display: none; } /* artık kullanılmıyor */
 
   /* Tablo: thead her sayfada tekrar eder, satırlar bölünmez */
   table { border-collapse: collapse; width: 100%; font-size: 7pt; }
   thead { display: table-header-group; }
+  tfoot { display: table-footer-group; }
   tbody tr { page-break-inside: avoid; }
 
   th, td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   th { background: #1e293b !important; color: #ffffff !important; }
 
-  /* İmza — her sayfanın alt kenar boşluğuna sabitlenir */
-  #print-signature {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    height: 22mm;
-    background: white;
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 4mm;
-    padding: 2mm 8mm 3mm;
-    border-top: 1.5px solid #e2e8f0;
-  }
   /* CSS page counter */
   .print-page-num::after { content: counter(page); }
 }

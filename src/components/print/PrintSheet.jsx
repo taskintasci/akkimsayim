@@ -24,30 +24,26 @@ const PrintSheet = forwardRef(function PrintSheet(
     ...extra,
   })
 
+  const sigBox = (name) => (
+    <div key={name} style={{ border: '1px solid #e2e8f0', borderRadius: 3, padding: '2px 5px' }}>
+      <p style={{ fontSize: '7pt', fontWeight: 700, color: '#2563eb', marginBottom: 2 }}>{name}</p>
+      <p style={{ fontSize: '5.5pt', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'monospace', marginBottom: 1 }}>Tarih</p>
+      <div style={{ borderBottom: '1px dashed #cbd5e1', height: 7, marginBottom: 3 }} />
+      <p style={{ fontSize: '5.5pt', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'monospace', marginBottom: 1 }}>İmza</p>
+      <div style={{ borderBottom: '1px dashed #cbd5e1', height: 7 }} />
+    </div>
+  )
+
   return (
     <div ref={ref} id="print-area">
-
-      {/* ── İmza: CSS fixed ile her sayfanın altına sabitlenir ── */}
-      <div id="print-signature">
-        {['Sayan 1', 'Sayan 2', 'Sistem Girişi', 'Kontrol'].map(name => (
-          <div key={name} style={{ border: '1px solid #e2e8f0', borderRadius: 3, padding: '2px 5px' }}>
-            <p style={{ fontSize: '7pt', fontWeight: 700, color: '#2563eb', marginBottom: 2 }}>{name}</p>
-            <p style={{ fontSize: '5.5pt', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'monospace', marginBottom: 1 }}>Tarih</p>
-            <div style={{ borderBottom: '1px dashed #cbd5e1', height: 7, marginBottom: 3 }} />
-            <p style={{ fontSize: '5.5pt', color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'monospace', marginBottom: 1 }}>İmza</p>
-            <div style={{ borderBottom: '1px dashed #cbd5e1', height: 7 }} />
-          </div>
-        ))}
-      </div>
-
       {/* ── Tek tablo — tarayıcı otomatik paginate eder ── */}
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '7pt' }}>
+
+        {/* thead: her sayfada başlık tekrar eder */}
         <thead>
-          {/* Belge başlığı — her sayfada tekrar eder */}
           <tr>
             <td colSpan={11} style={{ border: 'none', padding: '0 0 5px 0' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: 4, borderBottom: '1.5px solid #1e293b' }}>
-                {/* Orta */}
                 <div style={{ textAlign: 'center', flex: 1 }}>
                   <p style={{ fontSize: '11pt', fontWeight: 700, color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
                     AKKİM KİMYA SAN. TİC. A.Ş.
@@ -63,7 +59,6 @@ const PrintSheet = forwardRef(function PrintSheet(
                     {blindMode ? ' · KÖR SAYIM' : ''}
                   </p>
                 </div>
-                {/* Sağ */}
                 <div style={{ textAlign: 'right', minWidth: 80 }}>
                   <p style={{ fontSize: '6.5pt', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'monospace' }}>SAYFA</p>
                   <p style={{ fontSize: '16pt', fontWeight: 800, color: '#2563eb', lineHeight: 1 }}>
@@ -75,7 +70,6 @@ const PrintSheet = forwardRef(function PrintSheet(
               </div>
             </td>
           </tr>
-          {/* Sütun başlıkları */}
           <tr style={{ background: '#1e293b', color: 'white' }}>
             <th style={thStyle({ textAlign: 'center', width: 22 })}>#</th>
             <th style={thStyle({ textAlign: 'left',   width: 52 })}>ADRES</th>
@@ -90,6 +84,7 @@ const PrintSheet = forwardRef(function PrintSheet(
             <th style={thStyle({ textAlign: 'left'              })}>NOT</th>
           </tr>
         </thead>
+
         <tbody>
           {rows.map((row, i) => {
             const isEven = i % 2 === 1
@@ -123,11 +118,26 @@ const PrintSheet = forwardRef(function PrintSheet(
             )
           })}
         </tbody>
-      </table>
 
-      <p style={{ marginTop: 4, fontSize: '6pt', color: '#e2e8f0', textAlign: 'center', fontFamily: 'monospace' }}>
-        Bu belge sistem tarafından otomatik oluşturulmuştur.
-      </p>
+        {/* tfoot: her sayfanın altında imza kutuları */}
+        <tfoot>
+          <tr>
+            <td colSpan={11} style={{ padding: '3px 0 0', border: 'none' }}>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(4, 1fr)',
+                gap: '4mm',
+                padding: '2mm 0 3mm',
+                borderTop: '1.5px solid #e2e8f0',
+                background: 'white',
+              }}>
+                {['Sayan 1', 'Sayan 2', 'Sistem Girişi', 'Kontrol'].map(sigBox)}
+              </div>
+            </td>
+          </tr>
+        </tfoot>
+
+      </table>
     </div>
   )
 })
