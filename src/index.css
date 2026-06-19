@@ -66,8 +66,14 @@ body.hide-sayilan .sayilan-col { opacity: 0; pointer-events: none; }
   @page { size: A4 landscape; margin: 8mm; }
 
   body * { visibility: hidden; }
+
+  /* Sayım listesi yazdırma */
   #print-area, #print-area * { visibility: visible; }
   #print-area { position: absolute; top: 0; left: 0; width: 100%; }
+
+  /* Analiz / Rapor sayfaları yazdırma */
+  .print-content, .print-content * { visibility: visible; }
+  .print-content { position: absolute; top: 0; left: 0; width: 100%; }
 
   .no-print { display: none !important; }
 
@@ -76,4 +82,5 @@ body.hide-sayilan .sayilan-col { opacity: 0; pointer-events: none; }
 
   th, td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   th { background: #1e293b !important; color: #ffffff !important; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }

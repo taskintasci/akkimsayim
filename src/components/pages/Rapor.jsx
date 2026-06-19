@@ -1,18 +1,8 @@
-import { useRef } from 'react'
-import { useReactToPrint } from 'react-to-print'
 import useStore from '../../store/useStore'
 import { exportResults } from '../../utils/excelExport'
 
-const PRINT_STYLE = `
-  @page { size: A4 landscape; margin: 8mm; }
-  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-  .no-print { display: none !important; }
-`
-
 export default function Rapor() {
   const { rows, results, session } = useStore()
-  const printRef = useRef()
-  const handlePrint = useReactToPrint({ contentRef: printRef, pageStyle: PRINT_STYLE })
 
   const counted = rows.filter(r => results[r.id]?.miktar !== undefined && results[r.id]?.miktar !== '')
   const discrepancies = rows
@@ -29,7 +19,7 @@ export default function Rapor() {
   const pct = rows.length ? Math.round((counted.length / rows.length) * 100) : 0
 
   return (
-    <div ref={printRef} className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5 print-content">
       {/* Başlık */}
       <div className="flex items-center justify-between">
         <div>
@@ -37,7 +27,7 @@ export default function Rapor() {
           <p className="text-[13px] text-slate-500 mt-0.5">Onaydan önce tüm farklılıkları inceleyin</p>
         </div>
         <div className="flex gap-2 no-print">
-          <button onClick={handlePrint} className="flex items-center gap-1.5 px-4 py-2 bg-white border border-slate-300 rounded-lg text-[13px] font-medium text-slate-700 hover:bg-slate-50">
+          <button onClick={() => window.print()} className="flex items-center gap-1.5 px-4 py-2 bg-white border border-slate-300 rounded-lg text-[13px] font-medium text-slate-700 hover:bg-slate-50">
             <span className="ms" style={{ fontSize: 16 }}>print</span> Yazdır
           </button>
           <button
