@@ -53,31 +53,26 @@ const PrintSheet = forwardRef(function PrintSheet(
           {/* ── Sayfa başlığı ── */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: 4, marginBottom: 4, borderBottom: '1.5px solid #1e293b' }}>
             <div style={{ textAlign: 'center', flex: 1 }}>
-              <p style={{ fontSize: '11pt', fontWeight: 700, color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
+              <p style={{ fontSize: '9pt', fontWeight: 700, color: '#1e293b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 AKKİM KİMYA SAN. TİC. A.Ş.
               </p>
-<p style={{ fontSize: '10pt', fontWeight: 600, textTransform: 'uppercase', color: '#334155' }}>
+              <p style={{ fontSize: '11pt', fontWeight: 700, color: '#1d4ed8', textTransform: 'uppercase', letterSpacing: '0.03em', marginTop: 2 }}>
                 {session.sayimBasligi || session.type || 'YIL SONU SAYIM'}
-                {sayimTuru && (
-                  <span style={{ color: '#94a3b8', fontWeight: 400, margin: '0 6px' }}>·</span>
-                )}
-                {sayimTuru && (
-                  <span style={{ color: '#1d4ed8' }}>{sayimTuru}</span>
-                )}
+                {sayimTuru && <span style={{ color: '#cbd5e1', fontWeight: 300, margin: '0 7px' }}>·</span>}
+                {sayimTuru && <span style={{ color: '#334155' }}>{sayimTuru}</span>}
               </p>
-              <p style={{ fontSize: '7.5pt', color: '#94a3b8', marginTop: 2, fontFamily: 'monospace' }}>
-                {session.tur ? `Tur ${session.tur} · ` : ''}
+              <p style={{ fontSize: '7pt', color: '#94a3b8', marginTop: 3, letterSpacing: '0.02em' }}>
                 {tarihStr}
                 {session.depoAdi ? ` · ${session.depoAdi}` : ''}
               </p>
             </div>
             <div style={{ textAlign: 'right', minWidth: 90 }}>
-              <p style={{ fontSize: '6.5pt', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'monospace' }}>SAYFA</p>
-              <p style={{ fontSize: '16pt', fontWeight: 800, color: '#2563eb', lineHeight: 1 }}>
-                {pageIdx + 1} <span style={{ fontSize: '9pt', color: '#94a3b8' }}>/ {totalPages}</span>
+              <p style={{ fontSize: '6pt', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>SAYFA</p>
+              <p style={{ fontSize: '15pt', fontWeight: 800, color: '#1d4ed8', lineHeight: 1.1 }}>
+                {pageIdx + 1} <span style={{ fontSize: '8.5pt', color: '#94a3b8' }}>/ {totalPages}</span>
               </p>
-              <p style={{ fontSize: '6pt', color: '#94a3b8', fontFamily: 'monospace', marginTop: 3 }}>Baskı: {printDate}</p>
-              <p style={{ fontSize: '6pt', color: '#94a3b8', fontFamily: 'monospace' }}>{printTime} · {rows.length} kalem</p>
+              <p style={{ fontSize: '6pt', color: '#94a3b8', marginTop: 3 }}>Baskı: {printDate}</p>
+              <p style={{ fontSize: '6pt', color: '#94a3b8' }}>{printTime} · {rows.length} kalem</p>
             </div>
           </div>
 
