@@ -83,7 +83,9 @@ const useStore = create((set, get) => ({
 
       if (sessionData.rowsUploaded) {
         const rows = await downloadRows(id)
-        set({ rows })
+        const korCodes = sessionData.korCodes || []
+        const korMatched = korCodes.length > 0 ? rows.filter(r => korCodes.includes(r.kod)) : []
+        set({ rows, korCodes, korMatched })
       }
     }
 
@@ -228,18 +230,29 @@ const useStore = create((set, get) => ({
       return { results: next }
     }),
 
-  addKorCodes: (newCodes) => set(state => {
+  addKorCodes: (newCodes) => {
+    const state   = get()
     const merged  = [...new Set([...state.korCodes, ...newCodes.map(c => c.trim()).filter(Boolean)])]
     const matched = state.rows.filter(r => merged.includes(r.kod))
-    return { korCodes: merged, korMatched: matched }
-  }),
-  removeKorCode: (code) => set(state => {
+    set({ korCodes: merged, korMatched: matched })
+    if (state.activeSessionId)
+      updateDoc(doc(db, 'sessions', state.activeSessionId), { korCodes: merged }).catch(console.error)
+  },
+  removeKorCode: (code) => {
+    const state   = get()
     const updated = state.korCodes.filter(c => c !== code)
     const matched = state.rows.filter(r => updated.includes(r.kod))
-    return { korCodes: updated, korMatched: matched }
-  }),
+    set({ korCodes: updated, korMatched: matched })
+    if (state.activeSessionId)
+      updateDoc(doc(db, 'sessions', state.activeSessionId), { korCodes: updated }).catch(console.error)
+  },
   setKorMatched: (rows) => set({ korMatched: rows }),
-  clearKor:      () => set({ korCodes: [], korMatched: [] }),
+  clearKor: () => {
+    const { activeSessionId } = get()
+    set({ korCodes: [], korMatched: [] })
+    if (activeSessionId)
+      updateDoc(doc(db, 'sessions', activeSessionId), { korCodes: [] }).catch(console.error)
+  },
 
   reset: () => {
     if (resultsUnsub) { resultsUnsub(); resultsUnsub = null }
