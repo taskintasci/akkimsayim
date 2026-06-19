@@ -14,8 +14,9 @@ const KorSayim        = lazy(() => import('./components/pages/KorSayim'))
 const Rapor           = lazy(() => import('./components/pages/Rapor'))
 const SayimAnalizi    = lazy(() => import('./components/pages/SayimAnalizi'))
 const KorSayimAnalizi = lazy(() => import('./components/pages/KorSayimAnalizi'))
-const KorSayimRapor   = lazy(() => import('./components/pages/KorSayimRapor'))
-const Ayarlar         = lazy(() => import('./components/pages/Ayarlar'))
+const KorSayimRapor       = lazy(() => import('./components/pages/KorSayimRapor'))
+const HareketlilikSayim   = lazy(() => import('./components/pages/HareketlilikSayim'))
+const Ayarlar             = lazy(() => import('./components/pages/Ayarlar'))
 
 const PAGES = {
   panel:     { Component: Panel,            fullHeight: false },
@@ -25,8 +26,9 @@ const PAGES = {
   rapor:     { Component: Rapor,            fullHeight: false },
   kor:       { Component: KorSayim,         fullHeight: true  },
   koranaliz: { Component: KorSayimAnalizi,  fullHeight: false },
-  korrapor:  { Component: KorSayimRapor,    fullHeight: false },
-  ayarlar:   { Component: Ayarlar,          fullHeight: false },
+  korrapor:      { Component: KorSayimRapor,      fullHeight: false },
+  hareketlilik:  { Component: HareketlilikSayim,  fullHeight: true  },
+  ayarlar:       { Component: Ayarlar,            fullHeight: false },
 }
 
 function Spinner() {

@@ -56,9 +56,11 @@ export default function Sidebar({ activePage, onNavigate }) {
         {nav('analiz', 'monitoring',      'Tüm Stok Sayım Analizi')}
         {nav('rapor',  'analytics',       'Tüm Stok Rapor')}
         <Divider />
-        {nav('kor',       'visibility_off', 'Kör Stok Sayımı')}
-        {nav('koranaliz', 'query_stats',    'Kör Stok Sayım Analizi')}
-        {nav('korrapor',  'summarize',      'Kör Stok Sayım Raporu')}
+        {nav('kor',          'visibility_off', 'Kör Stok Sayımı')}
+        {nav('koranaliz',    'query_stats',    'Kör Stok Sayım Analizi')}
+        {nav('korrapor',     'summarize',      'Kör Stok Sayım Raporu')}
+        <Divider />
+        {nav('hareketlilik', 'trending_up',    'Hareketlilik Sayımı')}
       </nav>
 
       {/* Aktif sayım + kullanıcı */}

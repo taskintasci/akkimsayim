@@ -47,6 +47,16 @@ const RAPOR5_MAP = {
   'adet 2'             : 'sayim_yedek',
   'birim 2'            : 'birim_yedek',
   'barkod'             : 'aciklama',
+  'giriş tarih'        : 'girisTarih',
+  'giris tarih'        : 'girisTarih',
+  'giriş tarihi'       : 'girisTarih',
+  'giris tarihi'       : 'girisTarih',
+  'giriş gün'          : 'girisGun',
+  'giris gun'          : 'girisGun',
+  'giriş gun'          : 'girisGun',
+  'giris gün'          : 'girisGun',
+  'giriş gün sayısı'   : 'girisGun',
+  'giris gun sayisi'   : 'girisGun',
 }
 
 // RAPOR5 ayırt edici başlıkları
