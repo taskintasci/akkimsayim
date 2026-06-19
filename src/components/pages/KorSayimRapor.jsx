@@ -95,7 +95,7 @@ export default function KorSayimRapor({ onNavigate }) {
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+          <div className="px-3 py-1.5 border-b border-slate-100 flex items-center justify-between">
             <p className="text-[13px] font-semibold text-slate-700">
               Farklılıklar <span className="badge bg-red-50 text-red-600 ml-1">{discrepancies.length}</span>
             </p>
@@ -106,32 +106,32 @@ export default function KorSayimRapor({ onNavigate }) {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 text-[11px] mono text-slate-500 uppercase tracking-wider border-b border-slate-200">
-                <th className="px-4 py-2.5">Kod / Ad</th>
-                <th className="px-4 py-2.5">Adres</th>
-                <th className="px-4 py-2.5 text-right">Sistem</th>
-                <th className="px-4 py-2.5 text-right">Sayılan</th>
-                <th className="px-4 py-2.5 text-right">Fark</th>
-                <th className="px-4 py-2.5 text-center">İşlem</th>
+                <th className="px-3 py-1.5">Kod / Ad</th>
+                <th className="px-3 py-1.5">Adres</th>
+                <th className="px-3 py-1.5 text-right">Sistem</th>
+                <th className="px-3 py-1.5 text-right">Sayılan</th>
+                <th className="px-3 py-1.5 text-right">Fark</th>
+                <th className="px-3 py-1.5 text-center">İşlem</th>
               </tr>
             </thead>
             <tbody className="text-[12.5px] divide-y divide-slate-50">
               {discrepancies.map((row, i) => (
                 <tr key={row.id} className={i % 2 === 1 ? 'bg-slate-50/50 hover:bg-slate-50' : 'hover:bg-slate-50'}>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-1.5">
                     <p className="mono font-semibold text-blue-700 text-[11px]">{row.kod}</p>
                     <p className="text-slate-700">{row.ad}</p>
                   </td>
-                  <td className="px-4 py-3 mono text-slate-500 text-[12px]">{row.adres}</td>
-                  <td className="px-4 py-3 text-right mono font-medium">
+                  <td className="px-3 py-1.5 mono text-slate-500 text-[12px]">{row.adres}</td>
+                  <td className="px-3 py-1.5 text-right mono font-medium">
                     {row.sayim} <span className="text-slate-400 text-[11px]">{row.birim}</span>
                   </td>
-                  <td className="px-4 py-3 text-right mono font-bold text-red-600">
+                  <td className="px-3 py-1.5 text-right mono font-bold text-red-600">
                     {row.sayilan} <span className="text-red-400 text-[11px]">{row.birim}</span>
                   </td>
-                  <td className={`px-4 py-3 text-right mono font-bold ${row.fark > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  <td className={`px-3 py-1.5 text-right mono font-bold ${row.fark > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                     {row.fark > 0 ? '+' : ''}{row.fark.toLocaleString('tr', { maximumFractionDigits: 2 })} <span className="opacity-60 text-[11px]">{row.birim}</span>
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-3 py-1.5 text-center">
                     <button className="text-[12px] text-blue-600 hover:underline font-medium">İncele</button>
                   </td>
                 </tr>
