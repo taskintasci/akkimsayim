@@ -356,7 +356,7 @@ export default function HareketlilikSayim({ onNavigate }) {
       )}
 
       <div className="hidden">
-        <PrintSheet ref={printRef} rows={filtered} results={results} session={session} mode="sayim" hideSayilan={hideSayilan} />
+        <PrintSheet ref={printRef} rows={filtered} results={results} session={session} mode="sayim" hideSayilan={hideSayilan} sayimTuru="Ara Sayım" />
       </div>
     </div>
   )

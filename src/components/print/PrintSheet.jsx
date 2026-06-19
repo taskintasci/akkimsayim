@@ -3,7 +3,7 @@ import { forwardRef } from 'react'
 const ROWS_PER_PAGE = 25
 
 const PrintSheet = forwardRef(function PrintSheet(
-  { rows, results, session, mode = 'sayim', hideSayilan = false },
+  { rows, results, session, mode = 'sayim', hideSayilan = false, sayimTuru = '' },
   ref
 ) {
   const blindMode    = mode === 'kor'
@@ -64,8 +64,12 @@ const PrintSheet = forwardRef(function PrintSheet(
                 {session.tur ? `Tur ${session.tur} · ` : ''}
                 {tarihStr}
                 {session.depoAdi ? ` · ${session.depoAdi}` : ''}
-                {blindMode ? ' · KÖR SAYIM' : ''}
               </p>
+              {sayimTuru && (
+                <p style={{ fontSize: '7pt', fontWeight: 700, color: '#1e293b', marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: 'monospace' }}>
+                  — {sayimTuru} —
+                </p>
+              )}
             </div>
             <div style={{ textAlign: 'right', minWidth: 90 }}>
               <p style={{ fontSize: '6.5pt', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'monospace' }}>SAYFA</p>

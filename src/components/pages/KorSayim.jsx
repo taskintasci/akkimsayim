@@ -368,7 +368,7 @@ export default function KorSayim({ onNavigate }) {
       )}
 
       <div className="hidden">
-        <PrintSheet ref={printRef} rows={filtered} results={results} session={session} mode="kor" hideSistem={hideSistem} hideSayilan={hideSayilan} />
+        <PrintSheet ref={printRef} rows={filtered} results={results} session={session} mode="kor" hideSistem={hideSistem} hideSayilan={hideSayilan} sayimTuru="Kör Sayım" />
       </div>
     </div>
   )

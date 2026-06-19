@@ -303,7 +303,7 @@ export default function StokSayim({ onNavigate }) {
       )}
 
       <div className="hidden">
-        <PrintSheet ref={printRef} rows={filtered} results={results} session={session} mode="sayim" hideSayilan={hideSayilan} />
+        <PrintSheet ref={printRef} rows={filtered} results={results} session={session} mode="sayim" hideSayilan={hideSayilan} sayimTuru="Tüm Stok Sayımı" />
       </div>
     </div>
   )
