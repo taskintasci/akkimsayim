@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react'
+import { useState, useRef, useMemo, useEffect } from 'react'
 import { useReactToPrint } from 'react-to-print'
 import useStore from '../../store/useStore'
 import { sortRows, getUniqueAdresValues, parseAdres } from '../../utils/adresUtils'
@@ -17,7 +17,7 @@ function DurumBadge({ durum }) {
 }
 
 export default function KorSayim({ onNavigate }) {
-  const { rows, results, session, updateResult, fillFromSistem, korCodes, korMatched, addKorCodes, removeKorCode, clearKor } = useStore()
+  const { rows, results, session, updateResult, fillFromSistem, korCodes, korMatched, addKorCodes, removeKorCode, clearKor, pendingKodFilter, clearPendingKodFilter } = useStore()
   const printRef = useRef()
 
   const [codeInput, setCodeInput]     = useState('')
@@ -33,6 +33,13 @@ export default function KorSayim({ onNavigate }) {
   const [sortType, setSortType]       = useState('1')
 
   const handlePrint = useReactToPrint({ contentRef: printRef })
+
+  useEffect(() => {
+    if (pendingKodFilter) {
+      setFilterSearch(pendingKodFilter)
+      clearPendingKodFilter()
+    }
+  }, [pendingKodFilter])
 
   function toggleSistem() {
     const next = !hideSistem
