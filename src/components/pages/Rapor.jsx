@@ -2,14 +2,19 @@ import { useState } from 'react'
 import useStore from '../../store/useStore'
 import { exportRaporFarklar } from '../../utils/excelExport'
 
+const EMPTY_FORM = { kod: '', ad: '', adres: '', miktar: '', birim: '', not: '' }
+
 export default function Rapor({ onNavigate }) {
-  const { rows, results, session, setPendingKodFilter, approveSession } = useStore()
+  const { rows, results, session, setPendingKodFilter, approveSession, manualRows, addManualRow, removeManualRow } = useStore()
   const [approving, setApproving] = useState(false)
   const [approved, setApproved] = useState(false)
+  const [showForm, setShowForm] = useState(false)
+  const [form, setForm] = useState(EMPTY_FORM)
+  const [saving, setSaving] = useState(false)
 
   async function handleApprove() {
     const counted = rows.filter(r => results[r.id]?.miktar !== undefined && results[r.id]?.miktar !== '')
-    if (counted.length === 0) {
+    if (counted.length === 0 && manualRows.length === 0) {
       alert('Henüz sayım yapılmamış. Onaylamak için en az bir kalem sayılmış olmalı.')
       return
     }
@@ -24,6 +29,23 @@ export default function Rapor({ onNavigate }) {
     } finally {
       setApproving(false)
     }
+  }
+
+  async function handleAddManual(e) {
+    e.preventDefault()
+    if (!form.kod.trim() || !form.miktar) return
+    setSaving(true)
+    await addManualRow({
+      kod:    form.kod.trim().toUpperCase(),
+      ad:     form.ad.trim(),
+      adres:  form.adres.trim(),
+      miktar: form.miktar,
+      birim:  form.birim.trim(),
+      not:    form.not.trim(),
+    })
+    setSaving(false)
+    setForm(EMPTY_FORM)
+    setShowForm(false)
   }
 
   const counted = rows.filter(r => results[r.id]?.miktar !== undefined && results[r.id]?.miktar !== '')
@@ -157,6 +179,154 @@ export default function Rapor({ onNavigate }) {
           </table>
         </div>
       )}
+
+      {/* Manuel Eklenen Kalemler */}
+      <div className="bg-white rounded-xl border border-amber-200 overflow-hidden">
+        <div className="px-4 py-2.5 border-b border-amber-100 flex items-center justify-between bg-amber-50">
+          <div className="flex items-center gap-2">
+            <span className="ms text-amber-600" style={{ fontSize: 18 }}>add_box</span>
+            <p className="text-[13px] font-semibold text-amber-900">
+              Sistemde Bulunmayan Kalemler
+              {manualRows.length > 0 && <span className="badge bg-amber-100 text-amber-700 ml-2">{manualRows.length}</span>}
+            </p>
+          </div>
+          <button
+            onClick={() => { setShowForm(f => !f); setForm(EMPTY_FORM) }}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[12.5px] font-semibold no-print"
+          >
+            <span className="ms" style={{ fontSize: 15 }}>{showForm ? 'close' : 'add'}</span>
+            {showForm ? 'İptal' : 'Manuel Ekle'}
+          </button>
+        </div>
+
+        {/* Ekleme Formu */}
+        {showForm && (
+          <form onSubmit={handleAddManual} className="px-4 py-3 border-b border-amber-100 bg-amber-50/40 no-print">
+            <div className="grid grid-cols-6 gap-2 items-end">
+              <div>
+                <label className="block text-[11px] text-slate-500 mb-1">Stok Kodu *</label>
+                <input
+                  autoFocus
+                  type="text"
+                  value={form.kod}
+                  onChange={e => setForm(f => ({ ...f, kod: e.target.value }))}
+                  placeholder="KOD123"
+                  className="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-[12.5px] mono focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                  required
+                />
+              </div>
+              <div className="col-span-2">
+                <label className="block text-[11px] text-slate-500 mb-1">Ürün Adı</label>
+                <input
+                  type="text"
+                  value={form.ad}
+                  onChange={e => setForm(f => ({ ...f, ad: e.target.value }))}
+                  placeholder="Ürün adı..."
+                  className="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-[12.5px] focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] text-slate-500 mb-1">Adres</label>
+                <input
+                  type="text"
+                  value={form.adres}
+                  onChange={e => setForm(f => ({ ...f, adres: e.target.value }))}
+                  placeholder="A-01-1-1"
+                  className="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-[12.5px] mono focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] text-slate-500 mb-1">Sayılan Miktar *</label>
+                <div className="flex gap-1">
+                  <input
+                    type="number"
+                    value={form.miktar}
+                    onChange={e => setForm(f => ({ ...f, miktar: e.target.value }))}
+                    placeholder="0"
+                    className="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-[12.5px] mono focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                    required
+                  />
+                  <input
+                    type="text"
+                    value={form.birim}
+                    onChange={e => setForm(f => ({ ...f, birim: e.target.value }))}
+                    placeholder="KG"
+                    className="w-16 border border-slate-300 rounded-lg px-2 py-1.5 text-[12.5px] mono focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                  />
+                </div>
+              </div>
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <label className="block text-[11px] text-slate-500 mb-1">Not</label>
+                  <input
+                    type="text"
+                    value={form.not}
+                    onChange={e => setForm(f => ({ ...f, not: e.target.value }))}
+                    placeholder="Açıklama..."
+                    className="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-[12.5px] focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={saving || !form.kod.trim() || !form.miktar}
+                  className="px-4 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[12.5px] font-semibold disabled:opacity-40 whitespace-nowrap"
+                >
+                  {saving ? '…' : 'Ekle'}
+                </button>
+              </div>
+            </div>
+          </form>
+        )}
+
+        {/* Manuel kayıt listesi */}
+        {manualRows.length === 0 ? (
+          <div className="px-4 py-6 text-center text-[12.5px] text-slate-400">
+            Sistemde bulunmayan ürün eklemek için "Manuel Ekle" butonunu kullanın.
+          </div>
+        ) : (
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50 text-[11px] mono text-slate-500 uppercase tracking-wider border-b border-slate-200">
+                <th className="px-3 py-1.5">Kod / Ad</th>
+                <th className="px-3 py-1.5">Adres</th>
+                <th className="px-3 py-1.5 text-right">Sistem</th>
+                <th className="px-3 py-1.5 text-right">Sayılan</th>
+                <th className="px-3 py-1.5 text-right">Fark</th>
+                <th className="px-3 py-1.5">Not</th>
+                <th className="px-3 py-1.5 no-print"></th>
+              </tr>
+            </thead>
+            <tbody className="text-[12.5px] divide-y divide-slate-50">
+              {manualRows.map((row, i) => (
+                <tr key={row.id} className={i % 2 === 1 ? 'bg-amber-50/30' : ''}>
+                  <td className="px-3 py-1.5">
+                    <p className="mono font-semibold text-amber-700 text-[11px]">{row.kod}</p>
+                    <p className="text-slate-700">{row.ad || <span className="text-slate-400 italic">—</span>}</p>
+                  </td>
+                  <td className="px-3 py-1.5 mono text-slate-500 text-[12px]">{row.adres || '—'}</td>
+                  <td className="px-3 py-1.5 text-right mono text-slate-400">0</td>
+                  <td className="px-3 py-1.5 text-right mono font-bold text-emerald-600">
+                    +{row.miktar} <span className="text-emerald-400 text-[11px]">{row.birim}</span>
+                  </td>
+                  <td className="px-3 py-1.5 text-right mono font-bold text-emerald-600">
+                    +{row.miktar} <span className="opacity-60 text-[11px]">{row.birim}</span>
+                  </td>
+                  <td className="px-3 py-1.5 text-slate-500 text-[12px]">{row.not || '—'}</td>
+                  <td className="px-3 py-1.5 text-center no-print">
+                    <button
+                      onClick={() => removeManualRow(row.id)}
+                      className="text-slate-400 hover:text-red-500 transition-colors"
+                      title="Sil"
+                    >
+                      <span className="ms" style={{ fontSize: 16 }}>delete</span>
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   )
 }
