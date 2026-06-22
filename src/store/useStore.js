@@ -61,6 +61,7 @@ const useStore = create((set, get) => ({
 
   // ── Manuel eklenen kalemler (sistemde olmayan) ────────────────────────────
   manualRows: [],
+  korManualRows: [],
 
   // ── Navigation filter ──────────────────────────────────────────────────────
   pendingKodFilter: null,
@@ -80,7 +81,7 @@ const useStore = create((set, get) => ({
   setActiveSession: async (id) => {
     if (resultsUnsub) { resultsUnsub(); resultsUnsub = null }
 
-    set({ activeSessionId: id, rows: [], results: {}, korCodes: [], korMatched: [], manualRows: [], rowsLoading: true })
+    set({ activeSessionId: id, rows: [], results: {}, korCodes: [], korMatched: [], manualRows: [], korManualRows: [], rowsLoading: true })
 
     const sessionData = get().sessions.find(s => s.id === id)
     if (sessionData) {
@@ -99,8 +100,9 @@ const useStore = create((set, get) => ({
         const rows = await downloadRows(id)
         const korCodes = sessionData.korCodes || []
         const korMatched = korCodes.length > 0 ? rows.filter(r => korCodes.includes(r.kod)) : []
-        const manualRows = sessionData.manualRows || []
-        set({ rows, korCodes, korMatched, manualRows })
+        const manualRows    = sessionData.manualRows    || []
+        const korManualRows = sessionData.korManualRows || []
+        set({ rows, korCodes, korMatched, manualRows, korManualRows })
         get().addEvent({
           icon: 'inventory_2',
           text: `Oturum açıldı: ${sessionData.type || 'Sayım'}`,
@@ -155,6 +157,7 @@ const useStore = create((set, get) => ({
       korCodes:      [],
       korMatched:    [],
       manualRows:    [],
+      korManualRows: [],
       session: {
         type:         data.type,
         depoAdi:      data.depoAdi,
@@ -354,6 +357,31 @@ const useStore = create((set, get) => ({
     if (activeSessionId) {
       await updateDoc(doc(db, 'sessions', activeSessionId), {
         manualRows: updated,
+        updatedAt: serverTimestamp(),
+      })
+    }
+  },
+
+  addKorManualRow: async (row) => {
+    const { activeSessionId, korManualRows } = get()
+    const newRow  = { ...row, id: 'kormanual_' + Date.now() }
+    const updated = [...korManualRows, newRow]
+    set({ korManualRows: updated })
+    if (activeSessionId) {
+      await updateDoc(doc(db, 'sessions', activeSessionId), {
+        korManualRows: updated,
+        updatedAt: serverTimestamp(),
+      })
+    }
+  },
+
+  removeKorManualRow: async (id) => {
+    const { activeSessionId, korManualRows } = get()
+    const updated = korManualRows.filter(r => r.id !== id)
+    set({ korManualRows: updated })
+    if (activeSessionId) {
+      await updateDoc(doc(db, 'sessions', activeSessionId), {
+        korManualRows: updated,
         updatedAt: serverTimestamp(),
       })
     }

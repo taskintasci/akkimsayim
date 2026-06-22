@@ -5,10 +5,11 @@ import { exportRaporFarklar } from '../../utils/excelExport'
 const EMPTY_FORM = { kod: '', ad: '', adres: '', parti: '', durum: '', miktar: '', birim: '', not: '' }
 
 export default function KorSayimRapor({ onNavigate }) {
-  const { korMatched, results, session, setPendingKodFilter, manualRows, addManualRow, removeManualRow } = useStore()
+  const { korMatched, results, session, setPendingKodFilter, korManualRows, addKorManualRow, removeKorManualRow } = useStore()
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
+  const [onlyBigDiff, setOnlyBigDiff] = useState(false)
 
   const rows = korMatched
 
@@ -16,7 +17,7 @@ export default function KorSayimRapor({ onNavigate }) {
     e.preventDefault()
     if (!form.kod.trim() || !form.miktar) return
     setSaving(true)
-    await addManualRow({
+    await addKorManualRow({
       kod:    form.kod.trim().toUpperCase(),
       ad:     form.ad.trim(),
       adres:  form.adres.trim(),
@@ -42,6 +43,13 @@ export default function KorSayimRapor({ onNavigate }) {
       sayilan: results[r.id]?.miktar,
       fark: Number(results[r.id]?.miktar) - Number(String(r.sayim).replace(',', '.')),
     }))
+
+  const visibleDiscrepancies = onlyBigDiff
+    ? discrepancies.filter(r => {
+        const sistem = Number(String(r.sayim).replace(',', '.'))
+        return sistem > 0 ? Math.abs(r.fark) / sistem * 100 >= 10 : true
+      })
+    : discrepancies
 
   if (rows.length === 0) {
     return (
@@ -75,13 +83,10 @@ export default function KorSayimRapor({ onNavigate }) {
             <span className="ms" style={{ fontSize: 16 }}>print</span> Yazdır
           </button>
           <button
-            onClick={() => exportRaporFarklar(discrepancies, session)}
+            onClick={() => exportRaporFarklar(discrepancies, session, korManualRows)}
             className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-300 rounded-lg text-[13px] font-medium text-slate-700 hover:bg-slate-50"
           >
             <span className="ms" style={{ fontSize: 16 }}>download</span> Excel İndir
-          </button>
-          <button className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white rounded-lg text-[13px] font-bold hover:bg-emerald-700">
-            <span className="ms" style={{ fontSize: 16 }}>check_circle</span> Onayla
           </button>
         </div>
       </div>
@@ -122,10 +127,13 @@ export default function KorSayimRapor({ onNavigate }) {
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
           <div className="px-3 py-1.5 border-b border-slate-100 flex items-center justify-between">
             <p className="text-[13px] font-semibold text-slate-700">
-              Farklılıklar <span className="badge bg-red-50 text-red-600 ml-1">{discrepancies.length}</span>
+              Farklılıklar <span className="badge bg-red-50 text-red-600 ml-1">{visibleDiscrepancies.length}</span>
+              {onlyBigDiff && discrepancies.length !== visibleDiscrepancies.length && (
+                <span className="text-[11px] text-slate-400 ml-2">({discrepancies.length} toplamdan)</span>
+              )}
             </p>
-            <label className="flex items-center gap-2 text-[12px] text-slate-500 cursor-pointer">
-              <input type="checkbox" className="rounded" /> Sadece büyük farklar (±%10)
+            <label className="flex items-center gap-2 text-[12px] text-slate-500 cursor-pointer no-print">
+              <input type="checkbox" className="rounded" checked={onlyBigDiff} onChange={e => setOnlyBigDiff(e.target.checked)} /> Sadece büyük farklar (±%10)
             </label>
           </div>
           <table className="w-full text-left border-collapse">
@@ -142,7 +150,7 @@ export default function KorSayimRapor({ onNavigate }) {
               </tr>
             </thead>
             <tbody className="text-[12.5px] divide-y divide-slate-50">
-              {discrepancies.map((row, i) => (
+              {visibleDiscrepancies.map((row, i) => (
                 <tr key={row.id} className={i % 2 === 1 ? 'bg-slate-50/50 hover:bg-slate-50' : 'hover:bg-slate-50'}>
                   <td className="px-3 py-1.5">
                     <p className="mono font-semibold text-blue-700 text-[11px]">{row.kod}</p>
@@ -180,7 +188,7 @@ export default function KorSayimRapor({ onNavigate }) {
             <span className="ms text-amber-600" style={{ fontSize: 18 }}>add_box</span>
             <p className="text-[13px] font-semibold text-amber-900">
               Sistemde Bulunmayan Kalemler
-              {manualRows.length > 0 && <span className="badge bg-amber-100 text-amber-700 ml-2">{manualRows.length}</span>}
+              {korManualRows.length > 0 && <span className="badge bg-amber-100 text-amber-700 ml-2">{korManualRows.length}</span>}
             </p>
           </div>
           <button
@@ -294,7 +302,7 @@ export default function KorSayimRapor({ onNavigate }) {
         )}
 
         {/* Manuel kayıt listesi */}
-        {manualRows.length === 0 ? (
+        {korManualRows.length === 0 ? (
           <div className="px-4 py-6 text-center text-[12.5px] text-slate-400">
             Sistemde bulunmayan ürün eklemek için "Manuel Ekle" butonunu kullanın.
           </div>
@@ -314,7 +322,7 @@ export default function KorSayimRapor({ onNavigate }) {
               </tr>
             </thead>
             <tbody className="text-[12.5px] divide-y divide-slate-50">
-              {manualRows.map((row, i) => (
+              {korManualRows.map((row, i) => (
                 <tr key={row.id} className={i % 2 === 1 ? 'bg-amber-50/30' : ''}>
                   <td className="px-3 py-1.5">
                     <p className="mono font-semibold text-amber-700 text-[11px]">{row.kod}</p>
@@ -333,7 +341,7 @@ export default function KorSayimRapor({ onNavigate }) {
                   <td className="px-3 py-1.5 text-slate-500 text-[12px]">{row.not || '—'}</td>
                   <td className="px-3 py-1.5 text-center no-print">
                     <button
-                      onClick={() => removeManualRow(row.id)}
+                      onClick={() => removeKorManualRow(row.id)}
                       className="text-slate-400 hover:text-red-500 transition-colors"
                       title="Sil"
                     >

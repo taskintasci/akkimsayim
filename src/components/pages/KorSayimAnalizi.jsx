@@ -13,7 +13,7 @@ function AccBar({ pct }) {
 }
 
 export default function KorSayimAnalizi({ onNavigate }) {
-  const { korMatched, results, session, manualRows } = useStore()
+  const { korMatched, results, session, korManualRows: manualRows } = useStore()
 
   const rows = korMatched
 

@@ -1,4 +1,4 @@
-export async function exportRaporFarklar(discrepancies, session) {
+export async function exportRaporFarklar(discrepancies, session, manualRows = []) {
   const { default: ExcelJS } = await import('exceljs')
 
   const workbook = new ExcelJS.Workbook()
@@ -13,10 +13,12 @@ export async function exportRaporFarklar(discrepancies, session) {
     { header: 'Ad',              key: 'ad',       width: 35 },
     { header: 'Adres',           key: 'adres',    width: 14 },
     { header: 'Parti',           key: 'parti',    width: 14 },
+    { header: 'Durum',           key: 'durum',    width: 12 },
     { header: 'Sistem Mikt.',    key: 'sayim',    width: 14 },
     { header: 'Sayılan',         key: 'sayilan',  width: 14 },
     { header: 'Fark',            key: 'fark',     width: 12 },
     { header: 'Birim',           key: 'birim',    width: 8  },
+    { header: 'Not',             key: 'not',      width: 25 },
   ]
 
   ws.getRow(1).eachCell(cell => {
@@ -33,18 +35,42 @@ export async function exportRaporFarklar(discrepancies, session) {
 
     const wsRow = ws.addRow({
       siraNo: row.siraNo, kod: row.kod, ad: row.ad, adres: row.adres,
-      parti: row.parti, sayim: sistem, sayilan, fark, birim: row.birim,
+      parti: row.parti, durum: row.durum, sayim: sistem, sayilan, fark, birim: row.birim,
     })
 
-    const fillArgb = fark !== null && fark < 0 ? 'FFFFF3CD' : fark > 0 ? 'FFD4EDDA' : 'FFF3F4F6'
     wsRow.eachCell(cell => {
       cell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: i % 2 === 1 ? 'FFF3F4F6' : 'FFFFFFFF' } }
       cell.alignment = { vertical: 'middle' }
     })
     const farkCell = wsRow.getCell('fark')
-    farkCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillArgb } }
+    farkCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fark !== null && fark < 0 ? 'FFFFF3CD' : fark > 0 ? 'FFD4EDDA' : 'FFF3F4F6' } }
     farkCell.font = { bold: true, color: { argb: fark < 0 ? 'FF991B1B' : 'FF166534' } }
   })
+
+  // ── Manuel eklenen kalemler (sistemde bulunmayan) ──────────────────────────
+  if (manualRows.length > 0) {
+    ws.addRow([])
+    const sepRow = ws.addRow(['SİSTEMDE BULUNMAYAN KALEMLER (MANUEL EKLENDİ)'])
+    sepRow.getCell(1).font      = { bold: true, size: 10, color: { argb: 'FF92400E' } }
+    sepRow.getCell(1).fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEF3C7' } }
+    sepRow.getCell(1).alignment = { horizontal: 'left', vertical: 'middle' }
+    ws.mergeCells(`A${sepRow.number}:K${sepRow.number}`)
+    sepRow.height = 18
+
+    manualRows.forEach((row, i) => {
+      const miktar = parseFloat(row.miktar) || 0
+      const wsRow  = ws.addRow({
+        siraNo: i + 1, kod: row.kod, ad: row.ad, adres: row.adres,
+        parti: row.parti, durum: row.durum, sayim: 0, sayilan: miktar, fark: miktar,
+        birim: row.birim, not: row.not,
+      })
+      wsRow.eachCell(cell => {
+        cell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: i % 2 === 1 ? 'FFFFF8E8' : 'FFFFFDF5' } }
+        cell.alignment = { vertical: 'middle' }
+      })
+      wsRow.getCell('fark').font = { bold: true, color: { argb: 'FF166534' } }
+    })
+  }
 
   ws.views = [{ state: 'frozen', ySplit: 1 }]
 

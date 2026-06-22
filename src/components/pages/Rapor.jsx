@@ -11,6 +11,7 @@ export default function Rapor({ onNavigate }) {
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
+  const [onlyBigDiff, setOnlyBigDiff] = useState(false)
 
   async function handleApprove() {
     const counted = rows.filter(r => results[r.id]?.miktar !== undefined && results[r.id]?.miktar !== '')
@@ -62,6 +63,13 @@ export default function Rapor({ onNavigate }) {
       fark: Number(results[r.id]?.miktar) - Number(String(r.sayim).replace(',', '.')),
     }))
 
+  const visibleDiscrepancies = onlyBigDiff
+    ? discrepancies.filter(r => {
+        const sistem = Number(String(r.sayim).replace(',', '.'))
+        return sistem > 0 ? Math.abs(r.fark) / sistem * 100 >= 10 : true
+      })
+    : discrepancies
+
   const pct = rows.length ? Math.round((counted.length / rows.length) * 100) : 0
 
   return (
@@ -77,7 +85,7 @@ export default function Rapor({ onNavigate }) {
             <span className="ms" style={{ fontSize: 16 }}>print</span> Yazdır
           </button>
           <button
-            onClick={() => exportRaporFarklar(discrepancies, session)}
+            onClick={() => exportRaporFarklar(discrepancies, session, manualRows)}
             className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-300 rounded-lg text-[13px] font-medium text-slate-700 hover:bg-slate-50"
           >
             <span className="ms" style={{ fontSize: 16 }}>download</span> Excel İndir
@@ -135,10 +143,13 @@ export default function Rapor({ onNavigate }) {
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
           <div className="px-3 py-1.5 border-b border-slate-100 flex items-center justify-between">
             <p className="text-[13px] font-semibold text-slate-700">
-              Farklılıklar <span className="badge bg-red-50 text-red-600 ml-1">{discrepancies.length}</span>
+              Farklılıklar <span className="badge bg-red-50 text-red-600 ml-1">{visibleDiscrepancies.length}</span>
+              {onlyBigDiff && discrepancies.length !== visibleDiscrepancies.length && (
+                <span className="text-[11px] text-slate-400 ml-2">({discrepancies.length} toplamdan)</span>
+              )}
             </p>
-            <label className="flex items-center gap-2 text-[12px] text-slate-500 cursor-pointer">
-              <input type="checkbox" className="rounded" /> Sadece büyük farklar (±%10)
+            <label className="flex items-center gap-2 text-[12px] text-slate-500 cursor-pointer no-print">
+              <input type="checkbox" className="rounded" checked={onlyBigDiff} onChange={e => setOnlyBigDiff(e.target.checked)} /> Sadece büyük farklar (±%10)
             </label>
           </div>
           <table className="w-full text-left border-collapse">
@@ -155,7 +166,7 @@ export default function Rapor({ onNavigate }) {
               </tr>
             </thead>
             <tbody className="text-[12.5px] divide-y divide-slate-50">
-              {discrepancies.map((row, i) => (
+              {visibleDiscrepancies.map((row, i) => (
                 <tr key={row.id} className={i % 2 === 1 ? 'bg-slate-50/50 hover:bg-slate-50' : 'hover:bg-slate-50'}>
                   <td className="px-3 py-1.5">
                     <p className="mono font-semibold text-blue-700 text-[11px]">{row.kod}</p>
