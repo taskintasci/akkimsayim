@@ -4,6 +4,7 @@ import useStore from '../../store/useStore'
 import { sortRows, getUniqueAdresValues, parseAdres } from '../../utils/adresUtils'
 import { exportResults } from '../../utils/excelExport'
 import PrintSheet from '../print/PrintSheet'
+import { useVirtual } from '../../utils/useVirtual'
 
 function DurumBadge({ durum }) {
   return (
@@ -38,6 +39,7 @@ function GirisGunBadge({ gun }) {
 export default function HareketlilikSayim({ onNavigate }) {
   const { rows, results, session, updateResult, fillFromSistem, pendingKodFilter, clearPendingKodFilter } = useStore()
   const printRef = useRef()
+  const scrollRef = useRef()
 
   const [hideSistem, setHideSistem] = useState(false)
   const [hideSayilan, setHideSayilan] = useState(false)
@@ -73,7 +75,7 @@ export default function HareketlilikSayim({ onNavigate }) {
 
   const adresVals = useMemo(() => getUniqueAdresValues(rows), [rows])
 
-  const filtered = useMemo(() => {
+  const filteredBase = useMemo(() => {
     const q = filterSearch.trim().toLowerCase()
     let result = rows.filter(r => {
       if (q && !(
@@ -94,18 +96,24 @@ export default function HareketlilikSayim({ onNavigate }) {
         if (filterGirisGun === '91-180' && (isNaN(g) || g < 91 || g > 180)) return false
         if (filterGirisGun === '180+'   && (isNaN(g) || g <= 180))          return false
       }
-      if (onlyDiff) {
-        const m = results[r.id]?.miktar
-        if (m === undefined || m === '' || String(m) === String(r.sayim)) return false
-      }
       return true
     })
     return sortRows(result, sortType)
-  }, [rows, results, filterSearch, filterDurum, filterRaf, filterSira, filterKolon, filterGoz, filterGirisGun, onlyDiff, sortType])
+  }, [rows, filterSearch, filterDurum, filterRaf, filterSira, filterKolon, filterGoz, filterGirisGun, sortType])
+
+  const filtered = useMemo(() => {
+    if (!onlyDiff) return filteredBase
+    return filteredBase.filter(r => {
+      const m = results[r.id]?.miktar
+      return m !== undefined && m !== '' && String(m) !== String(r.sayim)
+    })
+  }, [filteredBase, onlyDiff, results])
 
   const counted   = useMemo(() => rows.filter(r => results[r.id]?.miktar !== undefined && results[r.id]?.miktar !== ''), [rows, results])
   const diffCount = useMemo(() => rows.filter(r => { const m = results[r.id]?.miktar; return m !== undefined && m !== '' && String(m) !== String(r.sayim) }).length, [rows, results])
   const waiting   = rows.length - counted.length
+
+  const virtual = useVirtual({ count: filtered.length, rowHeight: 36, scrollRef })
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -256,7 +264,7 @@ export default function HareketlilikSayim({ onNavigate }) {
           </button>
         </div>
       ) : (
-        <div className="flex-1 overflow-auto">
+        <div ref={scrollRef} className="flex-1 overflow-auto">
           <table className="w-full text-left border-collapse" style={{ minWidth: 1180 }}>
             <thead className="sticky top-0 z-10">
               <tr className="bg-slate-800 text-white text-[11px] mono uppercase tracking-wider">
@@ -276,13 +284,17 @@ export default function HareketlilikSayim({ onNavigate }) {
               </tr>
             </thead>
             <tbody className="text-[12.5px]">
-              {filtered.map((row, i) => {
+              {virtual.paddingTop > 0 && (
+                <tr><td colSpan={13} style={{ height: virtual.paddingTop }} /></tr>
+              )}
+              {filtered.slice(virtual.start, virtual.end + 1).map((row, localI) => {
+                const i = virtual.start + localI
                 const res = results[row.id] || {}
                 const hasValue = res.miktar !== undefined && res.miktar !== ''
                 const isDiff = hasValue && String(res.miktar) !== String(row.sayim)
                 const rowStyle = isDiff
-                  ? { background: 'rgba(254,242,242,0.6)' }
-                  : girisGunStyle(row.girisGun)
+                  ? { background: 'rgba(254,242,242,0.6)', height: 36 }
+                  : { ...girisGunStyle(row.girisGun), height: 36 }
                 return (
                   <tr
                     key={row.id}
@@ -324,6 +336,9 @@ export default function HareketlilikSayim({ onNavigate }) {
                   </tr>
                 )
               })}
+              {virtual.paddingBottom > 0 && (
+                <tr><td colSpan={13} style={{ height: virtual.paddingBottom }} /></tr>
+              )}
             </tbody>
           </table>
           {filtered.length === 0 && rows.length > 0 && (
@@ -342,9 +357,10 @@ export default function HareketlilikSayim({ onNavigate }) {
         <div className="px-5 py-2.5 bg-white border-t border-slate-200 flex items-center justify-between shrink-0 no-print">
           <p className="text-[11.5px] text-slate-400">Son kayıt: <span className="mono font-medium text-slate-600">{new Date().toLocaleTimeString('tr')}</span></p>
           <div className="flex gap-2">
-            <button className="px-4 py-2 border border-slate-300 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
-              Taslak Kaydet
-            </button>
+            <span className="flex items-center gap-1 text-[12px] text-slate-400">
+              <span className="ms text-emerald-400" style={{ fontSize: 14 }}>cloud_done</span>
+              Otomatik kaydediliyor
+            </span>
             <button onClick={() => onNavigate('rapor')} className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-[12.5px] font-semibold hover:bg-blue-700">
               Sayımı Tamamla <span className="ms" style={{ fontSize: 17 }}>arrow_forward</span>
             </button>
