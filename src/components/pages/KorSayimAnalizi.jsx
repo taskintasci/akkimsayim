@@ -13,9 +13,9 @@ function AccBar({ pct }) {
 }
 
 export default function KorSayimAnalizi({ onNavigate }) {
-  const { korMatched, results, session } = useStore()
+  const { korMatched, results, session, manualRows } = useStore()
 
-  const rows = korMatched   // birebir SayimAnalizi mantığı, sadece veri kaynağı farklı
+  const rows = korMatched
 
   const counted = rows.filter(r => results[r.id]?.miktar !== undefined && results[r.id]?.miktar !== '')
   const discrepancies = rows.filter(r => {
@@ -23,15 +23,19 @@ export default function KorSayimAnalizi({ onNavigate }) {
     return m !== undefined && m !== '' && String(m) !== String(r.sayim)
   })
 
+  const manuelFiziki    = manualRows.reduce((sum, r) => sum + (parseFloat(r.miktar) || 0), 0)
+  const manuelUniqueSku = [...new Set(manualRows.map(r => r.kod))].length
+  const totalCounted    = counted.length + manualRows.length
+
   const hatasizLokasyon = counted.length - discrepancies.length
-  const hataliLokasyon  = discrepancies.length
-  const adresPct        = counted.length > 0 ? +(hatasizLokasyon / counted.length * 100).toFixed(2) : 0
+  const hataliLokasyon  = discrepancies.length + manualRows.length
+  const adresPct        = totalCounted > 0 ? +(hatasizLokasyon / totalCounted * 100).toFixed(2) : 0
 
   const sistemToplam = rows.reduce((sum, r) => sum + (parseFloat(String(r.sayim).replace(',', '.')) || 0), 0)
   const fizikiToplam = rows.reduce((sum, r) => {
     const m = results[r.id]?.miktar
     return sum + (m !== undefined && m !== '' ? parseFloat(String(m).replace(',', '.')) || 0 : 0)
-  }, 0)
+  }, 0) + manuelFiziki
   const stokFark     = fizikiToplam - sistemToplam
   const stokMuafiyet = sistemToplam * 0.001
   const stokPct      = sistemToplam > 0 ? +(fizikiToplam / sistemToplam * 100).toFixed(2) : 0
@@ -43,8 +47,9 @@ export default function KorSayimAnalizi({ onNavigate }) {
       return m !== undefined && m !== '' && String(m) === String(r.sayim)
     }).map(r => r.kod)
   )].length
-  const hataliSku = uniqueSkuSistem - uniqueSkuHatasiz
-  const skuPct    = uniqueSkuSistem > 0 ? +(uniqueSkuHatasiz / uniqueSkuSistem * 100).toFixed(2) : 0
+  const uniqueSkuToplam = uniqueSkuSistem + manuelUniqueSku
+  const hataliSku       = (uniqueSkuSistem - uniqueSkuHatasiz) + manuelUniqueSku
+  const skuPct          = uniqueSkuToplam > 0 ? +(uniqueSkuHatasiz / uniqueSkuToplam * 100).toFixed(2) : 0
 
   const genelPct = +((adresPct + stokPct + skuPct) / 3).toFixed(2)
 
@@ -108,7 +113,7 @@ export default function KorSayimAnalizi({ onNavigate }) {
             <div className="mt-2 h-1 bg-blue-800 rounded-full overflow-hidden">
               <div className="h-full bg-blue-300 rounded-full" style={{ width: Math.min(adresPct, 100) + '%' }} />
             </div>
-            <p className="text-blue-300 text-[11px] mono mt-1">{fmt(hatasizLokasyon)} / {fmt(counted.length)} lokasyon</p>
+            <p className="text-blue-300 text-[11px] mono mt-1">{fmt(hatasizLokasyon)} / {fmt(totalCounted)} lokasyon</p>
           </div>
           <div className="bg-white/10 rounded-xl p-4">
             <p className="text-blue-200 text-[11px] mono uppercase tracking-wide mb-2">Stok Doğruluk</p>
@@ -124,7 +129,7 @@ export default function KorSayimAnalizi({ onNavigate }) {
             <div className="mt-2 h-1 bg-blue-800 rounded-full overflow-hidden">
               <div className="h-full bg-blue-300 rounded-full" style={{ width: Math.min(skuPct, 100) + '%' }} />
             </div>
-            <p className="text-blue-300 text-[11px] mono mt-1">{fmt(uniqueSkuHatasiz)} / {fmt(uniqueSkuSistem)} SKU</p>
+            <p className="text-blue-300 text-[11px] mono mt-1">{fmt(uniqueSkuHatasiz)} / {fmt(uniqueSkuToplam)} SKU</p>
           </div>
         </div>
       </div>
@@ -140,7 +145,7 @@ export default function KorSayimAnalizi({ onNavigate }) {
           <div className="p-4 space-y-3">
             <div className="flex justify-between items-center py-2 border-b border-slate-50">
               <p className="text-[12.5px] text-slate-500">Sayılan Lokasyon</p>
-              <p className="text-[13px] font-bold mono text-slate-800">{fmt(counted.length)}</p>
+              <p className="text-[13px] font-bold mono text-slate-800">{fmt(totalCounted)}</p>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-slate-50">
               <p className="text-[12.5px] text-slate-500">Hatasız Lokasyon</p>
@@ -207,7 +212,7 @@ export default function KorSayimAnalizi({ onNavigate }) {
           <div className="p-4 space-y-3">
             <div className="flex justify-between items-center py-2 border-b border-slate-50">
               <p className="text-[12.5px] text-slate-500">Sayılan SKU</p>
-              <p className="text-[13px] font-bold mono text-slate-800">{fmt(uniqueSkuSistem)}</p>
+              <p className="text-[13px] font-bold mono text-slate-800">{fmt(uniqueSkuToplam)}</p>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-slate-50">
               <p className="text-[12.5px] text-slate-500">Hatasız SKU</p>
