@@ -2,7 +2,7 @@ import { useState } from 'react'
 import useStore from '../../store/useStore'
 import { exportRaporFarklar } from '../../utils/excelExport'
 
-const EMPTY_FORM = { kod: '', ad: '', adres: '', miktar: '', birim: '', not: '' }
+const EMPTY_FORM = { kod: '', ad: '', adres: '', parti: '', durum: '', miktar: '', birim: '', not: '' }
 
 export default function Rapor({ onNavigate }) {
   const { rows, results, session, setPendingKodFilter, approveSession, manualRows, addManualRow, removeManualRow } = useStore()
@@ -39,6 +39,8 @@ export default function Rapor({ onNavigate }) {
       kod:    form.kod.trim().toUpperCase(),
       ad:     form.ad.trim(),
       adres:  form.adres.trim(),
+      parti:  form.parti.trim(),
+      durum:  form.durum.trim(),
       miktar: form.miktar,
       birim:  form.birim.trim(),
       not:    form.not.trim(),
@@ -143,6 +145,8 @@ export default function Rapor({ onNavigate }) {
             <thead>
               <tr className="bg-slate-50 text-[11px] mono text-slate-500 uppercase tracking-wider border-b border-slate-200">
                 <th className="px-3 py-1.5">Kod / Ad</th>
+                <th className="px-3 py-1.5">Parti</th>
+                <th className="px-3 py-1.5">Durum</th>
                 <th className="px-3 py-1.5">Adres</th>
                 <th className="px-3 py-1.5 text-right">Sistem</th>
                 <th className="px-3 py-1.5 text-right">Sayılan</th>
@@ -157,6 +161,8 @@ export default function Rapor({ onNavigate }) {
                     <p className="mono font-semibold text-blue-700 text-[11px]">{row.kod}</p>
                     <p className="text-slate-700">{row.ad}</p>
                   </td>
+                  <td className="px-3 py-1.5 mono text-slate-500 text-[12px]">{row.parti || '—'}</td>
+                  <td className="px-3 py-1.5 text-[12px] text-slate-500">{row.durum || '—'}</td>
                   <td className="px-3 py-1.5 mono text-slate-500 text-[12px]">{row.adres}</td>
                   <td className="px-3 py-1.5 text-right mono font-medium">
                     {row.sayim} <span className="text-slate-400 text-[11px]">{row.birim}</span>
@@ -201,8 +207,8 @@ export default function Rapor({ onNavigate }) {
 
         {/* Ekleme Formu */}
         {showForm && (
-          <form onSubmit={handleAddManual} className="px-4 py-3 border-b border-amber-100 bg-amber-50/40 no-print">
-            <div className="grid grid-cols-6 gap-2 items-end">
+          <form onSubmit={handleAddManual} className="px-4 py-3 border-b border-amber-100 bg-amber-50/40 no-print flex flex-col gap-2">
+            <div className="grid grid-cols-6 gap-2">
               <div>
                 <label className="block text-[11px] text-slate-500 mb-1">Stok Kodu *</label>
                 <input
@@ -236,6 +242,28 @@ export default function Rapor({ onNavigate }) {
                 />
               </div>
               <div>
+                <label className="block text-[11px] text-slate-500 mb-1">Parti</label>
+                <input
+                  type="text"
+                  value={form.parti}
+                  onChange={e => setForm(f => ({ ...f, parti: e.target.value }))}
+                  placeholder="PT240101"
+                  className="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-[12.5px] mono focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] text-slate-500 mb-1">Durum</label>
+                <input
+                  type="text"
+                  value={form.durum}
+                  onChange={e => setForm(f => ({ ...f, durum: e.target.value }))}
+                  placeholder="Serbest / KK..."
+                  className="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-[12.5px] focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-6 gap-2 items-end">
+              <div>
                 <label className="block text-[11px] text-slate-500 mb-1">Sayılan Miktar *</label>
                 <div className="flex gap-1">
                   <input
@@ -255,21 +283,21 @@ export default function Rapor({ onNavigate }) {
                   />
                 </div>
               </div>
-              <div className="flex items-end gap-2">
-                <div className="flex-1">
-                  <label className="block text-[11px] text-slate-500 mb-1">Not</label>
-                  <input
-                    type="text"
-                    value={form.not}
-                    onChange={e => setForm(f => ({ ...f, not: e.target.value }))}
-                    placeholder="Açıklama..."
-                    className="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-[12.5px] focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
-                  />
-                </div>
+              <div className="col-span-4">
+                <label className="block text-[11px] text-slate-500 mb-1">Not</label>
+                <input
+                  type="text"
+                  value={form.not}
+                  onChange={e => setForm(f => ({ ...f, not: e.target.value }))}
+                  placeholder="Açıklama..."
+                  className="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-[12.5px] focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                />
+              </div>
+              <div className="flex items-end">
                 <button
                   type="submit"
                   disabled={saving || !form.kod.trim() || !form.miktar}
-                  className="px-4 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[12.5px] font-semibold disabled:opacity-40 whitespace-nowrap"
+                  className="w-full px-4 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[12.5px] font-semibold disabled:opacity-40"
                 >
                   {saving ? '…' : 'Ekle'}
                 </button>
@@ -288,6 +316,8 @@ export default function Rapor({ onNavigate }) {
             <thead>
               <tr className="bg-slate-50 text-[11px] mono text-slate-500 uppercase tracking-wider border-b border-slate-200">
                 <th className="px-3 py-1.5">Kod / Ad</th>
+                <th className="px-3 py-1.5">Parti</th>
+                <th className="px-3 py-1.5">Durum</th>
                 <th className="px-3 py-1.5">Adres</th>
                 <th className="px-3 py-1.5 text-right">Sistem</th>
                 <th className="px-3 py-1.5 text-right">Sayılan</th>
@@ -303,6 +333,8 @@ export default function Rapor({ onNavigate }) {
                     <p className="mono font-semibold text-amber-700 text-[11px]">{row.kod}</p>
                     <p className="text-slate-700">{row.ad || <span className="text-slate-400 italic">—</span>}</p>
                   </td>
+                  <td className="px-3 py-1.5 mono text-slate-500 text-[12px]">{row.parti || '—'}</td>
+                  <td className="px-3 py-1.5 text-slate-500 text-[12px]">{row.durum || '—'}</td>
                   <td className="px-3 py-1.5 mono text-slate-500 text-[12px]">{row.adres || '—'}</td>
                   <td className="px-3 py-1.5 text-right mono text-slate-400">0</td>
                   <td className="px-3 py-1.5 text-right mono font-bold text-emerald-600">
