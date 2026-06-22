@@ -4,7 +4,6 @@ import useStore from '../../store/useStore'
 import { sortRows, getUniqueAdresValues, parseAdres } from '../../utils/adresUtils'
 import { exportResults } from '../../utils/excelExport'
 import PrintSheet from '../print/PrintSheet'
-import { useVirtual } from '../../utils/useVirtual'
 
 function DurumBadge({ durum }) {
   return (
@@ -20,7 +19,6 @@ function DurumBadge({ durum }) {
 export default function StokSayim({ onNavigate }) {
   const { rows, results, session, updateResult, fillFromSistem, pendingKodFilter, clearPendingKodFilter } = useStore()
   const printRef = useRef()
-  const scrollRef = useRef()
 
   const [hideSistem, setHideSistem] = useState(false)
   const [hideSayilan, setHideSayilan] = useState(false)
@@ -32,6 +30,8 @@ export default function StokSayim({ onNavigate }) {
   const [filterGoz, setFilterGoz] = useState('')
   const [onlyDiff, setOnlyDiff] = useState(false)
   const [sortType, setSortType] = useState('1')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(100)
 
   const handlePrint = useReactToPrint({ contentRef: printRef })
 
@@ -86,7 +86,15 @@ export default function StokSayim({ onNavigate }) {
   const diffCount = useMemo(() => rows.filter(r => { const m = results[r.id]?.miktar; return m !== undefined && m !== '' && String(m) !== String(r.sayim) }).length, [rows, results])
   const waiting   = rows.length - counted.length
 
-  const virtual = useVirtual({ count: filtered.length, rowHeight: 36, scrollRef })
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
+  const safePage   = Math.min(page, totalPages)
+  const paginated  = useMemo(
+    () => filtered.slice((safePage - 1) * pageSize, safePage * pageSize),
+    [filtered, safePage, pageSize]
+  )
+
+  // Filtre değişince 1. sayfaya dön
+  useEffect(() => { setPage(1) }, [filtered.length, pageSize])
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -216,7 +224,7 @@ export default function StokSayim({ onNavigate }) {
           </button>
         </div>
       ) : (
-        <div ref={scrollRef} className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto">
           <table className="w-full text-left border-collapse" style={{ minWidth: 1100 }}>
             <thead className="sticky top-0 z-10">
               <tr className="bg-slate-800 text-white text-[11px] mono uppercase tracking-wider">
@@ -235,11 +243,8 @@ export default function StokSayim({ onNavigate }) {
               </tr>
             </thead>
             <tbody className="text-[12.5px]">
-              {virtual.paddingTop > 0 && (
-                <tr><td colSpan={12} style={{ height: virtual.paddingTop }} /></tr>
-              )}
-              {filtered.slice(virtual.start, virtual.end + 1).map((row, localI) => {
-                const i = virtual.start + localI
+              {paginated.map((row, localI) => {
+                const i = (safePage - 1) * pageSize + localI
                 const res = results[row.id] || {}
                 const hasValue = res.miktar !== undefined && res.miktar !== ''
                 const isDiff = hasValue && String(res.miktar) !== String(row.sayim)
@@ -247,7 +252,7 @@ export default function StokSayim({ onNavigate }) {
                   <tr
                     key={row.id}
                     className={isDiff ? 'border-b border-slate-100 hover:bg-red-50' : 'border-b border-slate-100 hover:bg-blue-50/30'}
-                    style={isDiff ? { background: 'rgba(254,242,242,0.6)', height: 36 } : i % 2 === 1 ? { background: '#f8fafc', height: 36 } : { height: 36 }}
+                    style={isDiff ? { background: 'rgba(254,242,242,0.6)' } : i % 2 === 1 ? { background: '#f8fafc' } : {}}
                   >
                     <td className="px-3 py-2 text-center text-slate-400 mono text-[11px]">{i + 1}</td>
                     <td className="px-3 py-2 mono text-slate-600 text-[11.5px]">{row.adres}</td>
@@ -283,35 +288,73 @@ export default function StokSayim({ onNavigate }) {
                   </tr>
                 )
               })}
-              {virtual.paddingBottom > 0 && (
-                <tr><td colSpan={12} style={{ height: virtual.paddingBottom }} /></tr>
-              )}
             </tbody>
           </table>
           {filtered.length === 0 && rows.length > 0 && (
             <div className="p-8 text-center text-[11.5px] text-slate-400">Filtreye uyan kayıt yok.</div>
-          )}
-          {rows.length > 0 && (
-            <div className="p-4 text-center text-[11.5px] text-slate-400 border-t border-slate-100">
-              {filtered.length.toLocaleString('tr')} satır gösteriliyor · Toplam {rows.length.toLocaleString('tr')} kayıt
-            </div>
           )}
         </div>
       )}
 
       {/* ── Alt Bar ── */}
       {rows.length > 0 && (
-        <div className="px-5 py-2.5 bg-white border-t border-slate-200 flex items-center justify-between shrink-0 no-print">
-          <p className="text-[11.5px] text-slate-400">Son kayıt: <span className="mono font-medium text-slate-600">{new Date().toLocaleTimeString('tr')}</span></p>
-          <div className="flex gap-2">
-            <span className="flex items-center gap-1 text-[12px] text-slate-400">
-              <span className="ms text-emerald-400" style={{ fontSize: 14 }}>cloud_done</span>
-              Otomatik kaydediliyor
-            </span>
-            <button onClick={() => onNavigate('rapor')} className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-[12.5px] font-semibold hover:bg-blue-700">
-              Sayımı Tamamla <span className="ms" style={{ fontSize: 17 }}>arrow_forward</span>
-            </button>
+        <div className="px-5 py-2 bg-white border-t border-slate-200 flex items-center justify-between shrink-0 no-print">
+          {/* Sol: kayıt bilgisi */}
+          <div className="flex items-center gap-2 text-[11.5px] text-slate-400">
+            <span className="ms text-emerald-400" style={{ fontSize: 14 }}>cloud_done</span>
+            <span>Otomatik kaydediliyor</span>
+            <span className="text-slate-300">·</span>
+            <span>{filtered.length.toLocaleString('tr')} kayıt</span>
           </div>
+
+          {/* Orta: sayfalama */}
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={safePage === 1}
+              className="w-7 h-7 flex items-center justify-center rounded border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-30"
+            >
+              <span className="ms" style={{ fontSize: 16 }}>chevron_left</span>
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(p => p === 1 || p === totalPages || Math.abs(p - safePage) <= 2)
+              .reduce((acc, p, idx, arr) => {
+                if (idx > 0 && p - arr[idx - 1] > 1) acc.push('...')
+                acc.push(p)
+                return acc
+              }, [])
+              .map((p, idx) => p === '...'
+                ? <span key={'e' + idx} className="px-1 text-[11px] text-slate-400">…</span>
+                : <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    className={'w-7 h-7 rounded text-[11.5px] font-medium border ' +
+                      (p === safePage ? 'bg-blue-600 text-white border-blue-600' : 'border-slate-200 text-slate-600 hover:bg-slate-50')}
+                  >{p}</button>
+              )
+            }
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={safePage === totalPages}
+              className="w-7 h-7 flex items-center justify-center rounded border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-30"
+            >
+              <span className="ms" style={{ fontSize: 16 }}>chevron_right</span>
+            </button>
+            <select
+              value={pageSize}
+              onChange={e => setPageSize(Number(e.target.value))}
+              className="ml-2 fsel text-[11.5px]"
+            >
+              <option value={50}>50 / sayfa</option>
+              <option value={100}>100 / sayfa</option>
+              <option value={200}>200 / sayfa</option>
+            </select>
+          </div>
+
+          {/* Sağ: tamamla */}
+          <button onClick={() => onNavigate('rapor')} className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-[12.5px] font-semibold hover:bg-blue-700">
+            Sayımı Tamamla <span className="ms" style={{ fontSize: 17 }}>arrow_forward</span>
+          </button>
         </div>
       )}
 
