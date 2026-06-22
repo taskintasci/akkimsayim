@@ -31,6 +31,8 @@ export default function KorSayim({ onNavigate }) {
   const [filterGoz, setFilterGoz]     = useState('')
   const [onlyDiff, setOnlyDiff]       = useState(false)
   const [sortType, setSortType]       = useState('1')
+  const [page, setPage]               = useState(1)
+  const [pageSize, setPageSize]       = useState(100)
 
   const handlePrint = useReactToPrint({ contentRef: printRef })
 
@@ -67,7 +69,7 @@ export default function KorSayim({ onNavigate }) {
 
   const adresVals = useMemo(() => getUniqueAdresValues(korMatched), [korMatched])
 
-  const filtered = useMemo(() => {
+  const filteredBase = useMemo(() => {
     const q = filterSearch.trim().toLowerCase()
     let result = korMatched.filter(r => {
       if (q && !(
@@ -81,18 +83,31 @@ export default function KorSayim({ onNavigate }) {
       if (filterSira  && p.sira  !== filterSira)  return false
       if (filterKolon && p.kolon !== filterKolon) return false
       if (filterGoz   && p.goz   !== filterGoz)   return false
-      if (onlyDiff) {
-        const m = results[r.id]?.miktar
-        if (m === undefined || m === '' || String(m) === String(r.sayim)) return false
-      }
       return true
     })
     return sortRows(result, sortType)
-  }, [korMatched, results, filterSearch, filterDurum, filterRaf, filterSira, filterKolon, filterGoz, onlyDiff, sortType])
+  }, [korMatched, filterSearch, filterDurum, filterRaf, filterSira, filterKolon, filterGoz, sortType])
+
+  const filtered = useMemo(() => {
+    if (!onlyDiff) return filteredBase
+    return filteredBase.filter(r => {
+      const m = results[r.id]?.miktar
+      return m !== undefined && m !== '' && String(m) !== String(r.sayim)
+    })
+  }, [filteredBase, onlyDiff, results])
 
   const counted   = useMemo(() => korMatched.filter(r => results[r.id]?.miktar !== undefined && results[r.id]?.miktar !== ''), [korMatched, results])
   const diffCount = useMemo(() => korMatched.filter(r => { const m = results[r.id]?.miktar; return m !== undefined && m !== '' && String(m) !== String(r.sayim) }).length, [korMatched, results])
   const waiting   = korMatched.length - counted.length
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
+  const safePage   = Math.min(page, totalPages)
+  const paginated  = useMemo(
+    () => filtered.slice((safePage - 1) * pageSize, safePage * pageSize),
+    [filtered, safePage, pageSize]
+  )
+
+  useEffect(() => { setPage(1) }, [filtered.length, pageSize])
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -295,7 +310,8 @@ export default function KorSayim({ onNavigate }) {
               </tr>
             </thead>
             <tbody className="text-[12.5px]">
-              {filtered.map((row, i) => {
+              {paginated.map((row, localI) => {
+                const i        = (safePage - 1) * pageSize + localI
                 const res      = results[row.id] || {}
                 const hasValue = res.miktar !== undefined && res.miktar !== ''
                 const isDiff   = hasValue && String(res.miktar) !== String(row.sayim)
@@ -344,26 +360,65 @@ export default function KorSayim({ onNavigate }) {
           {filtered.length === 0 && korMatched.length > 0 && (
             <div className="p-8 text-center text-[11.5px] text-slate-400">Filtreye uyan kayıt yok.</div>
           )}
-          {korMatched.length > 0 && (
-            <div className="p-4 text-center text-[11.5px] text-slate-400 border-t border-slate-100">
-              {filtered.length.toLocaleString('tr')} satır gösteriliyor · Toplam {korMatched.length.toLocaleString('tr')} eşleşme
-            </div>
-          )}
         </div>
       )}
 
       {/* ── Alt bar ── */}
       {korMatched.length > 0 && (
-        <div className="px-5 py-2.5 bg-white border-t border-slate-200 flex items-center justify-between shrink-0 no-print">
-          <p className="text-[11.5px] text-slate-400">Son kayıt: <span className="mono font-medium text-slate-600">{new Date().toLocaleTimeString('tr')}</span></p>
-          <div className="flex gap-2">
-            <button className="px-4 py-2 border border-slate-300 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
-              Taslak Kaydet
-            </button>
-            <button onClick={() => onNavigate('korrapor')} className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-[12.5px] font-semibold hover:bg-blue-700">
-              Raporu Görüntüle <span className="ms" style={{ fontSize: 17 }}>arrow_forward</span>
-            </button>
+        <div className="px-5 py-2 bg-white border-t border-slate-200 flex items-center justify-between shrink-0 no-print">
+          <div className="flex items-center gap-2 text-[11.5px] text-slate-400">
+            <span className="ms text-emerald-400" style={{ fontSize: 14 }}>cloud_done</span>
+            <span>Otomatik kaydediliyor</span>
+            <span className="text-slate-300">·</span>
+            <span>{filtered.length.toLocaleString('tr')} kayıt</span>
           </div>
+
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={safePage === 1}
+              className="w-7 h-7 flex items-center justify-center rounded border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-30"
+            >
+              <span className="ms" style={{ fontSize: 16 }}>chevron_left</span>
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(p => p === 1 || p === totalPages || Math.abs(p - safePage) <= 2)
+              .reduce((acc, p, idx, arr) => {
+                if (idx > 0 && p - arr[idx - 1] > 1) acc.push('...')
+                acc.push(p)
+                return acc
+              }, [])
+              .map((p, idx) => p === '...'
+                ? <span key={'e' + idx} className="px-1 text-[11px] text-slate-400">…</span>
+                : <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    className={'w-7 h-7 rounded text-[11.5px] font-medium border ' +
+                      (p === safePage ? 'bg-blue-600 text-white border-blue-600' : 'border-slate-200 text-slate-600 hover:bg-slate-50')}
+                  >{p}</button>
+              )
+            }
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={safePage === totalPages}
+              className="w-7 h-7 flex items-center justify-center rounded border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-30"
+            >
+              <span className="ms" style={{ fontSize: 16 }}>chevron_right</span>
+            </button>
+            <select
+              value={pageSize}
+              onChange={e => setPageSize(Number(e.target.value))}
+              className="ml-2 fsel text-[11.5px]"
+            >
+              <option value={50}>50 / sayfa</option>
+              <option value={100}>100 / sayfa</option>
+              <option value={200}>200 / sayfa</option>
+            </select>
+          </div>
+
+          <button onClick={() => onNavigate('korrapor')} className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-[12.5px] font-semibold hover:bg-blue-700">
+            Raporu Görüntüle <span className="ms" style={{ fontSize: 17 }}>arrow_forward</span>
+          </button>
         </div>
       )}
 
