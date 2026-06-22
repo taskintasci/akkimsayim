@@ -7,6 +7,11 @@
     <title>Akkim Sayım</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <style>
+      /* Font yüklenene kadar ikon adlarını gizle — CSS @import'tan önce uygulanır */
+      .ms { visibility: hidden; }
+      body.ms-loaded .ms { visibility: visible; }
+    </style>
   </head>
   <body>
     <div id="root"></div>
