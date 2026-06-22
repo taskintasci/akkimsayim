@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import {
-  collection, doc, addDoc, getDocs, updateDoc, setDoc,
+  collection, doc, addDoc, getDocs, updateDoc, setDoc, deleteDoc,
   onSnapshot, orderBy, query, serverTimestamp, writeBatch, limit,
 } from 'firebase/firestore'
 import { db } from '../firebase/index'
@@ -327,6 +327,13 @@ const useStore = create((set, get) => ({
       iconBg: 'bg-emerald-50',
       iconColor: 'text-emerald-500',
     })
+  },
+
+  deleteSession: async (id) => {
+    await deleteDoc(doc(db, 'sessions', id))
+    set(state => ({
+      sessions: state.sessions.filter(s => s.id !== id),
+    }))
   },
 
   clearRows: async () => {

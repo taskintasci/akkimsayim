@@ -26,8 +26,9 @@ function StatusBadge({ durum }) {
 }
 
 export default function Giris({ onNavigate }) {
-  const { sessions, sessionsLoading, loadSessions, setActiveSession, createSession, currentUser } = useStore()
+  const { sessions, sessionsLoading, loadSessions, setActiveSession, createSession, deleteSession, currentUser } = useStore()
   const [selectedId, setSelectedId] = useState(null)
+  const [deletingId, setDeletingId] = useState(null)
 
   useEffect(() => { loadSessions() }, [])
   const [newType, setNewType] = useState('Yıl Sonu Sayımı')
@@ -97,10 +98,10 @@ export default function Giris({ onNavigate }) {
           <div className="flex flex-col gap-2">
             {sessions.map(s => {
               const pct = s.kalemSayisi > 0 ? Math.round((s.tamamlanan / s.kalemSayisi) * 100) : 0
+              const isDeleting = deletingId === s.id
               return (
-                <button
+                <div
                   key={s.id}
-                  onClick={() => setSelectedId(s.id)}
                   className={
                     'w-full text-left rounded-xl p-4 border transition-all ' +
                     (selectedId === s.id
@@ -109,30 +110,60 @@ export default function Giris({ onNavigate }) {
                   }
                 >
                   <div className="flex items-start justify-between mb-1">
-                    <div className="text-white font-semibold text-sm">{s.type}</div>
-                    <StatusBadge durum={s.durum} />
-                  </div>
-                  <div className="text-slate-300 text-xs mb-1.5 font-medium">{s.depoAdi}</div>
-                  <div className="flex items-center gap-2.5 text-xs text-slate-400 mono mb-2">
-                    <span>{s.tarih}</span>
-                    <span>·</span>
-                    <span>{s.kalemSayisi} kalem</span>
-                    {s.fark > 0 && (
-                      <>
-                        <span>·</span>
-                        <span className="text-amber-400">{s.fark} fark</span>
-                      </>
-                    )}
-                  </div>
-                  {s.kalemSayisi > 0 && (
-                    <div className="w-full bg-white/10 rounded-full h-1">
-                      <div
-                        className="h-1 rounded-full bg-blue-400 transition-all"
-                        style={{ width: pct + '%' }}
-                      />
+                    <button className="flex-1 text-left" onClick={() => { setSelectedId(s.id); setDeletingId(null) }}>
+                      <div className="text-white font-semibold text-sm">{s.type}</div>
+                    </button>
+                    <div className="flex items-center gap-2 ml-2 shrink-0">
+                      <StatusBadge durum={s.durum} />
+                      {!isDeleting ? (
+                        <button
+                          onClick={e => { e.stopPropagation(); setDeletingId(s.id) }}
+                          className="w-6 h-6 flex items-center justify-center rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                          title="Sayımı Sil"
+                        >
+                          <span className="ms" style={{ fontSize: 15 }}>delete</span>
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={async e => { e.stopPropagation(); await deleteSession(s.id); setDeletingId(null); if (selectedId === s.id) setSelectedId(null) }}
+                            className="px-2 py-0.5 bg-red-500 hover:bg-red-600 text-white text-[11px] font-semibold rounded-md transition-colors"
+                          >
+                            Sil
+                          </button>
+                          <button
+                            onClick={e => { e.stopPropagation(); setDeletingId(null) }}
+                            className="px-2 py-0.5 text-slate-400 hover:text-white text-[11px] rounded-md transition-colors"
+                          >
+                            İptal
+                          </button>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </button>
+                  </div>
+                  <button className="w-full text-left" onClick={() => { setSelectedId(s.id); setDeletingId(null) }}>
+                    <div className="text-slate-300 text-xs mb-1.5 font-medium">{s.depoAdi}</div>
+                    <div className="flex items-center gap-2.5 text-xs text-slate-400 mono mb-2">
+                      <span>{s.tarih}</span>
+                      <span>·</span>
+                      <span>{s.kalemSayisi} kalem</span>
+                      {s.fark > 0 && (
+                        <>
+                          <span>·</span>
+                          <span className="text-amber-400">{s.fark} fark</span>
+                        </>
+                      )}
+                    </div>
+                    {s.kalemSayisi > 0 && (
+                      <div className="w-full bg-white/10 rounded-full h-1">
+                        <div
+                          className="h-1 rounded-full bg-blue-400 transition-all"
+                          style={{ width: pct + '%' }}
+                        />
+                      </div>
+                    )}
+                  </button>
+                </div>
               )
             })}
           </div>
