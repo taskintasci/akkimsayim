@@ -16,6 +16,10 @@
   user-select: none;
   font-style: normal;
   display: inline-block;
+  visibility: hidden;
+}
+body.ms-loaded .ms {
+  visibility: visible;
 }
 
 .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 500; }
