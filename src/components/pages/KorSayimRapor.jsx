@@ -1,10 +1,35 @@
+import { useState } from 'react'
 import useStore from '../../store/useStore'
 import { exportRaporFarklar } from '../../utils/excelExport'
 
-export default function KorSayimRapor({ onNavigate }) {
-  const { korMatched, results, session, setPendingKodFilter } = useStore()
+const EMPTY_FORM = { kod: '', ad: '', adres: '', parti: '', durum: '', miktar: '', birim: '', not: '' }
 
-  const rows = korMatched   // birebir Rapor mantığı, sadece veri kaynağı farklı
+export default function KorSayimRapor({ onNavigate }) {
+  const { korMatched, results, session, setPendingKodFilter, manualRows, addManualRow, removeManualRow } = useStore()
+  const [showForm, setShowForm] = useState(false)
+  const [form, setForm] = useState(EMPTY_FORM)
+  const [saving, setSaving] = useState(false)
+
+  const rows = korMatched
+
+  async function handleAddManual(e) {
+    e.preventDefault()
+    if (!form.kod.trim() || !form.miktar) return
+    setSaving(true)
+    await addManualRow({
+      kod:    form.kod.trim().toUpperCase(),
+      ad:     form.ad.trim(),
+      adres:  form.adres.trim(),
+      parti:  form.parti.trim(),
+      durum:  form.durum.trim(),
+      miktar: form.miktar,
+      birim:  form.birim.trim(),
+      not:    form.not.trim(),
+    })
+    setSaving(false)
+    setForm(EMPTY_FORM)
+    setShowForm(false)
+  }
 
   const counted = rows.filter(r => results[r.id]?.miktar !== undefined && results[r.id]?.miktar !== '')
   const discrepancies = rows
@@ -107,6 +132,8 @@ export default function KorSayimRapor({ onNavigate }) {
             <thead>
               <tr className="bg-slate-50 text-[11px] mono text-slate-500 uppercase tracking-wider border-b border-slate-200">
                 <th className="px-3 py-1.5">Kod / Ad</th>
+                <th className="px-3 py-1.5">Parti</th>
+                <th className="px-3 py-1.5">Durum</th>
                 <th className="px-3 py-1.5">Adres</th>
                 <th className="px-3 py-1.5 text-right">Sistem</th>
                 <th className="px-3 py-1.5 text-right">Sayılan</th>
@@ -121,6 +148,8 @@ export default function KorSayimRapor({ onNavigate }) {
                     <p className="mono font-semibold text-blue-700 text-[11px]">{row.kod}</p>
                     <p className="text-slate-700">{row.ad}</p>
                   </td>
+                  <td className="px-3 py-1.5 mono text-slate-500 text-[12px]">{row.parti || '—'}</td>
+                  <td className="px-3 py-1.5 text-[12px] text-slate-500">{row.durum || '—'}</td>
                   <td className="px-3 py-1.5 mono text-slate-500 text-[12px]">{row.adres}</td>
                   <td className="px-3 py-1.5 text-right mono font-medium">
                     {row.sayim} <span className="text-slate-400 text-[11px]">{row.birim}</span>
@@ -133,7 +162,7 @@ export default function KorSayimRapor({ onNavigate }) {
                   </td>
                   <td className="px-3 py-1.5 text-center">
                     <button
-                      onClick={() => { setPendingKodFilter(row.kod); onNavigate('sayim') }}
+                      onClick={() => { setPendingKodFilter(row.kod); onNavigate('kor') }}
                       className="text-[12px] text-blue-600 hover:underline font-medium"
                     >İncele</button>
                   </td>
@@ -143,6 +172,180 @@ export default function KorSayimRapor({ onNavigate }) {
           </table>
         </div>
       )}
+
+      {/* Manuel Eklenen Kalemler */}
+      <div className="bg-white rounded-xl border border-amber-200 overflow-hidden">
+        <div className="px-4 py-2.5 border-b border-amber-100 flex items-center justify-between bg-amber-50">
+          <div className="flex items-center gap-2">
+            <span className="ms text-amber-600" style={{ fontSize: 18 }}>add_box</span>
+            <p className="text-[13px] font-semibold text-amber-900">
+              Sistemde Bulunmayan Kalemler
+              {manualRows.length > 0 && <span className="badge bg-amber-100 text-amber-700 ml-2">{manualRows.length}</span>}
+            </p>
+          </div>
+          <button
+            onClick={() => { setShowForm(f => !f); setForm(EMPTY_FORM) }}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[12.5px] font-semibold no-print"
+          >
+            <span className="ms" style={{ fontSize: 15 }}>{showForm ? 'close' : 'add'}</span>
+            {showForm ? 'İptal' : 'Manuel Ekle'}
+          </button>
+        </div>
+
+        {/* Ekleme Formu */}
+        {showForm && (
+          <form onSubmit={handleAddManual} className="px-4 py-3 border-b border-amber-100 bg-amber-50/40 no-print flex flex-col gap-2">
+            <div className="grid grid-cols-6 gap-2">
+              <div>
+                <label className="block text-[11px] text-slate-500 mb-1">Stok Kodu *</label>
+                <input
+                  autoFocus
+                  type="text"
+                  value={form.kod}
+                  onChange={e => setForm(f => ({ ...f, kod: e.target.value }))}
+                  placeholder="KOD123"
+                  className="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-[12.5px] mono focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                  required
+                />
+              </div>
+              <div className="col-span-2">
+                <label className="block text-[11px] text-slate-500 mb-1">Ürün Adı</label>
+                <input
+                  type="text"
+                  value={form.ad}
+                  onChange={e => setForm(f => ({ ...f, ad: e.target.value }))}
+                  placeholder="Ürün adı..."
+                  className="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-[12.5px] focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] text-slate-500 mb-1">Adres</label>
+                <input
+                  type="text"
+                  value={form.adres}
+                  onChange={e => setForm(f => ({ ...f, adres: e.target.value }))}
+                  placeholder="A-01-1-1"
+                  className="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-[12.5px] mono focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] text-slate-500 mb-1">Parti</label>
+                <input
+                  type="text"
+                  value={form.parti}
+                  onChange={e => setForm(f => ({ ...f, parti: e.target.value }))}
+                  placeholder="PT240101"
+                  className="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-[12.5px] mono focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] text-slate-500 mb-1">Durum</label>
+                <input
+                  type="text"
+                  value={form.durum}
+                  onChange={e => setForm(f => ({ ...f, durum: e.target.value }))}
+                  placeholder="Serbest / KK..."
+                  className="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-[12.5px] focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-6 gap-2 items-end">
+              <div>
+                <label className="block text-[11px] text-slate-500 mb-1">Sayılan Miktar *</label>
+                <div className="flex gap-1">
+                  <input
+                    type="number"
+                    value={form.miktar}
+                    onChange={e => setForm(f => ({ ...f, miktar: e.target.value }))}
+                    placeholder="0"
+                    className="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-[12.5px] mono focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                    required
+                  />
+                  <input
+                    type="text"
+                    value={form.birim}
+                    onChange={e => setForm(f => ({ ...f, birim: e.target.value }))}
+                    placeholder="KG"
+                    className="w-16 border border-slate-300 rounded-lg px-2 py-1.5 text-[12.5px] mono focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                  />
+                </div>
+              </div>
+              <div className="col-span-4">
+                <label className="block text-[11px] text-slate-500 mb-1">Not</label>
+                <input
+                  type="text"
+                  value={form.not}
+                  onChange={e => setForm(f => ({ ...f, not: e.target.value }))}
+                  placeholder="Açıklama..."
+                  className="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-[12.5px] focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                />
+              </div>
+              <div className="flex items-end">
+                <button
+                  type="submit"
+                  disabled={saving || !form.kod.trim() || !form.miktar}
+                  className="w-full px-4 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[12.5px] font-semibold disabled:opacity-40"
+                >
+                  {saving ? '…' : 'Ekle'}
+                </button>
+              </div>
+            </div>
+          </form>
+        )}
+
+        {/* Manuel kayıt listesi */}
+        {manualRows.length === 0 ? (
+          <div className="px-4 py-6 text-center text-[12.5px] text-slate-400">
+            Sistemde bulunmayan ürün eklemek için "Manuel Ekle" butonunu kullanın.
+          </div>
+        ) : (
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50 text-[11px] mono text-slate-500 uppercase tracking-wider border-b border-slate-200">
+                <th className="px-3 py-1.5">Kod / Ad</th>
+                <th className="px-3 py-1.5">Parti</th>
+                <th className="px-3 py-1.5">Durum</th>
+                <th className="px-3 py-1.5">Adres</th>
+                <th className="px-3 py-1.5 text-right">Sistem</th>
+                <th className="px-3 py-1.5 text-right">Sayılan</th>
+                <th className="px-3 py-1.5 text-right">Fark</th>
+                <th className="px-3 py-1.5">Not</th>
+                <th className="px-3 py-1.5 no-print"></th>
+              </tr>
+            </thead>
+            <tbody className="text-[12.5px] divide-y divide-slate-50">
+              {manualRows.map((row, i) => (
+                <tr key={row.id} className={i % 2 === 1 ? 'bg-amber-50/30' : ''}>
+                  <td className="px-3 py-1.5">
+                    <p className="mono font-semibold text-amber-700 text-[11px]">{row.kod}</p>
+                    <p className="text-slate-700">{row.ad || <span className="text-slate-400 italic">—</span>}</p>
+                  </td>
+                  <td className="px-3 py-1.5 mono text-slate-500 text-[12px]">{row.parti || '—'}</td>
+                  <td className="px-3 py-1.5 text-slate-500 text-[12px]">{row.durum || '—'}</td>
+                  <td className="px-3 py-1.5 mono text-slate-500 text-[12px]">{row.adres || '—'}</td>
+                  <td className="px-3 py-1.5 text-right mono text-slate-400">0</td>
+                  <td className="px-3 py-1.5 text-right mono font-bold text-emerald-600">
+                    +{row.miktar} <span className="text-emerald-400 text-[11px]">{row.birim}</span>
+                  </td>
+                  <td className="px-3 py-1.5 text-right mono font-bold text-emerald-600">
+                    +{row.miktar} <span className="opacity-60 text-[11px]">{row.birim}</span>
+                  </td>
+                  <td className="px-3 py-1.5 text-slate-500 text-[12px]">{row.not || '—'}</td>
+                  <td className="px-3 py-1.5 text-center no-print">
+                    <button
+                      onClick={() => removeManualRow(row.id)}
+                      className="text-slate-400 hover:text-red-500 transition-colors"
+                      title="Sil"
+                    >
+                      <span className="ms" style={{ fontSize: 16 }}>delete</span>
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   )
 }
