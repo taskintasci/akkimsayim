@@ -172,12 +172,6 @@ export default function MembranSayim({ onNavigate }) {
               <span className="ms" style={{ fontSize: 16 }}>{hideSayilan ? 'edit' : 'edit_off'}</span>
               <span>{hideSayilan ? 'Sayılanı Göster' : 'Sayılanı Gizle'}</span>
             </button>
-            <button onClick={handlePrint} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
-              <span className="ms" style={{ fontSize: 15 }}>print</span> Yazdır
-            </button>
-            <button onClick={() => exportResults(membranRows, results, session)} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
-              <span className="ms" style={{ fontSize: 15 }}>download</span> Excel'e Aktar
-            </button>
             {(() => {
               const allFilled = filtered.length > 0 && filtered.every(r => { const m = results[r.id]?.miktar; return m !== undefined && m !== '' && String(m) === String(r.sayim) })
               return (
@@ -191,13 +185,6 @@ export default function MembranSayim({ onNavigate }) {
                 </button>
               )
             })()}
-            <button
-              onClick={() => setGorevModal(true)}
-              disabled={filtered.length === 0}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[12.5px] font-medium disabled:opacity-40"
-            >
-              <span className="ms" style={{ fontSize: 15 }}>assignment_ind</span> Sayımcıya Gönder
-            </button>
           </div>
         </div>
 
@@ -372,9 +359,21 @@ export default function MembranSayim({ onNavigate }) {
             <span className="text-slate-300">·</span>
             <span>{filtered.length.toLocaleString('tr')} kayıt · {grouped.length} palet</span>
           </div>
-          <button onClick={() => onNavigate('rapor')} className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-[12.5px] font-semibold hover:bg-blue-700">
-            Sayımı Tamamla <span className="ms" style={{ fontSize: 17 }}>arrow_forward</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setGorevModal(true)}
+              disabled={filtered.length === 0}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[12.5px] font-medium disabled:opacity-40"
+            >
+              <span className="ms" style={{ fontSize: 15 }}>assignment_ind</span> Sayımcıya Gönder
+            </button>
+            <button onClick={() => exportResults(membranRows, results, session)} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
+              <span className="ms" style={{ fontSize: 15 }}>download</span> Excel'e Aktar
+            </button>
+            <button onClick={handlePrint} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
+              <span className="ms" style={{ fontSize: 15 }}>print</span> Yazdır
+            </button>
+          </div>
         </div>
       )}
 

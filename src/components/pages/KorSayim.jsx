@@ -142,9 +142,6 @@ export default function KorSayim({ onNavigate }) {
               <span className="ms" style={{ fontSize: 16 }}>{hideSayilan ? 'edit' : 'edit_off'}</span>
               <span>{hideSayilan ? 'Sayılanı Göster' : 'Sayılanı Gizle'}</span>
             </button>
-            <button onClick={handlePrint} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
-              <span className="ms" style={{ fontSize: 15 }}>print</span> Yazdır
-            </button>
             {(() => {
               const allFilled = filtered.length > 0 && filtered.every(r => { const m = results[r.id]?.miktar; return m !== undefined && m !== '' && String(m) === String(r.sayim) })
               return (
@@ -158,16 +155,6 @@ export default function KorSayim({ onNavigate }) {
                 </button>
               )
             })()}
-            <button onClick={() => exportResults(korMatched, results, session)} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
-              <span className="ms" style={{ fontSize: 15 }}>download</span> Excel'e Aktar
-            </button>
-            <button
-              onClick={() => setGorevModal(true)}
-              disabled={filtered.length === 0}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[12.5px] font-medium disabled:opacity-40"
-            >
-              <span className="ms" style={{ fontSize: 15 }}>assignment_ind</span> Sayımcıya Gönder
-            </button>
             {korCodes.length > 0 && (
               <button onClick={clearKor} className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 border border-red-200 text-red-600 rounded-lg text-[12.5px] font-medium hover:bg-red-100">
                 <span className="ms" style={{ fontSize: 15 }}>delete_sweep</span> Temizle
@@ -430,9 +417,21 @@ export default function KorSayim({ onNavigate }) {
             </select>
           </div>
 
-          <button onClick={() => onNavigate('korrapor')} className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-[12.5px] font-semibold hover:bg-blue-700">
-            Raporu Görüntüle <span className="ms" style={{ fontSize: 17 }}>arrow_forward</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setGorevModal(true)}
+              disabled={filtered.length === 0}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[12.5px] font-medium disabled:opacity-40"
+            >
+              <span className="ms" style={{ fontSize: 15 }}>assignment_ind</span> Sayımcıya Gönder
+            </button>
+            <button onClick={() => exportResults(korMatched, results, session)} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
+              <span className="ms" style={{ fontSize: 15 }}>download</span> Excel'e Aktar
+            </button>
+            <button onClick={handlePrint} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
+              <span className="ms" style={{ fontSize: 15 }}>print</span> Yazdır
+            </button>
+          </div>
         </div>
       )}
 
