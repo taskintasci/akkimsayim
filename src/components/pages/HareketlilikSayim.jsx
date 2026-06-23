@@ -1,7 +1,7 @@
 import { useState, useRef, useMemo, useEffect } from 'react'
 import { useReactToPrint } from 'react-to-print'
 import useStore from '../../store/useStore'
-import { sortRows, getUniqueAdresValues, parseAdres } from '../../utils/adresUtils'
+import { sortRows, getCascadedAdresValues, parseAdres } from '../../utils/adresUtils'
 import { exportResults } from '../../utils/excelExport'
 import PrintSheet from '../print/PrintSheet'
 import MultiSelect from '../shared/MultiSelect'
@@ -74,8 +74,29 @@ export default function HareketlilikSayim({ onNavigate }) {
     document.body.classList.toggle('hide-sayilan', next)
   }
 
-  const adresVals   = useMemo(() => getUniqueAdresValues(rows), [rows])
-  const kategoriler = useMemo(() => [...new Set(rows.map(r => r.kategori).filter(Boolean))].sort(), [rows])
+  const kategoriler = useMemo(() => {
+    const q = filterSearch.trim().toLowerCase()
+    return [...new Set(rows.filter(r => {
+      if (q && !(r.kod?.toLowerCase().includes(q) || r.ad?.toLowerCase().includes(q) || r.parti?.toLowerCase().includes(q))) return false
+      if (filterDurum.length > 0 && !filterDurum.includes(r.durum)) return false
+      return true
+    }).map(r => r.kategori).filter(Boolean))].sort()
+  }, [rows, filterSearch, filterDurum])
+
+  const preAdres = useMemo(() => {
+    const q = filterSearch.trim().toLowerCase()
+    return rows.filter(r => {
+      if (q && !(r.kod?.toLowerCase().includes(q) || r.ad?.toLowerCase().includes(q) || r.parti?.toLowerCase().includes(q))) return false
+      if (filterDurum.length > 0    && !filterDurum.includes(r.durum))       return false
+      if (filterKategori.length > 0 && !filterKategori.includes(r.kategori)) return false
+      return true
+    })
+  }, [rows, filterSearch, filterDurum, filterKategori])
+
+  const adresVals = useMemo(
+    () => getCascadedAdresValues(preAdres, filterRaf, filterSira, filterKolon),
+    [preAdres, filterRaf, filterSira, filterKolon]
+  )
 
   const filtered = useMemo(() => {
     const q = filterSearch.trim().toLowerCase()

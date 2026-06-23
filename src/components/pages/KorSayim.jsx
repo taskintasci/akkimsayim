@@ -1,7 +1,7 @@
 import { useState, useRef, useMemo, useEffect } from 'react'
 import { useReactToPrint } from 'react-to-print'
 import useStore from '../../store/useStore'
-import { sortRows, getUniqueAdresValues, parseAdres } from '../../utils/adresUtils'
+import { sortRows, getCascadedAdresValues, parseAdres } from '../../utils/adresUtils'
 import { exportResults } from '../../utils/excelExport'
 import PrintSheet from '../print/PrintSheet'
 import MultiSelect from '../shared/MultiSelect'
@@ -69,8 +69,29 @@ export default function KorSayim({ onNavigate }) {
     return map
   }, [rows])
 
-  const adresVals   = useMemo(() => getUniqueAdresValues(korMatched), [korMatched])
-  const kategoriler = useMemo(() => [...new Set(korMatched.map(r => r.kategori).filter(Boolean))].sort(), [korMatched])
+  const kategoriler = useMemo(() => {
+    const q = filterSearch.trim().toLowerCase()
+    return [...new Set(korMatched.filter(r => {
+      if (q && !(r.kod?.toLowerCase().includes(q) || r.ad?.toLowerCase().includes(q) || r.parti?.toLowerCase().includes(q))) return false
+      if (filterDurum.length > 0 && !filterDurum.includes(r.durum)) return false
+      return true
+    }).map(r => r.kategori).filter(Boolean))].sort()
+  }, [korMatched, filterSearch, filterDurum])
+
+  const preAdres = useMemo(() => {
+    const q = filterSearch.trim().toLowerCase()
+    return korMatched.filter(r => {
+      if (q && !(r.kod?.toLowerCase().includes(q) || r.ad?.toLowerCase().includes(q) || r.parti?.toLowerCase().includes(q))) return false
+      if (filterDurum.length > 0    && !filterDurum.includes(r.durum))       return false
+      if (filterKategori.length > 0 && !filterKategori.includes(r.kategori)) return false
+      return true
+    })
+  }, [korMatched, filterSearch, filterDurum, filterKategori])
+
+  const adresVals = useMemo(
+    () => getCascadedAdresValues(preAdres, filterRaf, filterSira, filterKolon),
+    [preAdres, filterRaf, filterSira, filterKolon]
+  )
 
   const filteredBase = useMemo(() => {
     const q = filterSearch.trim().toLowerCase()

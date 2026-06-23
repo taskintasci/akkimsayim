@@ -1,7 +1,7 @@
 import { useState, useRef, useMemo, useEffect } from 'react'
 import { useReactToPrint } from 'react-to-print'
 import useStore from '../../store/useStore'
-import { sortRows, getUniqueAdresValues, parseAdres } from '../../utils/adresUtils'
+import { sortRows, getCascadedAdresValues, parseAdres } from '../../utils/adresUtils'
 import { exportResults } from '../../utils/excelExport'
 import PrintSheet from '../print/PrintSheet'
 import MultiSelect from '../shared/MultiSelect'
@@ -72,10 +72,30 @@ export default function MembranSayim({ onNavigate }) {
     [rows]
   )
 
-  const adresVals = useMemo(() => getUniqueAdresValues(membranRows), [membranRows])
-  const paletler  = useMemo(
-    () => [...new Set(membranRows.map(r => r.partiEk).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'tr', { numeric: true })),
-    [membranRows]
+  // Palet seçenekleri: durum filtresinden sonra
+  const paletler = useMemo(() => {
+    const q = filterSearch.trim().toLowerCase()
+    return [...new Set(membranRows.filter(r => {
+      if (q && !(r.kod?.toLowerCase().includes(q) || r.ad?.toLowerCase().includes(q) || r.parti?.toLowerCase().includes(q))) return false
+      if (filterDurum.length > 0 && !filterDurum.includes(r.durum)) return false
+      return true
+    }).map(r => r.partiEk).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'tr', { numeric: true }))
+  }, [membranRows, filterSearch, filterDurum])
+
+  // Adres seçenekleri: durum + palet filtresinden sonra cascade
+  const preAdres = useMemo(() => {
+    const q = filterSearch.trim().toLowerCase()
+    return membranRows.filter(r => {
+      if (q && !(r.kod?.toLowerCase().includes(q) || r.ad?.toLowerCase().includes(q) || r.parti?.toLowerCase().includes(q))) return false
+      if (filterDurum.length > 0 && !filterDurum.includes(r.durum))       return false
+      if (filterPalet.length > 0 && !filterPalet.includes(r.partiEk))     return false
+      return true
+    })
+  }, [membranRows, filterSearch, filterDurum, filterPalet])
+
+  const adresVals = useMemo(
+    () => getCascadedAdresValues(preAdres, filterRaf, filterSira, filterKolon),
+    [preAdres, filterRaf, filterSira, filterKolon]
   )
 
   const filtered = useMemo(() => {

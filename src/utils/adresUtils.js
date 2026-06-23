@@ -33,3 +33,20 @@ export function getUniqueAdresValues(rows) {
     gozler: [...gozSet].sort((a, b) => Number(a) - Number(b)),
   }
 }
+
+// Filtre seçeneklerini cascade hesaplar:
+// raflar → tüm base'den, siralar → raf filtrelenmiş base'den, vb.
+export function getCascadedAdresValues(base, filterRaf, filterSira, filterKolon) {
+  const raflar = [...new Set(base.map(r => parseAdres(r.adres).raf).filter(Boolean))].sort()
+
+  const afterRaf   = filterRaf.length   > 0 ? base.filter(r => filterRaf.includes(parseAdres(r.adres).raf))     : base
+  const siralar    = [...new Set(afterRaf.map(r => parseAdres(r.adres).sira).filter(Boolean))].sort()
+
+  const afterSira  = filterSira.length  > 0 ? afterRaf.filter(r => filterSira.includes(parseAdres(r.adres).sira))   : afterRaf
+  const kolonlar   = [...new Set(afterSira.map(r => parseAdres(r.adres).kolon).filter(Boolean))].sort((a, b) => Number(a) - Number(b))
+
+  const afterKolon = filterKolon.length > 0 ? afterSira.filter(r => filterKolon.includes(parseAdres(r.adres).kolon)) : afterSira
+  const gozler     = [...new Set(afterKolon.map(r => parseAdres(r.adres).goz).filter(Boolean))].sort((a, b) => Number(a) - Number(b))
+
+  return { raflar, siralar, kolonlar, gozler }
+}

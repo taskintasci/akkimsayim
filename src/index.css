@@ -47,6 +47,12 @@
   font-size: 12px; color: #334155; background: white; cursor: pointer;
 }
 .fsel:focus { outline: none; border-color: #93c5fd; }
+.fsel-active {
+  border-color: #3b82f6 !important;
+  background: #eff6ff !important;
+  color: #1d4ed8 !important;
+  font-weight: 600;
+}
 
 /* Sistem gizle */
 .sistem-col { transition: opacity .2s; }

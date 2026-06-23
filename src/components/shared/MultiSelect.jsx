@@ -34,11 +34,8 @@ export default function MultiSelect({ placeholder, options, value = [], onChange
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
-        className={
-          'fsel flex items-center gap-1 pr-1.5 ' +
-          (active ? 'border-blue-400 bg-blue-50 text-blue-700 font-medium' : '')
-        }
-        style={active ? {} : style}
+        className={'fsel flex items-center gap-1 pr-1.5 ' + (active ? 'fsel-active' : '')}
+        style={active ? undefined : style}
       >
         <span className="flex-1 text-left truncate max-w-[100px]">{label}</span>
         {active && (
