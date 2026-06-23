@@ -48,7 +48,6 @@ export default function HareketlilikSayim({ onNavigate }) {
   const [filterKolon, setFilterKolon] = useState('')
   const [filterGoz, setFilterGoz] = useState('')
   const [filterGirisGun, setFilterGirisGun] = useState('')
-  const [onlyDiff, setOnlyDiff] = useState(false)
   const [sortType, setSortType] = useState('1')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(100)
@@ -75,7 +74,7 @@ export default function HareketlilikSayim({ onNavigate }) {
 
   const adresVals = useMemo(() => getUniqueAdresValues(rows), [rows])
 
-  const filteredBase = useMemo(() => {
+  const filtered = useMemo(() => {
     const q = filterSearch.trim().toLowerCase()
     let result = rows.filter(r => {
       if (q && !(
@@ -101,17 +100,8 @@ export default function HareketlilikSayim({ onNavigate }) {
     return sortRows(result, sortType)
   }, [rows, filterSearch, filterDurum, filterRaf, filterSira, filterKolon, filterGoz, filterGirisGun, sortType])
 
-  const filtered = useMemo(() => {
-    if (!onlyDiff) return filteredBase
-    return filteredBase.filter(r => {
-      const m = results[r.id]?.miktar
-      return m !== undefined && m !== '' && String(m) !== String(r.sayim)
-    })
-  }, [filteredBase, onlyDiff, results])
-
   const counted   = useMemo(() => rows.filter(r => results[r.id]?.miktar !== undefined && results[r.id]?.miktar !== ''), [rows, results])
   const diffCount = useMemo(() => rows.filter(r => { const m = results[r.id]?.miktar; return m !== undefined && m !== '' && String(m) !== String(r.sayim) }).length, [rows, results])
-  const waiting   = rows.length - counted.length
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const safePage   = Math.min(page, totalPages)
@@ -213,10 +203,6 @@ export default function HareketlilikSayim({ onNavigate }) {
             <option value="91-180">91–180 gün (Yavaş)</option>
             <option value="180+">180+ gün (Hareketsiz)</option>
           </select>
-          <label className="flex items-center gap-1.5 text-[11.5px] text-slate-500 cursor-pointer ml-1">
-            <input type="checkbox" checked={onlyDiff} onChange={e => setOnlyDiff(e.target.checked)} className="rounded" />
-            Sadece farklılıklar
-          </label>
           <div className="ml-auto flex items-center gap-1.5">
             <span className="text-[11.5px] text-slate-400 font-medium">Sıra:</span>
             <select className="fsel" style={{ borderColor: '#93c5fd' }} value={sortType} onChange={e => setSortType(e.target.value)}>
@@ -226,36 +212,6 @@ export default function HareketlilikSayim({ onNavigate }) {
           </div>
         </div>
 
-        {/* Satır 3: Mini İstatistik + Renk Efsanesi */}
-        <div className="flex items-center gap-5 mt-2">
-          <div className="flex items-center gap-1.5 text-[11.5px] text-slate-500">
-            <span className="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
-            Sayılan: <strong className="text-slate-700 ml-0.5">{counted.length.toLocaleString('tr')}</strong>
-          </div>
-          <div className="flex items-center gap-1.5 text-[11.5px] text-slate-500">
-            <span className="w-2 h-2 rounded-full bg-red-400 inline-block"></span>
-            Farklılık: <strong className="text-red-600 ml-0.5">{diffCount.toLocaleString('tr')}</strong>
-          </div>
-          <div className="flex items-center gap-1.5 text-[11.5px] text-slate-500">
-            <span className="w-2 h-2 rounded-full bg-slate-300 inline-block"></span>
-            Bekliyor: <strong className="text-slate-700 ml-0.5">{waiting.toLocaleString('tr')}</strong>
-          </div>
-          <div className="ml-4 flex items-center gap-3 border-l border-slate-200 pl-4">
-            <span className="text-[10.5px] text-slate-400 font-medium uppercase tracking-wide">Giriş Gün:</span>
-            <span className="flex items-center gap-1 text-[10.5px] text-slate-500">
-              <span className="w-3 h-3 rounded inline-block border border-slate-200 bg-white"></span>0–30
-            </span>
-            <span className="flex items-center gap-1 text-[10.5px] text-slate-500">
-              <span className="w-3 h-3 rounded inline-block" style={{ background: 'rgba(255,251,235,0.9)', border: '1px solid #fcd34d' }}></span>31–90
-            </span>
-            <span className="flex items-center gap-1 text-[10.5px] text-slate-500">
-              <span className="w-3 h-3 rounded inline-block" style={{ background: 'rgba(254,249,195,0.9)', border: '1px solid #fbbf24' }}></span>91–180
-            </span>
-            <span className="flex items-center gap-1 text-[10.5px] text-slate-500">
-              <span className="w-3 h-3 rounded inline-block" style={{ background: 'rgba(254,226,226,0.9)', border: '1px solid #f87171' }}></span>180+
-            </span>
-          </div>
-        </div>
       </div>
 
       {/* ── Tablo ── */}
