@@ -66,7 +66,6 @@ export default function Giris({ onNavigate }) {
           </div>
           <div>
             <div className="text-white font-bold text-lg tracking-tight">Akkim Sayım</div>
-            <div className="text-slate-400 text-xs mono">ChemStack Pro — Depo Yönetim Sistemi</div>
           </div>
         </div>
         <div className="flex items-center gap-3">

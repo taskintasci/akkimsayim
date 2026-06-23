@@ -34,7 +34,6 @@ export default function Login() {
           </div>
           <div>
             <div className="text-white font-bold text-lg tracking-tight">Akkim Sayım</div>
-            <div className="text-slate-400 text-xs mono">ChemStack Pro</div>
           </div>
         </div>
 
