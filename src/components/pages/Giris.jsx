@@ -61,7 +61,7 @@ export default function Giris({ onNavigate }) {
           <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center">
             <span className="ms text-white" style={{ fontSize: 20 }}>warehouse</span>
           </div>
-          <span className="text-slate-900 font-bold text-base tracking-tight">Akkim Sayım</span>
+          <span className="text-slate-900 font-bold text-sm leading-tight tracking-tight"><span className="hidden sm:inline">Akkim Depolama Merkezi </span>Sayım Sistemi</span>
         </div>
         <div className="flex items-center gap-3">
           {currentUser && <span className="text-slate-400 text-xs mono">{currentUser.email}</span>}

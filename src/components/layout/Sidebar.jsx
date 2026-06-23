@@ -67,7 +67,7 @@ export default function Sidebar({ activePage, onNavigate, onSettings }) {
           <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center">
             <span className="ms text-white" style={{ fontSize: 16 }}>warehouse</span>
           </div>
-          <span className="font-bold text-slate-900 text-[15px]">Akkim Sayım</span>
+          <span className="font-bold text-slate-900 text-[13px] leading-tight"><span className="hidden lg:inline">Akkim Depolama Merkezi </span>Sayım Sistemi</span>
         </div>
         <button
           onClick={() => setActiveSession(null)}

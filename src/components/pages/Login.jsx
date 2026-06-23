@@ -29,7 +29,7 @@ export default function Login() {
           <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
             <span className="ms text-white" style={{ fontSize: 22 }}>warehouse</span>
           </div>
-          <div className="text-slate-900 font-bold text-lg tracking-tight">Akkim Sayım</div>
+          <div className="text-slate-900 font-bold text-sm leading-tight tracking-tight"><span className="hidden sm:inline">Akkim Depolama Merkezi </span>Sayım Sistemi</div>
         </div>
 
         {/* Kart */}

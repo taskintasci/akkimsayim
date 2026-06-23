@@ -2,7 +2,7 @@ export async function exportRaporFarklar(discrepancies, session, manualRows = []
   const { default: ExcelJS } = await import('exceljs')
 
   const workbook = new ExcelJS.Workbook()
-  workbook.creator = 'Akkim Sayım'
+  workbook.creator = 'Akkim Depolama Merkezi Sayım Sistemi'
   workbook.created = new Date()
 
   const ws = workbook.addWorksheet('Mutabakat Raporu')
@@ -122,7 +122,7 @@ export async function exportAnalizi(rows, results, session) {
 
   // --- workbook ---
   const workbook = new ExcelJS.Workbook()
-  workbook.creator = 'Akkim Sayım'
+  workbook.creator = 'Akkim Depolama Merkezi Sayım Sistemi'
   workbook.created = new Date()
 
   const ws = workbook.addWorksheet('Sayım Analizi')
@@ -239,7 +239,7 @@ export async function exportResults(rows, results, session) {
   const { default: ExcelJS } = await import('exceljs')
 
   const workbook = new ExcelJS.Workbook()
-  workbook.creator = 'Akkim Sayım'
+  workbook.creator = 'Akkim Depolama Merkezi Sayım Sistemi'
   workbook.created = new Date()
 
   const ws = workbook.addWorksheet('Sayım Sonuçları')
