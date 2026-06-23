@@ -70,6 +70,7 @@ export default function Rapor({ onNavigate }) {
       ...r,
       sayilan: results[r.id]?.miktar,
       fark: Number(results[r.id]?.miktar) - Number(String(r.sayim).replace(',', '.')),
+      not: results[r.id]?.notlar || '',
     }))
 
   const visibleDiscrepancies = onlyBigDiff
@@ -172,7 +173,8 @@ export default function Rapor({ onNavigate }) {
                 <th className="px-3 py-1.5 text-right">Sistem</th>
                 <th className="px-3 py-1.5 text-right">Sayılan</th>
                 <th className="px-3 py-1.5 text-right">Fark</th>
-                <th className="px-3 py-1.5 text-center">İşlem</th>
+                <th className="px-3 py-1.5">Not</th>
+                <th className="px-3 py-1.5 text-center no-print">İşlem</th>
               </tr>
             </thead>
             <tbody className="text-[12.5px] divide-y divide-slate-50">
@@ -195,7 +197,8 @@ export default function Rapor({ onNavigate }) {
                   <td className={`px-3 py-1.5 text-right mono font-bold ${row.fark > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                     {row.fark > 0 ? '+' : ''}{row.fark.toLocaleString('tr', { maximumFractionDigits: 2 })} <span className="opacity-60 text-[11px]">{row.birim}</span>
                   </td>
-                  <td className="px-3 py-1.5 text-center">
+                  <td className="px-3 py-1.5 text-[12px] text-slate-500">{row.not || '—'}</td>
+                  <td className="px-3 py-1.5 text-center no-print">
                     <button
                       onClick={() => { setPendingKodFilter(row.kod); onNavigate('sayim') }}
                       className="text-[12px] text-blue-600 hover:underline font-medium"
