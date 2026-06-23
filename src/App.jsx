@@ -1,5 +1,6 @@
 import { lazy, Suspense, useState, useEffect } from 'react'
 import { onAuthStateChanged } from 'firebase/auth'
+import { useShallow } from 'zustand/react/shallow'
 import { auth } from './firebase/index'
 import useStore from './store/useStore'
 import Sidebar from './components/layout/Sidebar'
@@ -59,7 +60,17 @@ function Spinner() {
 export default function App() {
   // undefined = henüz kontrol edilmedi, null = giriş yok, object = giriş yapılmış
   const [firebaseUser, setFirebaseUser] = useState(undefined)
-  const { setCurrentUser, loadUserProfile, userRole, profileLoading, activeSessionId, rows, rowsLoading } = useStore()
+  const { setCurrentUser, loadUserProfile, userRole, profileLoading, activeSessionId, rows, rowsLoading } = useStore(
+    useShallow(s => ({
+      setCurrentUser:  s.setCurrentUser,
+      loadUserProfile: s.loadUserProfile,
+      userRole:        s.userRole,
+      profileLoading:  s.profileLoading,
+      activeSessionId: s.activeSessionId,
+      rows:            s.rows,
+      rowsLoading:     s.rowsLoading,
+    }))
+  )
   const [activePage, setActivePage] = useState('panel')
 
   useEffect(() => {

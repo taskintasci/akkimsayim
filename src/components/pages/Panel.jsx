@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
+import { useShallow } from 'zustand/react/shallow'
 import useStore from '../../store/useStore'
 
 function formatTime(date) {
@@ -8,7 +9,17 @@ function formatTime(date) {
 }
 
 export default function Panel({ onNavigate }) {
-  const { rows, results, session, events, importFormat, clearRows, userRole } = useStore()
+  const { rows, results, session, events, importFormat, clearRows, userRole } = useStore(
+    useShallow(s => ({
+      rows:        s.rows,
+      results:     s.results,
+      session:     s.session,
+      events:      s.events,
+      importFormat: s.importFormat,
+      clearRows:   s.clearRows,
+      userRole:    s.userRole,
+    }))
+  )
   const [confirmClear, setConfirmClear] = useState(false)
 
   async function handleClearRows() {
@@ -16,13 +27,10 @@ export default function Panel({ onNavigate }) {
     setConfirmClear(false)
   }
 
-  const counted = rows.filter(r => results[r.id]?.miktar !== undefined && results[r.id]?.miktar !== '')
-  const diff = rows.filter(r => {
-    const m = results[r.id]?.miktar
-    return m !== undefined && m !== '' && String(m) !== String(r.sayim)
-  })
-  const approved = rows.filter(r => results[r.id]?.status === 'Onaylandı')
-  const pct = rows.length > 0 ? Math.round(counted.length / rows.length * 100) : 0
+  const counted  = useMemo(() => rows.filter(r => results[r.id]?.miktar !== undefined && results[r.id]?.miktar !== ''), [rows, results])
+  const diff     = useMemo(() => rows.filter(r => { const m = results[r.id]?.miktar; return m !== undefined && m !== '' && String(m) !== String(r.sayim) }), [rows, results])
+  const approved = useMemo(() => rows.filter(r => results[r.id]?.status === 'Onaylandı'), [rows, results])
+  const pct      = rows.length > 0 ? Math.round(counted.length / rows.length * 100) : 0
 
   const tarihStr = session.tarih
     ? new Date(session.tarih).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })

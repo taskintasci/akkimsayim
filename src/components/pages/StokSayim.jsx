@@ -93,6 +93,10 @@ export default function StokSayim({ onNavigate }) {
   const counted   = useMemo(() => rows.filter(r => results[r.id]?.miktar !== undefined && results[r.id]?.miktar !== ''), [rows, results])
   const diffCount = useMemo(() => rows.filter(r => { const m = results[r.id]?.miktar; return m !== undefined && m !== '' && String(m) !== String(r.sayim) }).length, [rows, results])
   const waiting   = rows.length - counted.length
+  const allFilled = useMemo(
+    () => filtered.length > 0 && filtered.every(r => { const m = results[r.id]?.miktar; return m !== undefined && m !== '' && String(m) === String(r.sayim) }),
+    [filtered, results]
+  )
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const safePage   = Math.min(page, totalPages)
@@ -135,19 +139,14 @@ export default function StokSayim({ onNavigate }) {
             <button onClick={() => exportResults(rows, results, session)} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
               <span className="ms" style={{ fontSize: 15 }}>download</span> Excel'e Aktar
             </button>
-            {(() => {
-              const allFilled = filtered.length > 0 && filtered.every(r => { const m = results[r.id]?.miktar; return m !== undefined && m !== '' && String(m) === String(r.sayim) })
-              return (
-                <button
-                  onClick={() => allFilled ? clearMiktarlar(filtered) : fillFromSistem(filtered)}
-                  disabled={filtered.length === 0}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-[12.5px] font-medium disabled:opacity-40 ${allFilled ? 'bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'}`}
-                >
-                  <span className="ms" style={{ fontSize: 15 }}>{allFilled ? 'backspace' : 'content_copy'}</span>
-                  {allFilled ? 'Sayılanı Temizle' : 'Sistemden Doldur'}
-                </button>
-              )
-            })()}
+            <button
+              onClick={() => allFilled ? clearMiktarlar(filtered) : fillFromSistem(filtered)}
+              disabled={filtered.length === 0}
+              className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-[12.5px] font-medium disabled:opacity-40 ${allFilled ? 'bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'}`}
+            >
+              <span className="ms" style={{ fontSize: 15 }}>{allFilled ? 'backspace' : 'content_copy'}</span>
+              {allFilled ? 'Sayılanı Temizle' : 'Sistemden Doldur'}
+            </button>
             <button
               onClick={() => setGorevModal(true)}
               disabled={filtered.length === 0}

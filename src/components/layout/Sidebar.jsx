@@ -1,4 +1,5 @@
 import { signOut } from 'firebase/auth'
+import { useShallow } from 'zustand/react/shallow'
 import { auth } from '../../firebase/index'
 import useStore, { ROLE_LABELS } from '../../store/useStore'
 
@@ -43,7 +44,9 @@ const MENU = [
 ]
 
 export default function Sidebar({ activePage, onNavigate, onSettings }) {
-  const { session, setActiveSession, userProfile, userRole } = useStore()
+  const { session, setActiveSession, userProfile, userRole } = useStore(
+    useShallow(s => ({ session: s.session, setActiveSession: s.setActiveSession, userProfile: s.userProfile, userRole: s.userRole }))
+  )
 
   const initials = (userProfile?.displayName || userProfile?.email || '??')
     .split(/[\s.@]+/).filter(Boolean).slice(0, 2).map(s => s[0]?.toUpperCase()).join('')
