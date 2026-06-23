@@ -28,6 +28,7 @@ export default function StokSayim({ onNavigate }) {
   const [filterSira, setFilterSira] = useState('')
   const [filterKolon, setFilterKolon] = useState('')
   const [filterGoz, setFilterGoz] = useState('')
+  const [filterKategori, setFilterKategori] = useState('')
   const [onlyDiff, setOnlyDiff] = useState(false)
   const [sortType, setSortType] = useState('1')
   const [page, setPage] = useState(1)
@@ -53,7 +54,8 @@ export default function StokSayim({ onNavigate }) {
     document.body.classList.toggle('hide-sayilan', next)
   }
 
-  const adresVals = useMemo(() => getUniqueAdresValues(rows), [rows])
+  const adresVals   = useMemo(() => getUniqueAdresValues(rows), [rows])
+  const kategoriler = useMemo(() => [...new Set(rows.map(r => r.kategori).filter(Boolean))].sort(), [rows])
 
   const filteredBase = useMemo(() => {
     const q = filterSearch.trim().toLowerCase()
@@ -63,7 +65,8 @@ export default function StokSayim({ onNavigate }) {
         r.ad?.toLowerCase().includes(q) ||
         r.parti?.toLowerCase().includes(q)
       )) return false
-      if (filterDurum && r.durum !== filterDurum) return false
+      if (filterDurum    && r.durum    !== filterDurum)    return false
+      if (filterKategori && r.kategori !== filterKategori) return false
       const p = parseAdres(r.adres)
       if (filterRaf   && p.raf   !== filterRaf)   return false
       if (filterSira  && p.sira  !== filterSira)  return false
@@ -72,7 +75,7 @@ export default function StokSayim({ onNavigate }) {
       return true
     })
     return sortRows(result, sortType)
-  }, [rows, filterSearch, filterDurum, filterRaf, filterSira, filterKolon, filterGoz, sortType])
+  }, [rows, filterSearch, filterDurum, filterKategori, filterRaf, filterSira, filterKolon, filterGoz, sortType])
 
   const filtered = useMemo(() => {
     if (!onlyDiff) return filteredBase
@@ -165,6 +168,12 @@ export default function StokSayim({ onNavigate }) {
             <option value="">Tüm Durumlar</option>
             <option>Normal</option><option>Bloke</option><option>SKTG</option>
           </select>
+          {kategoriler.length > 0 && (
+            <select className="fsel" value={filterKategori} onChange={e => setFilterKategori(e.target.value)}>
+              <option value="">Tüm Kategoriler</option>
+              {kategoriler.map(k => <option key={k}>{k}</option>)}
+            </select>
+          )}
           <select className="fsel" value={filterRaf} onChange={e => setFilterRaf(e.target.value)}>
             <option value="">Tüm Raflar</option>
             {adresVals.raflar.map(v => <option key={v}>{v}</option>)}

@@ -57,6 +57,12 @@ const RAPOR5_MAP = {
   'giris gün'          : 'girisGun',
   'giriş gün sayısı'   : 'girisGun',
   'giris gun sayisi'   : 'girisGun',
+  'kategori'           : 'kategori',
+  'ürün kategorisi'    : 'kategori',
+  'urun kategorisi'    : 'kategori',
+  'kategori kodu'      : 'kategori',
+  'ürün grubu'         : 'kategori',
+  'urun grubu'         : 'kategori',
 }
 
 // RAPOR5 ayırt edici başlıkları
