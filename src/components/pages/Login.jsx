@@ -80,9 +80,12 @@ export default function Login() {
           </form>
         </div>
 
-        <p className="text-slate-400 text-xs text-center mt-6">
-          Akkim Kimya San. Tic. A.Ş. — Dahili Kullanım
-        </p>
+        <div className="flex items-start gap-2.5 mt-6 px-1">
+          <span className="ms text-slate-400 shrink-0" style={{ fontSize: 18 }}>shield_lock</span>
+          <p className="text-slate-400 text-xs leading-relaxed">
+            <span className="font-semibold text-slate-500">Güvenlik Protokolü:</span> Bu sisteme erişim yalnızca yetkili personelle sınırlıdır. Tüm işlemler küresel uyumluluk standartları çerçevesinde izlenmektedir.
+          </p>
+        </div>
       </div>
     </div>
   )
