@@ -166,6 +166,11 @@ const useStore = create((set, get) => ({
     set(state => ({ gorevler: state.gorevler.map(g => g.id === gorevId ? { ...g, durum } : g) }))
   },
 
+  deleteGorev: async (sessionId, gorevId) => {
+    await deleteDoc(doc(db, 'sessions', sessionId, 'sayimciGorevler', gorevId))
+    set(state => ({ gorevler: state.gorevler.filter(g => g.id !== gorevId) }))
+  },
+
   // ── Sessions ──────────────────────────────────────────────────────────────
   sessions: [],
   activeSessionId: null,

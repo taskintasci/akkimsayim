@@ -139,8 +139,8 @@ function SwipeCard({ row, sayilanMiktar, onConfirm, onEdit, isMembran }) {
 // ═══════════════════════════════════════════════════════════════════════════
 export default function SayimciEkran({ mode = 'self' }) {
   const {
-    currentUser, userProfile,
-    gorevler, gorevlerLoading, loadMyGorevler, loadSessionGorevler, updateGorevDurum,
+    currentUser, userProfile, userRole,
+    gorevler, gorevlerLoading, loadMyGorevler, loadSessionGorevler, updateGorevDurum, deleteGorev,
     activeSessionId, rows, rowsLoading, results, updateResult,
     manualRows, addManualRow, korManualRows, addKorManualRow,
   } = useStore()
@@ -150,6 +150,7 @@ export default function SayimciEkran({ mode = 'self' }) {
   const [view, setView]       = useState('gorevler')  // gorevler | liste | sayim | ozet
   const [gorev, setGorev]     = useState(null)
   const [sira, setSira]       = useState('adres')
+  const [deletingId, setDeletingId] = useState(null)
   const [idx, setIdx]         = useState(0)
   const [editing, setEditing] = useState(false)
   const [editVal, setEditVal] = useState('')
@@ -277,52 +278,86 @@ export default function SayimciEkran({ mode = 'self' }) {
         ) : (
           <div className="flex flex-col gap-3 w-full max-w-md">
             {gorevler.map(g => {
-              // İlerleme: sadece aktif session ise hesaplanabilir
               const ids = g.atananRows || []
               const counted = g.sessionId === activeSessionId
                 ? ids.filter(id => { const m = results[id]?.miktar; return m !== undefined && m !== '' }).length
                 : null
+              const isDeleting = deletingId === g.id
 
               return (
-                <button
-                  key={g.id}
-                  onClick={() => openGorev(g)}
-                  className="text-left rounded-2xl border border-white/15 bg-white/5 hover:bg-white/10 p-5 transition-all"
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-white font-bold text-lg">{g.depoAdi || g.sessionType || 'Sayım'}</span>
-                    <DurumRozet durum={g.durum} />
-                  </div>
-                  <p className="text-slate-300 text-sm mb-2">{g.sessionType}</p>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-slate-400 text-sm">
-                      <span className="ms" style={{ fontSize: 18 }}>inventory_2</span>
-                      {ids.length} kalem
-                      {g.sayimTipi === 'membran' && (
-                        <span className="ms text-purple-300 ml-1" style={{ fontSize: 16 }}>layers</span>
-                      )}
-                      {g.sayimTipi === 'kor' && (
-                        <span className="ms text-amber-300 ml-1" style={{ fontSize: 16 }}>visibility_off</span>
-                      )}
+                <div key={g.id} className="rounded-2xl border border-white/15 bg-white/5 p-5">
+                  {/* Silme onayı */}
+                  {isDeleting ? (
+                    <div className="flex items-center justify-between">
+                      <p className="text-white text-sm font-semibold">Bu görevi silmek istediğinizden emin misiniz?</p>
+                      <div className="flex items-center gap-2 ml-3 shrink-0">
+                        <button
+                          onClick={async () => { await deleteGorev(g.sessionId, g.id); setDeletingId(null) }}
+                          className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold rounded-lg"
+                        >
+                          Sil
+                        </button>
+                        <button
+                          onClick={() => setDeletingId(null)}
+                          className="px-3 py-1 text-slate-300 hover:text-white text-xs rounded-lg border border-white/20"
+                        >
+                          İptal
+                        </button>
+                      </div>
                     </div>
-                    {counted !== null && (
-                      <span className={
-                        'text-sm font-semibold ' +
-                        (counted === ids.length ? 'text-emerald-300' : 'text-blue-300')
-                      }>
-                        {counted}/{ids.length} sayıldı
-                      </span>
-                    )}
-                  </div>
-                  {counted !== null && ids.length > 0 && (
-                    <div className="mt-2 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                      <div
-                        className="h-1.5 bg-emerald-400 transition-all"
-                        style={{ width: `${(counted / ids.length) * 100}%` }}
-                      />
-                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center justify-between mb-1">
+                        <button className="flex-1 text-left" onClick={() => openGorev(g)}>
+                          <span className="text-white font-bold text-lg">{g.depoAdi || g.sessionType || 'Sayım'}</span>
+                        </button>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <DurumRozet durum={g.durum} />
+                          {userRole === 'yonetici' && (
+                            <button
+                              onClick={() => setDeletingId(g.id)}
+                              className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                              title="Görevi Sil"
+                            >
+                              <span className="ms" style={{ fontSize: 17 }}>delete</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <button className="w-full text-left" onClick={() => openGorev(g)}>
+                        <p className="text-slate-300 text-sm mb-2">{g.sessionType}</p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-slate-400 text-sm">
+                            <span className="ms" style={{ fontSize: 18 }}>inventory_2</span>
+                            {ids.length} kalem
+                            {g.sayimTipi === 'membran' && (
+                              <span className="ms text-purple-300 ml-1" style={{ fontSize: 16 }}>layers</span>
+                            )}
+                            {g.sayimTipi === 'kor' && (
+                              <span className="ms text-amber-300 ml-1" style={{ fontSize: 16 }}>visibility_off</span>
+                            )}
+                          </div>
+                          {counted !== null && (
+                            <span className={
+                              'text-sm font-semibold ' +
+                              (counted === ids.length ? 'text-emerald-300' : 'text-blue-300')
+                            }>
+                              {counted}/{ids.length} sayıldı
+                            </span>
+                          )}
+                        </div>
+                        {counted !== null && ids.length > 0 && (
+                          <div className="mt-2 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                            <div
+                              className="h-1.5 bg-emerald-400 transition-all"
+                              style={{ width: `${(counted / ids.length) * 100}%` }}
+                            />
+                          </div>
+                        )}
+                      </button>
+                    </>
                   )}
-                </button>
+                </div>
               )
             })}
           </div>
