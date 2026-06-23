@@ -5,6 +5,7 @@ import { sortRows, computeFilterOptions, parseAdres } from '../../utils/adresUti
 import { exportResults } from '../../utils/excelExport'
 import PrintSheet from '../print/PrintSheet'
 import MultiSelect from '../shared/MultiSelect'
+import GorevAtaModal from './GorevAtaModal'
 
 function DurumBadge({ durum }) {
   return (
@@ -52,6 +53,7 @@ export default function HareketlilikSayim({ onNavigate }) {
   const [filterKategori, setFilterKategori] = useState([])
   const [sortType, setSortType] = useState('1')
   const [page, setPage] = useState(1)
+  const [gorevModal, setGorevModal] = useState(false)
   const [pageSize, setPageSize] = useState(100)
 
   const handlePrint = useReactToPrint({ contentRef: printRef })
@@ -162,6 +164,13 @@ export default function HareketlilikSayim({ onNavigate }) {
               className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40"
             >
               <span className="ms" style={{ fontSize: 15 }}>content_copy</span> Sistemden Doldur
+            </button>
+            <button
+              onClick={() => setGorevModal(true)}
+              disabled={filtered.length === 0}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[12.5px] font-medium disabled:opacity-40"
+            >
+              <span className="ms" style={{ fontSize: 15 }}>assignment_ind</span> Sayımcıya Gönder
             </button>
           </div>
         </div>
@@ -372,6 +381,8 @@ export default function HareketlilikSayim({ onNavigate }) {
       <div className="hidden">
         <PrintSheet ref={printRef} rows={filtered} results={results} session={session} mode="sayim" hideSayilan={hideSayilan} sayimTuru="Hareketlilik Sayımı" />
       </div>
+
+      {gorevModal && <GorevAtaModal rows={filtered} onClose={() => setGorevModal(false)} />}
     </div>
   )
 }

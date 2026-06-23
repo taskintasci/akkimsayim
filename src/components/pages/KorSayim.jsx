@@ -5,6 +5,7 @@ import { sortRows, computeFilterOptions, parseAdres } from '../../utils/adresUti
 import { exportResults } from '../../utils/excelExport'
 import PrintSheet from '../print/PrintSheet'
 import MultiSelect from '../shared/MultiSelect'
+import GorevAtaModal from './GorevAtaModal'
 
 function DurumBadge({ durum }) {
   return (
@@ -35,6 +36,7 @@ export default function KorSayim({ onNavigate }) {
   const [sortType, setSortType]       = useState('1')
   const [page, setPage]               = useState(1)
   const [pageSize, setPageSize]       = useState(100)
+  const [gorevModal, setGorevModal]   = useState(false)
 
   const handlePrint = useReactToPrint({ contentRef: printRef })
 
@@ -155,6 +157,13 @@ export default function KorSayim({ onNavigate }) {
             </button>
             <button onClick={() => exportResults(korMatched, results, session)} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
               <span className="ms" style={{ fontSize: 15 }}>download</span> Excel'e Aktar
+            </button>
+            <button
+              onClick={() => setGorevModal(true)}
+              disabled={filtered.length === 0}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[12.5px] font-medium disabled:opacity-40"
+            >
+              <span className="ms" style={{ fontSize: 15 }}>assignment_ind</span> Sayımcıya Gönder
             </button>
             {korCodes.length > 0 && (
               <button onClick={clearKor} className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 border border-red-200 text-red-600 rounded-lg text-[12.5px] font-medium hover:bg-red-100">
@@ -427,6 +436,8 @@ export default function KorSayim({ onNavigate }) {
       <div className="hidden">
         <PrintSheet ref={printRef} rows={filtered} results={results} session={session} mode="kor" hideSistem={hideSistem} hideSayilan={hideSayilan} sayimTuru="Kör Sayım" />
       </div>
+
+      {gorevModal && <GorevAtaModal rows={filtered} onClose={() => setGorevModal(false)} />}
     </div>
   )
 }
