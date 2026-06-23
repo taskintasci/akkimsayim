@@ -5,7 +5,16 @@ import { exportRaporFarklar } from '../../utils/excelExport'
 const EMPTY_FORM = { kod: '', ad: '', adres: '', parti: '', durum: '', miktar: '', birim: '', not: '' }
 
 export default function Rapor({ onNavigate }) {
-  const { rows, results, session, setPendingKodFilter, approveSession, manualRows, addManualRow, removeManualRow } = useStore()
+  const { rows, results, session, setPendingKodFilter, approveSession, manualRows, addManualRow, removeManualRow, resultsLoading } = useStore()
+
+  if (resultsLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 py-24 text-slate-400">
+        <span className="ms animate-spin" style={{ fontSize: 36 }}>progress_activity</span>
+        <p className="text-[13px]">Sayım verileri yükleniyor…</p>
+      </div>
+    )
+  }
   const [approving, setApproving] = useState(false)
   const [approved, setApproved] = useState(false)
   const [showForm, setShowForm] = useState(false)

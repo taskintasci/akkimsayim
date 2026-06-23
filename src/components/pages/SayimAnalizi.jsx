@@ -13,7 +13,16 @@ function AccBar({ pct }) {
 }
 
 export default function SayimAnalizi() {
-  const { rows, results, session, manualRows } = useStore()
+  const { rows, results, session, manualRows, resultsLoading } = useStore()
+
+  if (resultsLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 py-24 text-slate-400">
+        <span className="ms animate-spin" style={{ fontSize: 36 }}>progress_activity</span>
+        <p className="text-[13px]">Sayım verileri yükleniyor…</p>
+      </div>
+    )
+  }
 
   const counted = rows.filter(r => results[r.id]?.miktar !== undefined && results[r.id]?.miktar !== '')
   const discrepancies = rows.filter(r => {

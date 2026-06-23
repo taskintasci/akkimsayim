@@ -44,6 +44,7 @@ const useStore = create((set, get) => ({
 
   // ── Sayım sonuçları ───────────────────────────────────────────────────────
   results: {},
+  resultsLoading: false,
 
   // ── Aktif session bilgisi ─────────────────────────────────────────────────
   session: {
@@ -81,7 +82,7 @@ const useStore = create((set, get) => ({
   setActiveSession: async (id) => {
     if (resultsUnsub) { resultsUnsub(); resultsUnsub = null }
 
-    set({ activeSessionId: id, rows: [], results: {}, korCodes: [], korMatched: [], manualRows: [], korManualRows: [], rowsLoading: true })
+    set({ activeSessionId: id, rows: [], results: {}, korCodes: [], korMatched: [], manualRows: [], korManualRows: [], rowsLoading: true, resultsLoading: true })
 
     const sessionData = get().sessions.find(s => s.id === id)
     if (sessionData) {
@@ -118,14 +119,23 @@ const useStore = create((set, get) => ({
     set({ rowsLoading: false })
 
     // Real-time results listener
+    let firstSnapshot = true
     resultsUnsub = onSnapshot(
       collection(db, 'sessions', id, 'results'),
       (snap) => {
         const results = {}
         snap.forEach(d => { results[d.id] = d.data() })
-        set({ results })
+        if (firstSnapshot) {
+          firstSnapshot = false
+          set({ results, resultsLoading: false })
+        } else {
+          set({ results })
+        }
       },
-      (err) => console.error('Results listener hatası:', err)
+      (err) => {
+        console.error('Results listener hatası:', err)
+        set({ resultsLoading: false })
+      }
     )
   },
 
