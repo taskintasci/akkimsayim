@@ -165,6 +165,7 @@ export default function Rapor({ onNavigate }) {
             <thead>
               <tr className="bg-slate-50 text-[11px] mono text-slate-500 uppercase tracking-wider border-b border-slate-200">
                 <th className="px-3 py-1.5">Kod / Ad</th>
+                <th className="px-3 py-1.5">Kategori</th>
                 <th className="px-3 py-1.5">Parti</th>
                 <th className="px-3 py-1.5">Durum</th>
                 <th className="px-3 py-1.5">Adres</th>
@@ -181,6 +182,7 @@ export default function Rapor({ onNavigate }) {
                     <p className="mono font-semibold text-blue-700 text-[11px]">{row.kod}</p>
                     <p className="text-slate-700">{row.ad}</p>
                   </td>
+                  <td className="px-3 py-1.5 text-[12px] text-slate-500">{row.kategori || '—'}</td>
                   <td className="px-3 py-1.5 mono text-slate-500 text-[12px]">{row.parti || '—'}</td>
                   <td className="px-3 py-1.5 text-[12px] text-slate-500">{row.durum || '—'}</td>
                   <td className="px-3 py-1.5 mono text-slate-500 text-[12px]">{row.adres}</td>
@@ -336,6 +338,7 @@ export default function Rapor({ onNavigate }) {
             <thead>
               <tr className="bg-slate-50 text-[11px] mono text-slate-500 uppercase tracking-wider border-b border-slate-200">
                 <th className="px-3 py-1.5">Kod / Ad</th>
+                <th className="px-3 py-1.5">Kategori</th>
                 <th className="px-3 py-1.5">Parti</th>
                 <th className="px-3 py-1.5">Durum</th>
                 <th className="px-3 py-1.5">Adres</th>
@@ -353,6 +356,7 @@ export default function Rapor({ onNavigate }) {
                     <p className="mono font-semibold text-amber-700 text-[11px]">{row.kod}</p>
                     <p className="text-slate-700">{row.ad || <span className="text-slate-400 italic">—</span>}</p>
                   </td>
+                  <td className="px-3 py-1.5 text-slate-500 text-[12px]">—</td>
                   <td className="px-3 py-1.5 mono text-slate-500 text-[12px]">{row.parti || '—'}</td>
                   <td className="px-3 py-1.5 text-slate-500 text-[12px]">{row.durum || '—'}</td>
                   <td className="px-3 py-1.5 mono text-slate-500 text-[12px]">{row.adres || '—'}</td>
