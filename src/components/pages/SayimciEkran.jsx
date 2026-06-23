@@ -216,7 +216,7 @@ export default function SayimciEkran({ mode = 'self' }) {
     setView('sayim')
   }
 
-  const current = atanan[idx]
+  const current = atanan[idxRef.current]
 
   function ilerle() {
     setEditing(false)
@@ -384,7 +384,7 @@ export default function SayimciEkran({ mode = 'self' }) {
       >
         {rowsLoading ? <Loading /> : (
           <div className="w-full max-w-md flex flex-col">
-            {/* Sıralama — membran'da gizle (palet sırasına kilitli) */}
+            {/* Sıralama — membran'da gizle (partiEk+adres sırasına kilitli) */}
             {!isMembran && (
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-slate-400 text-sm shrink-0">Sırala:</span>
@@ -403,41 +403,10 @@ export default function SayimciEkran({ mode = 'self' }) {
               </div>
             )}
 
-            {/* Membran: palet gruplu liste */}
-            {isMembran ? (
-              <div className="flex flex-col gap-3 mb-4 max-h-[50vh] overflow-y-auto">
-                {membranGruplar.map(([paletKey, paletRows]) => {
-                  const paletSayilan = paletRows.filter(r => { const m = results[r.id]?.miktar; return m !== undefined && m !== '' }).length
-                  const paletTamamlandi = paletSayilan === paletRows.length
-                  return (
-                    <div key={paletKey} className="rounded-2xl border border-white/10 overflow-hidden">
-                      {/* Palet başlığı */}
-                      <div className="flex items-center justify-between px-4 py-2.5 bg-purple-900/30 border-b border-white/5">
-                        <div className="flex items-center gap-2">
-                          <span className="ms text-purple-300" style={{ fontSize: 18 }}>layers</span>
-                          <span className="text-purple-200 font-semibold text-sm">{paletKey}</span>
-                        </div>
-                        <span className={
-                          'text-xs font-semibold ' +
-                          (paletTamamlandi ? 'text-emerald-300' : 'text-slate-400')
-                        }>
-                          {paletSayilan}/{paletRows.length}
-                        </span>
-                      </div>
-                      {/* Palet içindeki ürünler */}
-                      <div className="divide-y divide-white/5">
-                        {paletRows.map((r, i) => <SatirItem key={r.id} r={r} i={i} results={results} />)}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            ) : (
-              /* Normal düz liste */
-              <div className="rounded-2xl border border-white/10 overflow-hidden divide-y divide-white/5 mb-4 max-h-[50vh] overflow-y-auto">
-                {atanan.map((r, i) => <SatirItem key={r.id} r={r} i={i} results={results} />)}
-              </div>
-            )}
+            {/* Ürün listesi — membran'da partiEk gösterilir */}
+            <div className="rounded-2xl border border-white/10 overflow-hidden divide-y divide-white/5 mb-4 max-h-[55vh] overflow-y-auto">
+              {atanan.map((r, i) => <SatirItem key={r.id} r={r} i={i} results={results} showPartiEk={isMembran} />)}
+            </div>
 
             <button
               onClick={basla}
@@ -573,7 +542,7 @@ export default function SayimciEkran({ mode = 'self' }) {
 }
 
 // ── Satır item (liste görünümü) ────────────────────────────────────────────
-function SatirItem({ r, i, results }) {
+function SatirItem({ r, i, results, showPartiEk = false }) {
   const m = results[r.id]?.miktar
   const sayildi = m !== undefined && m !== ''
   const farkli  = sayildi && String(m) !== String(r.sayim)
@@ -583,6 +552,9 @@ function SatirItem({ r, i, results }) {
     <div className="flex items-center gap-3 px-4 py-3 bg-white/[0.03]">
       <span className="text-slate-500 mono text-xs w-6 shrink-0">{i + 1}</span>
       <div className="min-w-0 flex-1">
+        {showPartiEk && r.partiEk && (
+          <p className="text-purple-300 text-[10px] mono mb-0.5">{r.partiEk}</p>
+        )}
         <p className="text-white text-sm font-semibold truncate">{r.ad}</p>
         <p className="text-slate-400 text-xs mono truncate">{r.adres} · {r.kod}</p>
       </div>
