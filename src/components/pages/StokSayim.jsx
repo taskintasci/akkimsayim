@@ -4,6 +4,7 @@ import useStore from '../../store/useStore'
 import { sortRows, getUniqueAdresValues, parseAdres } from '../../utils/adresUtils'
 import { exportResults } from '../../utils/excelExport'
 import PrintSheet from '../print/PrintSheet'
+import MultiSelect from '../shared/MultiSelect'
 
 function DurumBadge({ durum }) {
   return (
@@ -23,12 +24,12 @@ export default function StokSayim({ onNavigate }) {
   const [hideSistem, setHideSistem] = useState(false)
   const [hideSayilan, setHideSayilan] = useState(false)
   const [filterSearch, setFilterSearch] = useState('')
-  const [filterDurum, setFilterDurum] = useState('')
-  const [filterRaf, setFilterRaf] = useState('')
-  const [filterSira, setFilterSira] = useState('')
-  const [filterKolon, setFilterKolon] = useState('')
-  const [filterGoz, setFilterGoz] = useState('')
-  const [filterKategori, setFilterKategori] = useState('')
+  const [filterDurum, setFilterDurum] = useState([])
+  const [filterRaf, setFilterRaf] = useState([])
+  const [filterSira, setFilterSira] = useState([])
+  const [filterKolon, setFilterKolon] = useState([])
+  const [filterGoz, setFilterGoz] = useState([])
+  const [filterKategori, setFilterKategori] = useState([])
   const [onlyDiff, setOnlyDiff] = useState(false)
   const [sortType, setSortType] = useState('1')
   const [page, setPage] = useState(1)
@@ -65,13 +66,13 @@ export default function StokSayim({ onNavigate }) {
         r.ad?.toLowerCase().includes(q) ||
         r.parti?.toLowerCase().includes(q)
       )) return false
-      if (filterDurum    && r.durum    !== filterDurum)    return false
-      if (filterKategori && r.kategori !== filterKategori) return false
+      if (filterDurum.length > 0    && !filterDurum.includes(r.durum))       return false
+      if (filterKategori.length > 0 && !filterKategori.includes(r.kategori)) return false
       const p = parseAdres(r.adres)
-      if (filterRaf   && p.raf   !== filterRaf)   return false
-      if (filterSira  && p.sira  !== filterSira)  return false
-      if (filterKolon && p.kolon !== filterKolon) return false
-      if (filterGoz   && p.goz   !== filterGoz)   return false
+      if (filterRaf.length > 0   && !filterRaf.includes(p.raf))     return false
+      if (filterSira.length > 0  && !filterSira.includes(p.sira))   return false
+      if (filterKolon.length > 0 && !filterKolon.includes(p.kolon)) return false
+      if (filterGoz.length > 0   && !filterGoz.includes(p.goz))     return false
       return true
     })
     return sortRows(result, sortType)
@@ -164,36 +165,26 @@ export default function StokSayim({ onNavigate }) {
             )}
           </div>
           <span className="text-[11.5px] text-slate-400 font-medium">Filtre:</span>
-          <select className="fsel" value={filterDurum} onChange={e => setFilterDurum(e.target.value)}>
-            <option value="">Tüm Durumlar</option>
-            <option>Normal</option><option>Bloke</option><option>SKTG</option>
-          </select>
+          <MultiSelect placeholder="Tüm Durumlar" options={['Normal', 'Bloke', 'SKTG']} value={filterDurum} onChange={setFilterDurum} />
           {kategoriler.length > 0 && (
-            <select className="fsel" value={filterKategori} onChange={e => setFilterKategori(e.target.value)}>
-              <option value="">Tüm Kategoriler</option>
-              {kategoriler.map(k => <option key={k}>{k}</option>)}
-            </select>
+            <MultiSelect placeholder="Tüm Kategoriler" options={kategoriler} value={filterKategori} onChange={setFilterKategori} />
           )}
-          <select className="fsel" value={filterRaf} onChange={e => setFilterRaf(e.target.value)}>
-            <option value="">Tüm Raflar</option>
-            {adresVals.raflar.map(v => <option key={v}>{v}</option>)}
-          </select>
-          <select className="fsel" value={filterSira} onChange={e => setFilterSira(e.target.value)}>
-            <option value="">Tüm Sıralar</option>
-            {adresVals.siralar.map(v => <option key={v}>{v}</option>)}
-          </select>
-          <select className="fsel" value={filterKolon} onChange={e => setFilterKolon(e.target.value)}>
-            <option value="">Tüm Kolonlar</option>
-            {adresVals.kolonlar.map(v => <option key={v}>{v}</option>)}
-          </select>
-          <select className="fsel" value={filterGoz} onChange={e => setFilterGoz(e.target.value)}>
-            <option value="">Tüm Gözler</option>
-            {adresVals.gozler.map(v => <option key={v}>{v}</option>)}
-          </select>
+          <MultiSelect placeholder="Tüm Raflar"   options={adresVals.raflar}   value={filterRaf}   onChange={setFilterRaf} />
+          <MultiSelect placeholder="Tüm Sıralar"  options={adresVals.siralar}  value={filterSira}  onChange={setFilterSira} />
+          <MultiSelect placeholder="Tüm Kolonlar" options={adresVals.kolonlar} value={filterKolon} onChange={setFilterKolon} />
+          <MultiSelect placeholder="Tüm Gözler"   options={adresVals.gozler}   value={filterGoz}   onChange={setFilterGoz} />
           <label className="flex items-center gap-1.5 text-[11.5px] text-slate-500 cursor-pointer ml-1">
             <input type="checkbox" checked={onlyDiff} onChange={e => setOnlyDiff(e.target.checked)} className="rounded" />
             Sadece farklılıklar
           </label>
+          {(filterDurum.length > 0 || filterKategori.length > 0 || filterRaf.length > 0 || filterSira.length > 0 || filterKolon.length > 0 || filterGoz.length > 0 || filterSearch.trim()) && (
+            <button
+              onClick={() => { setFilterSearch(''); setFilterDurum([]); setFilterKategori([]); setFilterRaf([]); setFilterSira([]); setFilterKolon([]); setFilterGoz([]) }}
+              className="flex items-center gap-1 px-2 py-1 text-[11.5px] text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+            >
+              <span className="ms" style={{ fontSize: 13 }}>filter_list_off</span> Temizle
+            </button>
+          )}
           <div className="ml-auto flex items-center gap-1.5">
             <span className="text-[11.5px] text-slate-400 font-medium">Sıra:</span>
             <select className="fsel" style={{ borderColor: '#93c5fd' }} value={sortType} onChange={e => setSortType(e.target.value)}>
