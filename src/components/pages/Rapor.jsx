@@ -5,7 +5,11 @@ import { exportRaporFarklar } from '../../utils/excelExport'
 const EMPTY_FORM = { kod: '', ad: '', adres: '', parti: '', durum: '', miktar: '', birim: '', not: '' }
 
 export default function Rapor({ onNavigate }) {
-  const { rows, results, session, setPendingKodFilter, approveSession, manualRows, addManualRow, removeManualRow, resultsLoading } = useStore()
+  const { rows, results, session, setPendingKodFilter, approveSession, manualRows, addManualRow, removeManualRow, korManualRows, removeKorManualRow, resultsLoading } = useStore()
+  const allManualRows = [
+    ...manualRows.map(r => ({ ...r, _kaya: 'stok' })),
+    ...korManualRows.map(r => ({ ...r, _kaya: 'kor' })),
+  ]
 
   if (resultsLoading) {
     return (
@@ -24,7 +28,7 @@ export default function Rapor({ onNavigate }) {
 
   async function handleApprove() {
     const counted = rows.filter(r => results[r.id]?.miktar !== undefined && results[r.id]?.miktar !== '')
-    if (counted.length === 0 && manualRows.length === 0) {
+    if (counted.length === 0 && allManualRows.length === 0) {
       alert('Henüz sayım yapılmamış. Onaylamak için en az bir kalem sayılmış olmalı.')
       return
     }
@@ -218,7 +222,7 @@ export default function Rapor({ onNavigate }) {
             <span className="ms text-amber-600" style={{ fontSize: 18 }}>add_box</span>
             <p className="text-[13px] font-semibold text-amber-900">
               Sistemde Bulunmayan Kalemler
-              {manualRows.length > 0 && <span className="badge bg-amber-100 text-amber-700 ml-2">{manualRows.length}</span>}
+              {allManualRows.length > 0 && <span className="badge bg-amber-100 text-amber-700 ml-2">{allManualRows.length}</span>}
             </p>
           </div>
           <button
@@ -331,8 +335,8 @@ export default function Rapor({ onNavigate }) {
           </form>
         )}
 
-        {/* Manuel kayıt listesi */}
-        {manualRows.length === 0 ? (
+        {/* Manuel kayıt listesi — stok + kör sayım manuel kalemleri */}
+        {allManualRows.length === 0 ? (
           <div className="px-4 py-6 text-center text-[12.5px] text-slate-400">
             Sistemde bulunmayan ürün eklemek için "Manuel Ekle" butonunu kullanın.
           </div>
@@ -341,9 +345,8 @@ export default function Rapor({ onNavigate }) {
             <thead>
               <tr className="bg-slate-50 text-[11px] mono text-slate-500 uppercase tracking-wider border-b border-slate-200">
                 <th className="px-3 py-1.5">Kod / Ad</th>
+                <th className="px-3 py-1.5">Kaynak</th>
                 <th className="px-3 py-1.5">Parti</th>
-                <th className="px-3 py-1.5">Kategori</th>
-                <th className="px-3 py-1.5">Durum</th>
                 <th className="px-3 py-1.5">Adres</th>
                 <th className="px-3 py-1.5 text-right">Sistem</th>
                 <th className="px-3 py-1.5 text-right">Sayılan</th>
@@ -353,15 +356,18 @@ export default function Rapor({ onNavigate }) {
               </tr>
             </thead>
             <tbody className="text-[12.5px] divide-y divide-slate-50">
-              {manualRows.map((row, i) => (
+              {allManualRows.map((row, i) => (
                 <tr key={row.id} className={i % 2 === 1 ? 'bg-amber-50/30' : ''}>
                   <td className="px-3 py-1.5">
                     <p className="mono font-semibold text-amber-700 text-[11px]">{row.kod}</p>
                     <p className="text-slate-700">{row.ad || <span className="text-slate-400 italic">—</span>}</p>
                   </td>
+                  <td className="px-3 py-1.5">
+                    {row._kaya === 'kor'
+                      ? <span className="badge bg-violet-100 text-violet-700 text-[10px]">Kör</span>
+                      : <span className="badge bg-slate-100 text-slate-600 text-[10px]">Stok</span>}
+                  </td>
                   <td className="px-3 py-1.5 mono text-slate-500 text-[12px]">{row.parti || '—'}</td>
-                  <td className="px-3 py-1.5 text-slate-500 text-[12px]">—</td>
-                  <td className="px-3 py-1.5 text-slate-500 text-[12px]">{row.durum || '—'}</td>
                   <td className="px-3 py-1.5 mono text-slate-500 text-[12px]">{row.adres || '—'}</td>
                   <td className="px-3 py-1.5 text-right mono text-slate-400">0</td>
                   <td className="px-3 py-1.5 text-right mono font-bold text-emerald-600">
@@ -373,7 +379,7 @@ export default function Rapor({ onNavigate }) {
                   <td className="px-3 py-1.5 text-slate-500 text-[12px]">{row.not || '—'}</td>
                   <td className="px-3 py-1.5 text-center no-print">
                     <button
-                      onClick={() => removeManualRow(row.id)}
+                      onClick={() => row._kaya === 'kor' ? removeKorManualRow(row.id) : removeManualRow(row.id)}
                       className="text-slate-400 hover:text-red-500 transition-colors"
                       title="Sil"
                     >

@@ -19,7 +19,7 @@ function DurumBadge({ durum }) {
 }
 
 export default function KorSayim({ onNavigate }) {
-  const { rows, results, session, updateResult, fillFromSistem, korCodes, korMatched, addKorCodes, removeKorCode, clearKor, pendingKodFilter, clearPendingKodFilter } = useStore()
+  const { rows, results, session, updateResult, fillFromSistem, clearMiktarlar, korCodes, korMatched, addKorCodes, removeKorCode, clearKor, pendingKodFilter, clearPendingKodFilter } = useStore()
   const printRef = useRef()
 
   const [codeInput, setCodeInput]     = useState('')
@@ -145,16 +145,19 @@ export default function KorSayim({ onNavigate }) {
             <button onClick={handlePrint} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
               <span className="ms" style={{ fontSize: 15 }}>print</span> Yazdır
             </button>
-            <button
-              onClick={() => {
-                if (window.confirm(`${filtered.length} satırın sayılan miktarı sistem miktarıyla doldurulsun mu?`))
-                  fillFromSistem(filtered)
-              }}
-              disabled={filtered.length === 0}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40"
-            >
-              <span className="ms" style={{ fontSize: 15 }}>content_copy</span> Sistemden Doldur
-            </button>
+            {(() => {
+              const allFilled = filtered.length > 0 && filtered.every(r => { const m = results[r.id]?.miktar; return m !== undefined && m !== '' && String(m) === String(r.sayim) })
+              return (
+                <button
+                  onClick={() => allFilled ? clearMiktarlar(filtered) : fillFromSistem(filtered)}
+                  disabled={filtered.length === 0}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-[12.5px] font-medium disabled:opacity-40 ${allFilled ? 'bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'}`}
+                >
+                  <span className="ms" style={{ fontSize: 15 }}>{allFilled ? 'backspace' : 'content_copy'}</span>
+                  {allFilled ? 'Sayılanı Temizle' : 'Sistemden Doldur'}
+                </button>
+              )
+            })()}
             <button onClick={() => exportResults(korMatched, results, session)} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
               <span className="ms" style={{ fontSize: 15 }}>download</span> Excel'e Aktar
             </button>

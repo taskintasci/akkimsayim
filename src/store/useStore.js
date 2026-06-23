@@ -421,6 +421,27 @@ const useStore = create((set, get) => ({
     }
   },
 
+  // ── Toplu miktar temizle (Sistemden Doldur toggle için) ───────────────────
+  clearMiktarlar: async (targetRows) => {
+    const { activeSessionId, currentUser } = get()
+    set(state => {
+      const next = { ...state.results }
+      targetRows.forEach(r => { next[r.id] = { ...next[r.id], miktar: '' } })
+      return { results: next }
+    })
+    if (activeSessionId && targetRows.length > 0) {
+      const batch = writeBatch(db)
+      targetRows.forEach(r => {
+        batch.set(
+          doc(db, 'sessions', activeSessionId, 'results', r.id),
+          { miktar: '', updatedBy: currentUser?.uid || null, updatedAt: serverTimestamp() },
+          { merge: true }
+        )
+      })
+      await batch.commit()
+    }
+  },
+
   setSession: (partial) =>
     set(state => ({ session: { ...state.session, ...partial } })),
 

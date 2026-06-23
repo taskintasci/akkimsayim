@@ -151,11 +151,15 @@ export default function SayimciEkran({ mode = 'self' }) {
   const [gorev, setGorev]     = useState(null)
   const [sira, setSira]       = useState('adres')
   const [deletingId, setDeletingId] = useState(null)
-  const [idx, setIdx]         = useState(0)
+  const [idx, _setIdx]        = useState(0)
+  const idxRef                = useRef(0)
+  const confirmingRef         = useRef(false)
   const [editing, setEditing] = useState(false)
   const [editVal, setEditVal] = useState('')
   const [editNote, setEditNote] = useState('')
   const [manuelOpen, setManuelOpen] = useState(false)
+
+  function setIdx(n) { idxRef.current = n; _setIdx(n) }
 
   // Görevleri yükle
   useEffect(() => {
@@ -216,9 +220,9 @@ export default function SayimciEkran({ mode = 'self' }) {
 
   function ilerle() {
     setEditing(false)
-    // Sonraki sayılmamış kalemi bul
+    // idxRef kullan (stale closure olmaz)
     let nextIdx = -1
-    for (let i = idx + 1; i < atanan.length; i++) {
+    for (let i = idxRef.current + 1; i < atanan.length; i++) {
       const m = results[atanan[i].id]?.miktar
       if (m === undefined || m === '') { nextIdx = i; break }
     }
@@ -228,10 +232,12 @@ export default function SayimciEkran({ mode = 'self' }) {
     } else {
       setIdx(nextIdx)
     }
+    setTimeout(() => { confirmingRef.current = false }, 80)
   }
 
   function onayla() {
-    if (!current) return
+    if (!current || confirmingRef.current) return
+    confirmingRef.current = true
     updateResult(current.id, {
       miktar: current.sayim,
       status: 'Sayıldı',
@@ -248,7 +254,8 @@ export default function SayimciEkran({ mode = 'self' }) {
   }
 
   function editKaydet() {
-    if (!current) return
+    if (!current || confirmingRef.current) return
+    confirmingRef.current = true
     updateResult(current.id, {
       miktar: editVal === '' ? '' : Number(editVal),
       status: 'Sayıldı',
@@ -267,7 +274,7 @@ export default function SayimciEkran({ mode = 'self' }) {
       <Shell mode={mode} title="Sayım Görevlerim" subtitle={userProfile?.displayName || currentUser?.email}>
         {gorevlerLoading ? (
           <Loading />
-        ) : gorevler.length === 0 ? (
+        ) : (mode === 'self' ? gorevler.filter(g => g.durum !== 'tamamlandi') : gorevler).length === 0 ? (
           <Empty
             icon="assignment_late"
             title="Henüz görev yok"
@@ -277,7 +284,7 @@ export default function SayimciEkran({ mode = 'self' }) {
           />
         ) : (
           <div className="flex flex-col gap-3 w-full max-w-md">
-            {gorevler.map(g => {
+            {(mode === 'self' ? gorevler.filter(g => g.durum !== 'tamamlandi') : gorevler).map(g => {
               const ids = g.atananRows || []
               const counted = g.sessionId === activeSessionId
                 ? ids.filter(id => { const m = results[id]?.miktar; return m !== undefined && m !== '' }).length
