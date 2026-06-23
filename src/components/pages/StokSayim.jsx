@@ -19,7 +19,7 @@ function DurumBadge({ durum }) {
 }
 
 export default function StokSayim({ onNavigate }) {
-  const { rows, results, session, updateResult, fillFromSistem, clearMiktarlar, pendingKodFilter, clearPendingKodFilter } = useStore()
+  const { rows, results, session, updateResult, fillFromSistem, clearMiktarlar, pendingKodFilter, clearPendingKodFilter, rowsLoading } = useStore()
   const printRef = useRef()
 
   const [hideSistem, setHideSistem] = useState(false)
@@ -225,14 +225,39 @@ export default function StokSayim({ onNavigate }) {
       </div>
 
       {/* ── Tablo ── */}
-      {rows.length === 0 ? (
+      {rowsLoading ? (
+        <div className="flex-1 overflow-auto">
+          <table className="w-full text-left border-collapse" style={{ minWidth: 1100 }}>
+            <thead className="sticky top-0 z-10">
+              <tr className="bg-slate-800">
+                {[8, 96, 112, 200, 112, 80, 48, 96, 80, 96, 48, 120].map((w, i) => (
+                  <th key={i} className="px-3 py-2.5">
+                    <span className="skeleton h-3 inline-block" style={{ width: w * 0.5 + 'px', opacity: 0.3 }} />
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: 18 }).map((_, i) => (
+                <tr key={i} className="border-b border-slate-100" style={i % 2 === 1 ? { background: '#f8fafc' } : {}}>
+                  {[8, 96, 112, 200, 112, 80, 48, 96, 80, 96, 48, 120].map((w, j) => (
+                    <td key={j} className="px-3 py-2.5">
+                      <span className="skeleton h-3 inline-block" style={{ width: (w * (0.4 + Math.random() * 0.4)) + 'px' }} />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : rows.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center bg-slate-50">
           <div className="w-16 h-16 rounded-2xl bg-white border border-slate-200 flex items-center justify-center mb-4 shadow-sm">
             <span className="ms text-slate-300" style={{ fontSize: 32 }}>upload_file</span>
           </div>
           <div className="text-slate-600 font-semibold text-sm mb-1">Henüz dosya yüklenmedi</div>
           <div className="text-slate-400 text-[13px] mb-4">RAPOR5.xls veya Sku_Sayım_Listesi.xlsx yükleyin</div>
-          <button onClick={() => onNavigate('upload')} className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-semibold hover:bg-blue-700">
+          <button onClick={() => onNavigate('upload')} className="flex items-center gap-1.5 px-4 py-2.5 bg-blue-600 text-white rounded-lg text-[13px] font-semibold hover:bg-blue-700 active:scale-[0.98] transition-all">
             <span className="ms" style={{ fontSize: 18 }}>upload_file</span> Excel Yükle
           </button>
         </div>
@@ -304,7 +329,13 @@ export default function StokSayim({ onNavigate }) {
             </tbody>
           </table>
           {filtered.length === 0 && rows.length > 0 && (
-            <div className="p-8 text-center text-[11.5px] text-slate-400">Filtreye uyan kayıt yok.</div>
+            <div className="p-12 text-center">
+              <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center mx-auto mb-3">
+                <span className="ms text-slate-300" style={{ fontSize: 20 }}>search_off</span>
+              </div>
+              <p className="text-[13px] font-medium text-slate-500">Filtreye uyan kayıt yok</p>
+              <p className="text-[11.5px] text-slate-400 mt-0.5">Filtreleri temizleyerek tüm kayıtları görebilirsiniz</p>
+            </div>
           )}
         </div>
       )}

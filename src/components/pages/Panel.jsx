@@ -49,14 +49,26 @@ export default function Panel({ onNavigate }) {
       {/* 4 İstatistik Kartı */}
       <div className="grid grid-cols-4 gap-4">
         {/* Toplam SKU */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4">
-          <p className="text-[11px] text-slate-400 mono uppercase tracking-wide mb-2">Toplam SKU</p>
+        <div className="bg-white rounded-xl border border-slate-200 p-4 relative overflow-hidden hover:border-slate-300 hover:shadow-sm transition-all">
+          <div className="absolute top-0 left-0 w-1 h-full bg-slate-400 rounded-l-xl" />
+          <div className="flex items-start justify-between mb-2">
+            <p className="text-[11px] text-slate-400 mono uppercase tracking-wide">Toplam SKU</p>
+            <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center shrink-0">
+              <span className="ms text-slate-500" style={{ fontSize: 17 }}>inventory_2</span>
+            </div>
+          </div>
           <p className="text-3xl font-bold text-slate-900">{rows.length.toLocaleString('tr')}</p>
           <p className="text-[12px] text-slate-400 mt-1">Tüm stok kalemleri</p>
         </div>
         {/* Sayılan */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4">
-          <p className="text-[11px] text-slate-400 mono uppercase tracking-wide mb-2">Sayılan</p>
+        <div className="bg-white rounded-xl border border-slate-200 p-4 relative overflow-hidden hover:border-blue-200 hover:shadow-sm transition-all">
+          <div className="absolute top-0 left-0 w-1 h-full bg-blue-500 rounded-l-xl" />
+          <div className="flex items-start justify-between mb-2">
+            <p className="text-[11px] text-slate-400 mono uppercase tracking-wide">Sayılan</p>
+            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+              <span className="ms text-blue-500" style={{ fontSize: 17 }}>fact_check</span>
+            </div>
+          </div>
           <div className="flex items-end gap-2">
             <p className="text-3xl font-bold text-blue-600">{counted.length.toLocaleString('tr')}</p>
             {rows.length > 0 && <p className="text-[13px] text-slate-400 mb-1">/ {rows.length.toLocaleString('tr')}</p>}
@@ -64,21 +76,33 @@ export default function Panel({ onNavigate }) {
           {rows.length > 0 && (
             <>
               <div className="mt-2 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: pct + '%' }} />
+                <div className="h-full bg-blue-500 rounded-full transition-all duration-500" style={{ width: pct + '%' }} />
               </div>
               <p className="text-[11px] text-slate-400 mt-1">%{pct} tamamlandı</p>
             </>
           )}
         </div>
         {/* Farklılık */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4">
-          <p className="text-[11px] text-slate-400 mono uppercase tracking-wide mb-2">Farklılık</p>
+        <div className="bg-white rounded-xl border border-slate-200 p-4 relative overflow-hidden hover:border-red-200 hover:shadow-sm transition-all">
+          <div className="absolute top-0 left-0 w-1 h-full bg-red-400 rounded-l-xl" />
+          <div className="flex items-start justify-between mb-2">
+            <p className="text-[11px] text-slate-400 mono uppercase tracking-wide">Farklılık</p>
+            <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
+              <span className="ms text-red-500" style={{ fontSize: 17 }}>warning</span>
+            </div>
+          </div>
           <p className="text-3xl font-bold text-red-500">{diff.length.toLocaleString('tr')}</p>
           <p className="text-[12px] text-slate-400 mt-1">İncelenmeli</p>
         </div>
         {/* Onaylanan */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4">
-          <p className="text-[11px] text-slate-400 mono uppercase tracking-wide mb-2">Onaylanan</p>
+        <div className="bg-white rounded-xl border border-slate-200 p-4 relative overflow-hidden hover:border-emerald-200 hover:shadow-sm transition-all">
+          <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500 rounded-l-xl" />
+          <div className="flex items-start justify-between mb-2">
+            <p className="text-[11px] text-slate-400 mono uppercase tracking-wide">Onaylanan</p>
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
+              <span className="ms text-emerald-500" style={{ fontSize: 17 }}>verified</span>
+            </div>
+          </div>
           <p className="text-3xl font-bold text-emerald-600">{approved.length.toLocaleString('tr')}</p>
           <p className="text-[12px] text-slate-400 mt-1">Mutabık</p>
         </div>
@@ -90,7 +114,7 @@ export default function Panel({ onNavigate }) {
         <div className={`grid gap-3 ${userRole === 'kontrolcu' ? 'grid-cols-1 max-w-xs' : 'grid-cols-3'}`}>
           {userRole !== 'kontrolcu' && (
             rows.length === 0 ? (
-              <button onClick={() => onNavigate('upload')} className="bg-white rounded-xl border border-slate-200 p-4 text-left hover:border-blue-300 hover:shadow-sm transition-all group">
+              <button onClick={() => onNavigate('upload')} className="bg-white rounded-xl border border-slate-200 p-4 text-left hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition-all group">
                 <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center mb-3 group-hover:bg-blue-100 transition-colors">
                   <span className="ms text-blue-600" style={{ fontSize: 22 }}>upload_file</span>
                 </div>
@@ -136,7 +160,7 @@ export default function Panel({ onNavigate }) {
             )
           )}
           {userRole !== 'kontrolcu' && (
-            <button onClick={() => onNavigate('kor')} className="bg-white rounded-xl border border-slate-200 p-4 text-left hover:border-blue-300 hover:shadow-sm transition-all group">
+            <button onClick={() => onNavigate('kor')} className="bg-white rounded-xl border border-slate-200 p-4 text-left hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition-all group">
               <div className="w-9 h-9 rounded-lg bg-violet-50 flex items-center justify-center mb-3 group-hover:bg-violet-100 transition-colors">
                 <span className="ms text-violet-600" style={{ fontSize: 22 }}>visibility_off</span>
               </div>
@@ -144,7 +168,7 @@ export default function Panel({ onNavigate }) {
               <p className="text-[12px] text-slate-400 mt-0.5">Kod gir, liste oluştur, yazdır</p>
             </button>
           )}
-          <button onClick={() => onNavigate('rapor')} className="bg-white rounded-xl border border-slate-200 p-4 text-left hover:border-blue-300 hover:shadow-sm transition-all group">
+          <button onClick={() => onNavigate('rapor')} className="bg-white rounded-xl border border-slate-200 p-4 text-left hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition-all group">
             <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center mb-3 group-hover:bg-emerald-100 transition-colors">
               <span className="ms text-emerald-600" style={{ fontSize: 22 }}>analytics</span>
             </div>
@@ -164,10 +188,12 @@ export default function Panel({ onNavigate }) {
         </div>
         <div className="divide-y divide-slate-50">
           {events.length === 0 ? (
-            <div className="px-4 py-8 text-center">
-              <span className="ms text-slate-300 block mb-2" style={{ fontSize: 32 }}>history</span>
-              <p className="text-[12px] text-slate-400">Henüz işlem yok</p>
-              <p className="text-[11px] text-slate-300 mt-0.5">Excel yükleyince burada görünür</p>
+            <div className="px-4 py-10 text-center">
+              <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center mx-auto mb-3">
+                <span className="ms text-slate-300" style={{ fontSize: 24 }}>history</span>
+              </div>
+              <p className="text-[13px] font-medium text-slate-500">Henüz işlem yok</p>
+              <p className="text-[11px] text-slate-400 mt-1">Excel yükleyince burada görünür</p>
             </div>
           ) : (
             events.slice(0, 5).map((r, i) => (

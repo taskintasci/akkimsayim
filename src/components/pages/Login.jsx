@@ -51,7 +51,7 @@ export default function Login() {
                 onChange={e => setEmail(e.target.value)}
                 placeholder="ornek@akkim.com.tr"
                 required
-                className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2.5 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
               />
             </div>
             <div>
@@ -62,7 +62,7 @@ export default function Login() {
                 onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2.5 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
               />
             </div>
 
@@ -75,7 +75,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading || !email || !password}
-              className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2 mt-2"
+              className="w-full py-3 bg-blue-600 hover:bg-blue-500 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl text-sm transition-all flex items-center justify-center gap-2 mt-2"
             >
               {loading
                 ? <span className="ms animate-spin" style={{ fontSize: 18 }}>progress_activity</span>

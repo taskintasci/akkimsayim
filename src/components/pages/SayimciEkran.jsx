@@ -115,13 +115,15 @@ function SwipeCard({ row, sayilanMiktar, onConfirm, onEdit, isMembran }) {
       <div className="flex gap-3 mt-4 shrink-0">
         <button
           onClick={onEdit}
-          className="flex-1 py-4 rounded-2xl bg-amber-500/90 hover:bg-amber-500 text-white font-bold text-lg flex items-center justify-center gap-2"
+          className="flex-1 py-4 rounded-2xl bg-amber-500/90 hover:bg-amber-500 active:scale-95 text-white font-bold text-lg flex items-center justify-center gap-2 transition-all"
+          style={{ minHeight: 56 }}
         >
           <span className="ms" style={{ fontSize: 24 }}>edit_note</span> Eksik / Fazla
         </button>
         <button
           onClick={onConfirm}
-          className="flex-1 py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-lg flex items-center justify-center gap-2"
+          className="flex-1 py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-white font-bold text-lg flex items-center justify-center gap-2 transition-all"
+          style={{ minHeight: 56 }}
         >
           <span className="ms" style={{ fontSize: 24 }}>check</span> Onayla
         </button>
@@ -296,7 +298,7 @@ export default function SayimciEkran({ mode = 'self' }) {
               const isDeleting = deletingId === g.id
 
               return (
-                <div key={g.id} className="rounded-2xl border border-white/15 bg-white/5 p-5">
+                <div key={g.id} className="rounded-2xl border border-white/15 bg-white/5 hover:bg-white/10 hover:border-white/25 transition-all p-5">
                   {/* Silme onayı */}
                   {isDeleting ? (
                     <div className="flex items-center justify-between">
@@ -397,7 +399,7 @@ export default function SayimciEkran({ mode = 'self' }) {
           <button
             onClick={basla}
             disabled={atanan.length === 0}
-            className="flex items-center gap-1.5 px-3 py-2 bg-blue-500 hover:bg-blue-400 disabled:opacity-40 text-white rounded-xl text-sm font-bold shrink-0"
+            className="flex items-center gap-1.5 px-3 py-2 bg-blue-500 hover:bg-blue-400 active:scale-95 disabled:opacity-40 text-white rounded-xl text-sm font-bold shrink-0 transition-all"
           >
             <span className="ms" style={{ fontSize: 16 }}>play_arrow</span> Kart Modu
           </button>

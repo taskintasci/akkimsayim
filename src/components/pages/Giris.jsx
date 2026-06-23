@@ -90,18 +90,29 @@ export default function Giris({ onNavigate }) {
             Geçmiş Sayımlar
           </h2>
 
-          {sessionsLoading && (
-            <div className="text-slate-400 text-sm p-6 text-center border border-white/10 rounded-xl flex items-center justify-center gap-2">
-              <span className="ms animate-spin" style={{ fontSize: 18 }}>progress_activity</span> Yükleniyor…
+          {sessionsLoading ? (
+            <div className="flex flex-col gap-2">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="rounded-xl p-4 border border-white/10 bg-white/5">
+                  <div className="h-4 bg-white/10 rounded-md w-40 mb-2 animate-pulse" />
+                  <div className="h-3 bg-white/10 rounded-md w-28 mb-3 animate-pulse" />
+                  <div className="h-1.5 bg-white/10 rounded-full w-full animate-pulse" />
+                </div>
+              ))}
             </div>
-          )}
-          {!sessionsLoading && sessions.length === 0 && (
-            <div className="text-slate-400 text-sm p-6 text-center border border-white/10 rounded-xl">
-              Henüz kayıtlı sayım yok.
+          ) : sessions.length === 0 ? (
+            <div className="text-center py-10 border border-dashed border-white/20 rounded-xl">
+              <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-3">
+                <span className="ms text-white/30" style={{ fontSize: 24 }}>folder_open</span>
+              </div>
+              <p className="text-slate-400 text-sm font-medium">Kayıtlı sayım yok</p>
+              <p className="text-slate-500 text-xs mt-1">
+                {userRole === 'yonetici' ? 'Sağ panelden yeni sayım oluşturun' : 'Yönetici sayım oluşturduğunda buraya eklenir'}
+              </p>
             </div>
-          )}
+          ) : null}
 
-          <div className="flex flex-col gap-2">
+          {!sessionsLoading && sessions.length > 0 && <div className="flex flex-col gap-2">
             {sessions.map(s => {
               const pct = s.kalemSayisi > 0 ? Math.round((s.tamamlanan / s.kalemSayisi) * 100) : 0
               const isDeleting = deletingId === s.id
@@ -172,13 +183,13 @@ export default function Giris({ onNavigate }) {
                 </div>
               )
             })}
-          </div>
+          </div>}
 
           <div className="py-5 mt-auto">
             <button
               onClick={handleDevamEt}
               disabled={!selectedId}
-              className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+              className="w-full py-3 bg-blue-600 hover:bg-blue-500 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl text-sm transition-all flex items-center justify-center gap-2"
             >
               <span className="ms">play_arrow</span>
               Devam Et
@@ -254,7 +265,7 @@ export default function Giris({ onNavigate }) {
             <button
               onClick={handleCreate}
               disabled={!depoAdi.trim() || creating}
-              className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+              className="w-full py-3 bg-blue-600 hover:bg-blue-500 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl text-sm transition-all flex items-center justify-center gap-2"
             >
               <span className={'ms ' + (creating ? 'animate-spin' : '')}>{creating ? 'progress_activity' : 'rocket_launch'}</span>
               {creating ? 'Oluşturuluyor…' : 'Yeni Sayım Oluştur'}
