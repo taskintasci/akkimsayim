@@ -28,6 +28,11 @@ service cloud.firestore {
       }
     }
 
+    // collectionGroup sorgusu için wildcard path — sayımcının tüm görevleri tek sorguda çekilir
+    match /{path=**}/sayimciGorevler/{gorevId} {
+      allow read: if request.auth != null;
+    }
+
     match /users/{uid} {
       // Kendi profilini herkes okuyabilir; yönetici tüm kullanıcıları okur
       allow read:   if request.auth != null && (request.auth.uid == uid || isYonetici());
