@@ -272,17 +272,27 @@ const useStore = create((set, get) => ({
     set({ rowsLoading: false })
 
     // Real-time results listener
+    // MERGE ile güncelle: debounce bekleyen (writeTimers'daki) satırlar silinmez
     let firstSnapshot = true
     resultsUnsub = onSnapshot(
       collection(db, 'sessions', id, 'results'),
       (snap) => {
-        const results = {}
-        snap.forEach(d => { results[d.id] = d.data() })
+        const incoming = {}
+        snap.forEach(d => { incoming[d.id] = d.data() })
         if (firstSnapshot) {
           firstSnapshot = false
-          set({ results, resultsLoading: false })
+          set({ results: incoming, resultsLoading: false })
         } else {
-          set({ results })
+          set(state => {
+            // Firestore'a henüz yazılmamış (timer bekleyen) satırları koru
+            const merged = { ...incoming }
+            for (const pendingId of writeTimers.keys()) {
+              if (state.results[pendingId] !== undefined) {
+                merged[pendingId] = state.results[pendingId]
+              }
+            }
+            return { results: merged }
+          })
         }
       },
       (err) => {

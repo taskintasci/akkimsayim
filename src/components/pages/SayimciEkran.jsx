@@ -57,61 +57,62 @@ function SwipeCard({ row, sayilanMiktar, onConfirm, onEdit, isMembran }) {
         onMouseMove={e => startX.current != null && onMove(e.clientX)}
         onMouseUp={onEnd}
         onMouseLeave={() => { if (startX.current != null) onEnd() }}
-        className="relative rounded-3xl border border-white/15 p-7 shadow-2xl cursor-grab active:cursor-grabbing"
+        className="relative rounded-3xl border border-white/15 shadow-2xl cursor-grab active:cursor-grabbing flex flex-col"
         style={{
           transform: `translateX(${dx}px) rotate(${dx * 0.03}deg)`,
           transition: startX.current == null ? 'transform 0.25s ease' : 'none',
           background: bg,
           backdropFilter: 'blur(8px)',
+          height: 340,
+          padding: '28px 28px 24px',
         }}
       >
         {/* Palet rozeti — sadece membran */}
         {isMembran && row.partiEk && (
-          <div className="flex items-center gap-2 mb-3">
-            <span className="ms text-purple-300" style={{ fontSize: 18 }}>layers</span>
+          <div className="flex items-center gap-2 mb-2 shrink-0">
+            <span className="ms text-purple-300" style={{ fontSize: 16 }}>layers</span>
             <span className="text-purple-200 font-semibold text-sm mono">{row.partiEk}</span>
           </div>
         )}
 
         {/* Raf / Adres */}
-        <div className="flex items-center gap-2 mb-5">
-          <span className="ms text-blue-300" style={{ fontSize: 26 }}>shelves</span>
-          <span className="text-blue-200 font-bold tracking-tight mono" style={{ fontSize: 30 }}>
+        <div className="flex items-center gap-2 mb-3 shrink-0">
+          <span className="ms text-blue-300" style={{ fontSize: 22 }}>shelves</span>
+          <span className="text-blue-200 font-bold tracking-tight mono" style={{ fontSize: 26 }}>
             {row.adres || '—'}
           </span>
         </div>
 
-        {/* Ürün adı */}
-        <p className="text-white font-extrabold leading-tight mb-3" style={{ fontSize: 30 }}>
+        {/* Ürün adı — 2 satırla sınırlı */}
+        <p className="text-white font-extrabold leading-tight mb-2 overflow-hidden" style={{ fontSize: 26, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
           {row.ad || '—'}
         </p>
 
-        {/* Kod + parti + durum */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-6">
-          <span className="text-slate-300 mono" style={{ fontSize: 18 }}>{row.kod}</span>
-          {row.parti && <span className="text-slate-400 mono text-sm">Parti: {row.parti}</span>}
-          {row.durum && <span className="text-slate-400 text-sm">{row.durum}</span>}
+        {/* Kod + parti */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mb-3 shrink-0">
+          <span className="text-slate-300 mono" style={{ fontSize: 15 }}>{row.kod}</span>
+          {row.parti && <span className="text-slate-400 mono text-xs">Parti: {row.parti}</span>}
         </div>
 
-        {/* Sistem miktarı + sayılan */}
-        <div className="flex items-end justify-between bg-black/20 rounded-2xl px-5 py-4">
+        {/* Sistem miktarı + sayılan — flex-1 altta */}
+        <div className="flex items-end justify-between bg-black/20 rounded-2xl px-4 py-3 mt-auto shrink-0">
           <div>
-            <p className="text-slate-400 text-xs uppercase tracking-wide mb-1">Sistem Miktarı</p>
-            <p className="text-white font-bold" style={{ fontSize: 34 }}>
-              {row.sayim ?? '—'} <span className="text-slate-400 text-lg font-normal">{row.birim}</span>
+            <p className="text-slate-400 text-xs uppercase tracking-wide mb-0.5">Sistem</p>
+            <p className="text-white font-bold" style={{ fontSize: 30 }}>
+              {row.sayim ?? '—'} <span className="text-slate-400 text-base font-normal">{row.birim}</span>
             </p>
           </div>
           {sayilanMiktar !== undefined && sayilanMiktar !== '' && (
             <div className="text-right">
-              <p className="text-emerald-300 text-xs uppercase tracking-wide mb-1">Sayılan</p>
-              <p className="text-emerald-200 font-bold" style={{ fontSize: 28 }}>{sayilanMiktar}</p>
+              <p className="text-emerald-300 text-xs uppercase tracking-wide mb-0.5">Sayılan</p>
+              <p className="text-emerald-200 font-bold" style={{ fontSize: 26 }}>{sayilanMiktar}</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Butonlar */}
-      <div className="flex gap-3 mt-5">
+      {/* Butonlar — her zaman kartın altında, sabit */}
+      <div className="flex gap-3 mt-4 shrink-0">
         <button
           onClick={onEdit}
           className="flex-1 py-4 rounded-2xl bg-amber-500/90 hover:bg-amber-500 text-white font-bold text-lg flex items-center justify-center gap-2"
