@@ -3,7 +3,7 @@ import { forwardRef } from 'react'
 const ROWS_PER_PAGE = 25
 
 const PrintSheet = forwardRef(function PrintSheet(
-  { rows, results, session, mode = 'sayim', hideSayilan = false, sayimTuru = '' },
+  { rows, results, session, mode = 'sayim', hideSayilan = false, sayimTuru = '', paletGrouped = false },
   ref
 ) {
   const blindMode    = mode === 'kor'
@@ -36,16 +36,40 @@ const PrintSheet = forwardRef(function PrintSheet(
     </div>
   )
 
-  // Satırları sayfalara böl
-  const pages = []
-  for (let i = 0; i < rows.length; i += ROWS_PER_PAGE) {
-    pages.push(rows.slice(i, i + ROWS_PER_PAGE))
+  // Palet gruplu mod: partiEk'e göre sırala + ara başlık satırları ekle
+  let flatItems = rows
+  if (paletGrouped) {
+    const map = new Map()
+    ;[...rows]
+      .sort((a, b) => (a.partiEk || '').localeCompare(b.partiEk || '', 'tr', { numeric: true }))
+      .forEach(r => {
+        const key = r.partiEk?.trim() || '(Palet Yok)'
+        if (!map.has(key)) map.set(key, [])
+        map.get(key).push(r)
+      })
+    flatItems = []
+    map.forEach((items, key) => {
+      flatItems.push({ __header: true, paletKey: key, count: items.length })
+      items.forEach(r => flatItems.push(r))
+    })
   }
+
+  // Sayfalara böl (header'lar da slot tüketir)
+  const pages = []
+  for (let i = 0; i < flatItems.length; i += ROWS_PER_PAGE) {
+    pages.push(flatItems.slice(i, i + ROWS_PER_PAGE))
+  }
+  if (pages.length === 0) pages.push([])
   const totalPages = pages.length
+
+  // Gerçek veri satırı sayısı (header hariç)
+  const dataRowCount = paletGrouped ? rows.length : rows.length
+
+  let globalDataIdx = 0 // header satırları sayılmadan artan sayaç
 
   return (
     <div ref={ref} id="print-area">
-      {pages.map((pageRows, pageIdx) => (
+      {pages.map((pageItems, pageIdx) => (
         <div
           key={pageIdx}
           style={{ pageBreakAfter: pageIdx < totalPages - 1 ? 'always' : 'auto' }}
@@ -72,7 +96,7 @@ const PrintSheet = forwardRef(function PrintSheet(
                 {pageIdx + 1} <span style={{ fontSize: '8.5pt', color: '#94a3b8' }}>/ {totalPages}</span>
               </p>
               <p style={{ fontSize: '6pt', color: '#94a3b8', marginTop: 3 }}>Baskı: {printDate}</p>
-              <p style={{ fontSize: '6pt', color: '#94a3b8' }}>{printTime} · {rows.length} kalem</p>
+              <p style={{ fontSize: '6pt', color: '#94a3b8' }}>{printTime} · {dataRowCount} kalem</p>
             </div>
           </div>
 
@@ -94,24 +118,45 @@ const PrintSheet = forwardRef(function PrintSheet(
               </tr>
             </thead>
             <tbody>
-              {pageRows.map((row, i) => {
-                const globalIdx = pageIdx * ROWS_PER_PAGE + i
-                const isEven    = globalIdx % 2 === 1
-                const miktar    = results?.[row.id]?.miktar
-                const notlar    = results?.[row.id]?.notlar ?? ''
-                const isDiff    = miktar !== undefined && miktar !== '' && String(miktar) !== String(row.sayim)
-                const rowBg     = isDiff ? '#fff1f2' : isEven ? '#f8fafc' : '#ffffff'
+              {pageItems.map((item, i) => {
+                // Palet başlık satırı
+                if (item.__header) {
+                  return (
+                    <tr key={'h-' + item.paletKey + '-' + pageIdx + '-' + i} style={{ background: '#f1f5f9' }}>
+                      <td colSpan={11} style={{
+                        padding: '3px 6px',
+                        border: '1px solid #cbd5e1',
+                        borderLeft: '3px solid #7c3aed',
+                        fontFamily: 'monospace',
+                        fontSize: '7pt',
+                        fontWeight: 700,
+                        color: '#3730a3',
+                        letterSpacing: '0.03em',
+                      }}>
+                        ▶ PALET: {item.paletKey} <span style={{ fontWeight: 400, color: '#64748b', marginLeft: 8 }}>{item.count} kalem</span>
+                      </td>
+                    </tr>
+                  )
+                }
+
+                // Normal veri satırı
+                const rowNum  = ++globalDataIdx
+                const isEven  = rowNum % 2 === 0
+                const miktar  = results?.[item.id]?.miktar
+                const notlar  = results?.[item.id]?.notlar ?? ''
+                const isDiff  = miktar !== undefined && miktar !== '' && String(miktar) !== String(item.sayim)
+                const rowBg   = isDiff ? '#fff1f2' : isEven ? '#f8fafc' : '#ffffff'
 
                 return (
-                  <tr key={row.id || globalIdx} style={{ background: rowBg }}>
-                    <td style={{ padding: '2px 4px', textAlign: 'center', border: '1px solid #e2e8f0', fontFamily: 'monospace', fontSize: '6.5pt', color: '#94a3b8' }}>{globalIdx + 1}</td>
-                    <td style={{ padding: '2px 4px', border: '1px solid #e2e8f0', fontFamily: 'monospace', fontSize: '6.5pt' }}>{row.adres}</td>
-                    <td style={{ padding: '2px 4px', border: '1px solid #e2e8f0', fontFamily: 'monospace', fontSize: '6.5pt', color: '#2563eb', fontWeight: 700 }}>{row.kod}</td>
-                    <td style={{ padding: '2px 4px', border: '1px solid #e2e8f0', fontSize: '6pt', fontWeight: 500 }}>{row.ad}</td>
-                    <td style={{ padding: '2px 4px', textAlign: 'center', border: '1px solid #e2e8f0', fontFamily: 'monospace', fontSize: '6.5pt', color: '#64748b' }}>{row.parti}</td>
-                    <td style={{ padding: '2px 4px', textAlign: 'center', border: '1px solid #e2e8f0', fontSize: '6.5pt' }}>{row.durum}</td>
-                    <td style={{ padding: '2px 4px', textAlign: 'right', border: '1px solid #e2e8f0', fontFamily: 'monospace' }}>{row.adet1}</td>
-                    <td style={{ padding: '2px 4px', textAlign: 'center', border: '1px solid #e2e8f0', fontSize: '5.5pt', color: '#64748b' }}>{row.ambalaj}</td>
+                  <tr key={item.id || i} style={{ background: rowBg }}>
+                    <td style={{ padding: '2px 4px', textAlign: 'center', border: '1px solid #e2e8f0', fontFamily: 'monospace', fontSize: '6.5pt', color: '#94a3b8' }}>{rowNum}</td>
+                    <td style={{ padding: '2px 4px', border: '1px solid #e2e8f0', fontFamily: 'monospace', fontSize: '6.5pt' }}>{item.adres}</td>
+                    <td style={{ padding: '2px 4px', border: '1px solid #e2e8f0', fontFamily: 'monospace', fontSize: '6.5pt', color: '#2563eb', fontWeight: 700 }}>{item.kod}</td>
+                    <td style={{ padding: '2px 4px', border: '1px solid #e2e8f0', fontSize: '6pt', fontWeight: 500 }}>{item.ad}</td>
+                    <td style={{ padding: '2px 4px', textAlign: 'center', border: '1px solid #e2e8f0', fontFamily: 'monospace', fontSize: '6.5pt', color: '#64748b' }}>{item.parti}</td>
+                    <td style={{ padding: '2px 4px', textAlign: 'center', border: '1px solid #e2e8f0', fontSize: '6.5pt' }}>{item.durum}</td>
+                    <td style={{ padding: '2px 4px', textAlign: 'right', border: '1px solid #e2e8f0', fontFamily: 'monospace' }}>{item.adet1}</td>
+                    <td style={{ padding: '2px 4px', textAlign: 'center', border: '1px solid #e2e8f0', fontSize: '5.5pt', color: '#64748b' }}>{item.ambalaj}</td>
                     <td style={{
                       padding: '2px 4px', textAlign: 'right',
                       border: '1px solid #3b82f6',
@@ -121,8 +166,8 @@ const PrintSheet = forwardRef(function PrintSheet(
                     }}>
                       {sayilanGizli ? ' ' : (miktar !== undefined && miktar !== '' ? miktar : ' ')}
                     </td>
-                    <td style={{ padding: '2px 4px', textAlign: 'center', border: '1px solid #e2e8f0', fontFamily: 'monospace', fontSize: '6.5pt', color: '#64748b' }}>{row.birim}</td>
-                    <td style={{ padding: '2px 4px', border: '1px solid #e2e8f0', fontFamily: 'monospace', fontSize: '6pt', color: '#94a3b8' }}>{notlar || row.aciklama || ''}</td>
+                    <td style={{ padding: '2px 4px', textAlign: 'center', border: '1px solid #e2e8f0', fontFamily: 'monospace', fontSize: '6.5pt', color: '#64748b' }}>{item.birim}</td>
+                    <td style={{ padding: '2px 4px', border: '1px solid #e2e8f0', fontFamily: 'monospace', fontSize: '6pt', color: '#94a3b8' }}>{notlar || item.aciklama || ''}</td>
                   </tr>
                 )
               })}
