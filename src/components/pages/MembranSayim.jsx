@@ -205,7 +205,7 @@ export default function MembranSayim({ onNavigate }) {
             )}
           </div>
           <span className="text-[11.5px] text-slate-400 font-medium">Filtre:</span>
-          <MultiSelect placeholder="Tüm Durumlar" options={['Normal', 'Bloke', 'SKTG']} value={filterDurum} onChange={setFilterDurum} />
+          <MultiSelect placeholder="Tüm Durumlar" options={filterOptions.durumlar} value={filterDurum} onChange={setFilterDurum} />
           {filterOptions.paletler?.length > 0 && (
             <MultiSelect placeholder="Tüm Paletler" options={filterOptions.paletler} value={filterPalet} onChange={setFilterPalet} style={{ borderColor: '#c4b5fd' }} />
           )}

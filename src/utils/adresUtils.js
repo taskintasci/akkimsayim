@@ -79,7 +79,11 @@ export function computeFilterOptions(sourceRows, filters) {
     })
   }
 
+  const DURUM_ORDER = ['Normal', 'Bloke', 'SKTG']
+  const availDurumlar = new Set(apply(sourceRows, 'durum').map(r => r.durum).filter(Boolean))
+
   const result = {
+    durumlar:    DURUM_ORDER.filter(d => availDurumlar.has(d)),
     kategoriler: [...new Set(apply(sourceRows, 'kategori').map(r => r.kategori).filter(Boolean))].sort(),
     raflar:      [...new Set(apply(sourceRows, 'raf').map(r => parseAdres(r.adres).raf).filter(Boolean))].sort(),
     siralar:     [...new Set(apply(sourceRows, 'sira').map(r => parseAdres(r.adres).sira).filter(Boolean))].sort(),
