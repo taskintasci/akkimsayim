@@ -29,6 +29,7 @@ export default function Giris({ onNavigate }) {
   const { sessions, sessionsLoading, loadSessions, setActiveSession, createSession, deleteSession, currentUser } = useStore()
   const [selectedId, setSelectedId] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
+  const [creating, setCreating] = useState(false)
 
   useEffect(() => { loadSessions() }, [])
   const [newType, setNewType] = useState('Yıl Sonu Sayımı')
@@ -41,10 +42,15 @@ export default function Giris({ onNavigate }) {
     onNavigate('panel')
   }
 
-  function handleCreate() {
-    if (!depoAdi.trim()) return
-    createSession({ type: newType, depoAdi: depoAdi.trim(), tarih })
-    onNavigate('panel')
+  async function handleCreate() {
+    if (!depoAdi.trim() || creating) return
+    setCreating(true)
+    try {
+      await createSession({ type: newType, depoAdi: depoAdi.trim(), tarih })
+      onNavigate('panel')
+    } finally {
+      setCreating(false)
+    }
   }
 
   return (
@@ -247,11 +253,11 @@ export default function Giris({ onNavigate }) {
 
             <button
               onClick={handleCreate}
-              disabled={!depoAdi.trim()}
+              disabled={!depoAdi.trim() || creating}
               className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
             >
-              <span className="ms">rocket_launch</span>
-              Yeni Sayım Oluştur
+              <span className={'ms ' + (creating ? 'animate-spin' : '')}>{creating ? 'progress_activity' : 'rocket_launch'}</span>
+              {creating ? 'Oluşturuluyor…' : 'Yeni Sayım Oluştur'}
             </button>
           </div>
         </div>
