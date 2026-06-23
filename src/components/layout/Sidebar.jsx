@@ -108,22 +108,22 @@ export default function Sidebar({ activePage, onNavigate, onSettings }) {
           </button>
         </div>
 
-        {/* Ayarlar linki — kullanıcı adının altında */}
-        <button
-          onClick={() => onNavigate('ayarlar')}
-          className={
-            'mt-2 w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[12px] transition-all ' +
-            (activePage === 'ayarlar'
-              ? 'bg-blue-50 text-blue-700 font-semibold'
-              : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50')
-          }
-        >
-          <span className="ms" style={{ fontSize: 15 }}>settings</span>
-          Ayarlar
-          {userRole === 'yonetici' && (
+        {/* Ayarlar linki — yalnızca yönetici */}
+        {userRole === 'yonetici' && (
+          <button
+            onClick={() => onNavigate('ayarlar')}
+            className={
+              'mt-2 w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[12px] transition-all ' +
+              (activePage === 'ayarlar'
+                ? 'bg-blue-50 text-blue-700 font-semibold'
+                : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50')
+            }
+          >
+            <span className="ms" style={{ fontSize: 15 }}>settings</span>
+            Ayarlar
             <span className="ml-auto text-[10px] text-slate-400">+ Kullanıcılar</span>
-          )}
-        </button>
+          </button>
+        )}
       </div>
     </aside>
   )

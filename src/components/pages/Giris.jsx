@@ -26,7 +26,7 @@ function StatusBadge({ durum }) {
 }
 
 export default function Giris({ onNavigate }) {
-  const { sessions, sessionsLoading, loadSessions, setActiveSession, createSession, deleteSession, currentUser } = useStore()
+  const { sessions, sessionsLoading, loadSessions, setActiveSession, createSession, deleteSession, currentUser, userRole } = useStore()
   const [selectedId, setSelectedId] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
   const [creating, setCreating] = useState(false)
@@ -84,7 +84,7 @@ export default function Giris({ onNavigate }) {
       <div className="flex flex-1 overflow-hidden">
 
         {/* Sol panel: Geçmiş Sayımlar */}
-        <div className="w-[420px] shrink-0 flex flex-col px-10 border-r border-white/10 overflow-y-auto">
+        <div className={`${userRole === 'yonetici' ? 'w-[420px] shrink-0 border-r border-white/10' : 'flex-1 max-w-lg mx-auto'} flex flex-col px-10 overflow-y-auto`}>
           <h2 className="text-white font-semibold text-sm flex items-center gap-2 mb-4">
             <span className="ms text-blue-400" style={{ fontSize: 18 }}>history</span>
             Geçmiş Sayımlar
@@ -121,7 +121,7 @@ export default function Giris({ onNavigate }) {
                     </button>
                     <div className="flex items-center gap-2 ml-2 shrink-0">
                       <StatusBadge durum={s.durum} />
-                      {!isDeleting ? (
+                      {userRole === 'yonetici' && (!isDeleting ? (
                         <button
                           onClick={e => { e.stopPropagation(); setDeletingId(s.id) }}
                           className="w-6 h-6 flex items-center justify-center rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-400/10 transition-colors"
@@ -144,7 +144,7 @@ export default function Giris({ onNavigate }) {
                             İptal
                           </button>
                         </div>
-                      )}
+                      ))}
                     </div>
                   </div>
                   <button className="w-full text-left" onClick={() => { setSelectedId(s.id); setDeletingId(null) }}>
@@ -186,8 +186,8 @@ export default function Giris({ onNavigate }) {
           </div>
         </div>
 
-        {/* Sağ panel: Yeni Sayım */}
-        <div className="flex-1 flex flex-col justify-center items-center px-12 py-8">
+        {/* Sağ panel: Yeni Sayım — yalnızca yönetici */}
+        {userRole === 'yonetici' && <div className="flex-1 flex flex-col justify-center items-center px-12 py-8">
           <div className="w-full max-w-sm">
             <h2 className="text-white font-semibold text-sm flex items-center gap-2 mb-5">
               <span className="ms text-blue-400" style={{ fontSize: 18 }}>add_circle</span>
@@ -260,7 +260,7 @@ export default function Giris({ onNavigate }) {
               {creating ? 'Oluşturuluyor…' : 'Yeni Sayım Oluştur'}
             </button>
           </div>
-        </div>
+        </div>}
       </div>
     </div>
   )
