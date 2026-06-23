@@ -1,5 +1,14 @@
 {
-  "indexes": [],
+  "indexes": [
+    {
+      "collectionGroup": "sayimciGorevler",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "sayimciUid", "order": "ASCENDING" },
+        { "fieldPath": "createdAt",  "order": "DESCENDING" }
+      ]
+    }
+  ],
   "fieldOverrides": [
     {
       "collectionGroup": "sayimciGorevler",

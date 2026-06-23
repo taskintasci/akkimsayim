@@ -11,14 +11,17 @@ service cloud.firestore {
     }
 
     match /sessions/{sessionId} {
-      allow read, write: if request.auth != null;
+      allow read:  if request.auth != null;
+      allow write: if isYonetici();
 
       match /results/{rowId} {
-        allow read, write: if request.auth != null;
+        allow read:  if request.auth != null;
+        allow write: if request.auth != null; // sayımcı kendi sonucunu yazar
       }
 
       match /rowChunks/{chunkId} {
-        allow read, write: if request.auth != null;
+        allow read:  if request.auth != null;
+        allow write: if isYonetici();
       }
 
       // Sayımcı görevleri: yönetici yazar, ilgili sayımcı + yetkililer okur

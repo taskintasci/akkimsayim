@@ -109,8 +109,23 @@ function mapDataRow(rowArr, colMap, siraNo) {
   return mapped
 }
 
+const VALID_MIMES = [
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-excel',
+  'application/octet-stream',
+]
+const MAX_FILE_SIZE = 30 * 1024 * 1024 // 30MB
+
 export function parseExcelFile(file) {
   return new Promise((resolve, reject) => {
+    if (file.size > MAX_FILE_SIZE) {
+      reject(new Error('Dosya 30MB\'dan büyük olamaz.'))
+      return
+    }
+    if (file.type && !VALID_MIMES.includes(file.type)) {
+      reject(new Error('Yalnızca Excel dosyaları (.xlsx, .xls) kabul edilir.'))
+      return
+    }
     const reader = new FileReader()
     reader.onload = async (e) => {
       try {

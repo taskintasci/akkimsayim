@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { signInWithEmailAndPassword } from 'firebase/auth'
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth'
 import { auth } from '../../firebase/index'
 
 export default function Login() {
@@ -7,6 +7,8 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [error,    setError]    = useState('')
   const [loading,  setLoading]  = useState(false)
+  const [resetSent, setResetSent] = useState(false)
+  const [resetLoading, setResetLoading] = useState(false)
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -18,6 +20,20 @@ export default function Login() {
       setError('E-posta veya şifre hatalı')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleReset() {
+    if (!email) { setError('Şifre sıfırlama için önce e-posta adresinizi girin.'); return }
+    setResetLoading(true)
+    setError('')
+    try {
+      await sendPasswordResetEmail(auth, email)
+      setResetSent(true)
+    } catch {
+      setError('Sıfırlama e-postası gönderilemedi. E-posta adresini kontrol edin.')
+    } finally {
+      setResetLoading(false)
     }
   }
 
@@ -66,6 +82,12 @@ export default function Login() {
               </div>
             )}
 
+            {resetSent && (
+              <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 text-emerald-700 text-sm text-center">
+                Sıfırlama bağlantısı e-posta adresinize gönderildi.
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={loading || !email || !password}
@@ -76,6 +98,15 @@ export default function Login() {
                 : <span className="ms" style={{ fontSize: 18 }}>login</span>
               }
               {loading ? 'Giriş yapılıyor…' : 'Giriş Yap'}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleReset}
+              disabled={resetLoading}
+              className="w-full text-slate-400 hover:text-slate-600 text-xs text-center transition-colors disabled:opacity-40"
+            >
+              {resetLoading ? 'Gönderiliyor…' : 'Şifremi unuttum'}
             </button>
           </form>
         </div>

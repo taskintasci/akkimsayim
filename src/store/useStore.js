@@ -8,6 +8,9 @@ import { db, getSecondaryAuth } from '../firebase/index'
 import { parseExcelFile } from '../utils/excelImport'
 import { uploadRows, downloadRows } from '../firebase/rowStorage'
 
+// ─── Dev-only error logger — prod'da hassas hata detayı loglanmaz ─────────
+const devErr = (msg, err) => { if (import.meta.env.DEV) console.error(msg, err) }
+
 // ─── Debounce map: keystroke → Firestore write ────────────────────────────
 const writeTimers = new Map()
 
@@ -26,7 +29,28 @@ const useStore = create((set, get) => ({
 
   // Giriş yapan kullanıcının profilini yükle (yoksa varsayılan sayımcı oluştur)
   loadUserProfile: async (user) => {
-    if (!user) { set({ userProfile: null, userRole: null, profileLoading: false }); return }
+    if (!user) {
+      if (resultsUnsub) { resultsUnsub(); resultsUnsub = null }
+      set({
+        currentUser: null, userProfile: null, userRole: null, profileLoading: false,
+        users: [], usersLoading: false,
+        gorevler: [], gorevlerLoading: false,
+        sessions: [], activeSessionId: null, sessionsLoading: false,
+        rows: [], importFormat: null, rowsLoading: false,
+        results: {}, resultsLoading: false,
+        korCodes: [], korMatched: [],
+        manualRows: [], korManualRows: [],
+        pendingKodFilter: null,
+        events: [],
+        session: {
+          type: 'Yıl Sonu Sayımı', depoAdi: '',
+          sayimBasligi: 'YIL SONU SAYIM',
+          tarih: new Date().toISOString().slice(0, 10),
+          sorumlu: '', tur: 1,
+        },
+      })
+      return
+    }
     set({ profileLoading: true })
     try {
       const ref  = doc(db, 'users', user.uid)
@@ -48,7 +72,7 @@ const useStore = create((set, get) => ({
         set({ userProfile: { uid: user.uid, ...profile }, userRole: 'sayimci' })
       }
     } catch (err) {
-      console.error('Profil yüklenemedi:', err)
+      devErr('Profil yüklenemedi:', err)
       set({ userProfile: null, userRole: null })
     } finally {
       set({ profileLoading: false })
@@ -65,7 +89,7 @@ const useStore = create((set, get) => ({
       const snap = await getDocs(query(collection(db, 'users'), orderBy('createdAt', 'desc')))
       set({ users: snap.docs.map(d => ({ uid: d.id, ...d.data() })) })
     } catch (err) {
-      console.error('Kullanıcılar yüklenemedi:', err)
+      devErr('Kullanıcılar yüklenemedi:', err)
     } finally {
       set({ usersLoading: false })
     }
@@ -139,7 +163,7 @@ const useStore = create((set, get) => ({
       list.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))
       set({ gorevler: list })
     } catch (err) {
-      console.error('Görevler yüklenemedi:', err)
+      devErr('Görevler yüklenemedi:', err)
     } finally {
       set({ gorevlerLoading: false })
     }
@@ -155,7 +179,7 @@ const useStore = create((set, get) => ({
       )
       set({ gorevler: snap.docs.map(d => ({ id: d.id, ...d.data() })) })
     } catch (err) {
-      console.error('Oturum görevleri yüklenemedi:', err)
+      devErr('Oturum görevleri yüklenemedi:', err)
     } finally {
       set({ gorevlerLoading: false })
     }
@@ -184,7 +208,7 @@ const useStore = create((set, get) => ({
       )
       set({ sessions: snap.docs.map(d => ({ id: d.id, ...d.data() })) })
     } catch (err) {
-      console.error('Sessions yüklenemedi:', err)
+      devErr('Sessions yüklenemedi:', err)
     } finally {
       set({ sessionsLoading: false })
     }
@@ -296,7 +320,7 @@ const useStore = create((set, get) => ({
         }
       },
       (err) => {
-        console.error('Results listener hatası:', err)
+        devErr('Results listener hatası:', err)
         set({ resultsLoading: false })
       }
     )
@@ -382,7 +406,7 @@ const useStore = create((set, get) => ({
         }))
       }
     } catch (err) {
-      console.error('Excel import hatası:', err)
+      devErr('Excel import hatası:', err)
       alert('Excel dosyası okunamadı.\nDesteklenen formatlar: RAPOR5.xls veya Sku_Sayım_Listesi.xlsx')
     }
   },
@@ -468,7 +492,7 @@ const useStore = create((set, get) => ({
     const matched = state.rows.filter(r => merged.includes(r.kod))
     set({ korCodes: merged, korMatched: matched })
     if (state.activeSessionId)
-      updateDoc(doc(db, 'sessions', state.activeSessionId), { korCodes: merged }).catch(console.error)
+      updateDoc(doc(db, 'sessions', state.activeSessionId), { korCodes: merged }).catch(e => devErr('korCodes güncelleme hatası:', e))
   },
   removeKorCode: (code) => {
     const state   = get()
@@ -476,14 +500,14 @@ const useStore = create((set, get) => ({
     const matched = state.rows.filter(r => updated.includes(r.kod))
     set({ korCodes: updated, korMatched: matched })
     if (state.activeSessionId)
-      updateDoc(doc(db, 'sessions', state.activeSessionId), { korCodes: updated }).catch(console.error)
+      updateDoc(doc(db, 'sessions', state.activeSessionId), { korCodes: updated }).catch(e => devErr('korCodes güncelleme hatası:', e))
   },
   setKorMatched: (rows) => set({ korMatched: rows }),
   clearKor: () => {
     const { activeSessionId } = get()
     set({ korCodes: [], korMatched: [] })
     if (activeSessionId)
-      updateDoc(doc(db, 'sessions', activeSessionId), { korCodes: [] }).catch(console.error)
+      updateDoc(doc(db, 'sessions', activeSessionId), { korCodes: [] }).catch(e => devErr('korCodes temizleme hatası:', e))
   },
 
   approveSession: async () => {

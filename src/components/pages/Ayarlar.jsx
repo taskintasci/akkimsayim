@@ -32,8 +32,8 @@ function KullaniciTab() {
   async function handleCreate(e) {
     e.preventDefault()
     setError(''); setOkMsg('')
-    if (!form.email.trim() || form.password.length < 6) {
-      setError('Geçerli bir e-posta ve en az 6 karakterli şifre girin.')
+    if (!form.email.trim() || form.password.length < 8) {
+      setError('Geçerli bir e-posta ve en az 8 karakterli şifre girin.')
       return
     }
     setSaving(true)
@@ -51,7 +51,7 @@ function KullaniciTab() {
       if (code === 'auth/email-already-in-use') setError('Bu e-posta zaten kayıtlı.')
       else if (code === 'auth/invalid-email')   setError('Geçersiz e-posta adresi.')
       else if (code === 'auth/weak-password')    setError('Şifre çok zayıf (en az 6 karakter).')
-      else setError('Kullanıcı oluşturulamadı: ' + (err?.message || code))
+      else setError('Kullanıcı oluşturulamadı. Lütfen tekrar deneyin.')
     } finally {
       setSaving(false)
     }
