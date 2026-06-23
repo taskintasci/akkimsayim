@@ -40,11 +40,9 @@ const MENU = [
   { id: 'membran',      icon: 'layers',         label: 'Membran Sayımı',          roles: ['yonetici'] },
   { divider: true,      roles: ['yonetici', 'kontrolcu'] },
   { id: 'sayimciekran', icon: 'swipe',          label: 'Sayımcı Ekranı',          roles: ['yonetici', 'kontrolcu'] },
-  { id: 'kullanicilar', icon: 'group',          label: 'Kullanıcı Yönetimi',      roles: ['yonetici'] },
-  { id: 'ayarlar',      icon: 'settings',       label: 'Ayarlar',                 roles: ['yonetici'] },
 ]
 
-export default function Sidebar({ activePage, onNavigate }) {
+export default function Sidebar({ activePage, onNavigate, onSettings }) {
   const { session, setActiveSession, userProfile, userRole } = useStore()
 
   const initials = (userProfile?.displayName || userProfile?.email || '??')
@@ -109,6 +107,23 @@ export default function Sidebar({ activePage, onNavigate }) {
             <span className="ms" style={{ fontSize: 16 }}>logout</span>
           </button>
         </div>
+
+        {/* Ayarlar linki — kullanıcı adının altında */}
+        <button
+          onClick={() => onNavigate('ayarlar')}
+          className={
+            'mt-2 w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[12px] transition-all ' +
+            (activePage === 'ayarlar'
+              ? 'bg-blue-50 text-blue-700 font-semibold'
+              : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50')
+          }
+        >
+          <span className="ms" style={{ fontSize: 15 }}>settings</span>
+          Ayarlar
+          {userRole === 'yonetici' && (
+            <span className="ml-auto text-[10px] text-slate-400">+ Kullanıcılar</span>
+          )}
+        </button>
       </div>
     </aside>
   )

@@ -18,7 +18,6 @@ const KorSayimRapor       = lazy(() => import('./components/pages/KorSayimRapor'
 const HareketlilikSayim   = lazy(() => import('./components/pages/HareketlilikSayim'))
 const MembranSayim        = lazy(() => import('./components/pages/MembranSayim'))
 const Ayarlar             = lazy(() => import('./components/pages/Ayarlar'))
-const KullaniciYonetim    = lazy(() => import('./components/pages/KullaniciYonetim'))
 const SayimciEkran        = lazy(() => import('./components/pages/SayimciEkran'))
 
 const HEPSI = ['yonetici', 'kontrolcu', 'sayimci']
@@ -34,8 +33,7 @@ const PAGES = {
   korrapor:      { Component: KorSayimRapor,      fullHeight: false, roles: ['yonetici', 'kontrolcu'] },
   hareketlilik:  { Component: HareketlilikSayim,  fullHeight: true,  roles: ['yonetici'] },
   membran:       { Component: MembranSayim,       fullHeight: true,  roles: ['yonetici'] },
-  ayarlar:       { Component: Ayarlar,            fullHeight: false, roles: ['yonetici'] },
-  kullanicilar:  { Component: KullaniciYonetim,   fullHeight: false, roles: ['yonetici'] },
+  ayarlar:       { Component: Ayarlar,            fullHeight: false, roles: ['yonetici', 'kontrolcu'] },
   sayimciekran:  { Component: SayimciEkran,       fullHeight: true,  roles: HEPSI },
 }
 
