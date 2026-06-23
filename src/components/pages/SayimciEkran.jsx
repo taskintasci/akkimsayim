@@ -3,13 +3,6 @@ import { signOut } from 'firebase/auth'
 import { auth } from '../../firebase/index'
 import useStore from '../../store/useStore'
 
-// ── Atanan satırları sıralama seçenekleri ──────────────────────────────────
-const SIRA_SECENEK = [
-  { id: 'adres', label: 'Raf Sırası', icon: 'shelves' },
-  { id: 'ad',    label: 'Ürün Adı',   icon: 'sort_by_alpha' },
-  { id: 'kod',   label: 'Ürün Kodu',  icon: 'tag' },
-]
-
 function siralaRows(rows, sira) {
   const arr = [...rows]
   if (sira === 'adres') arr.sort((a, b) => (a.adres || '').localeCompare(b.adres || '', 'tr'))
@@ -158,6 +151,8 @@ export default function SayimciEkran({ mode = 'self' }) {
   const [editVal, setEditVal] = useState('')
   const [editNote, setEditNote] = useState('')
   const [manuelOpen, setManuelOpen] = useState(false)
+  const [listeSearch, setListeSearch] = useState('')
+  const [expandedPalets, setExpandedPalets] = useState(null) // null = hepsi açık
 
   function setIdx(n) { idxRef.current = n; _setIdx(n) }
 
@@ -184,17 +179,25 @@ export default function SayimciEkran({ mode = 'self' }) {
     [atanan, results]
   )
 
-  // Membran: palet grupları (for liste view)
+  const filteredAtanan = useMemo(() => {
+    if (!listeSearch.trim()) return atanan
+    const q = listeSearch.trim().toLowerCase()
+    return atanan.filter(r =>
+      r.kod?.toLowerCase().includes(q) ||
+      r.ad?.toLowerCase().includes(q)
+    )
+  }, [atanan, listeSearch])
+
   const membranGruplar = useMemo(() => {
     if (!isMembran) return []
     const map = new Map()
-    atanan.forEach(r => {
+    filteredAtanan.forEach(r => {
       const key = r.partiEk?.trim() || '(Palet Yok)'
       if (!map.has(key)) map.set(key, [])
       map.get(key).push(r)
     })
-    return [...map.entries()]
-  }, [atanan, isMembran])
+    return [...map.entries()].sort(([a], [b]) => a.localeCompare(b, 'tr', { numeric: true }))
+  }, [filteredAtanan, isMembran])
 
   async function openGorev(g) {
     setGorev(g)
@@ -373,68 +376,194 @@ export default function SayimciEkran({ mode = 'self' }) {
     )
   }
 
-  // ─── ATANAN LİSTE + SIRALAMA + SAYIMA BAŞLA ───────────────────────────────
+  // ─── ATANAN TABLO + SAYIMA BAŞLA ──────────────────────────────────────────
   if (view === 'liste') {
+    let rowCounter = 0
     return (
-      <Shell
-        mode={mode}
-        title={gorev?.depoAdi || 'Sayım Listesi'}
-        subtitle={`${atanan.length} kalem · ${sayilanAdet} sayıldı`}
-        onBack={() => { setView('gorevler'); setGorev(null) }}
-      >
-        {rowsLoading ? <Loading /> : (
-          <div className="w-full max-w-md flex flex-col">
-            {/* Sıralama — membran'da gizle (partiEk+adres sırasına kilitli) */}
-            {!isMembran && (
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-slate-400 text-sm shrink-0">Sırala:</span>
-                {SIRA_SECENEK.map(s => (
-                  <button
-                    key={s.id}
-                    onClick={() => setSira(s.id)}
-                    className={
-                      'flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm transition-all ' +
-                      (sira === s.id ? 'bg-blue-600 text-white font-semibold' : 'bg-white/5 text-slate-300 hover:bg-white/10')
-                    }
-                  >
-                    <span className="ms" style={{ fontSize: 16 }}>{s.icon}</span> {s.label}
-                  </button>
-                ))}
-              </div>
+      <div className={mode === 'preview' ? 'flex-1 flex flex-col overflow-hidden bg-white' : 'h-screen flex flex-col overflow-hidden bg-white'}>
+        {/* Üst bar */}
+        <div className="bg-slate-800 px-4 py-3 flex items-center gap-3 shrink-0">
+          <button
+            onClick={() => { setView('gorevler'); setGorev(null); setListeSearch('') }}
+            className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-300 hover:bg-white/10 shrink-0"
+          >
+            <span className="ms" style={{ fontSize: 24 }}>arrow_back</span>
+          </button>
+          <div className="flex-1 min-w-0">
+            <p className="text-white font-bold text-sm truncate">{gorev?.depoAdi || 'Sayım Listesi'}</p>
+            <p className="text-slate-400 text-xs">{atanan.length} kalem · {sayilanAdet} sayıldı</p>
+          </div>
+          <button
+            onClick={basla}
+            disabled={atanan.length === 0}
+            className="flex items-center gap-1.5 px-3 py-2 bg-blue-500 hover:bg-blue-400 disabled:opacity-40 text-white rounded-xl text-sm font-bold shrink-0"
+          >
+            <span className="ms" style={{ fontSize: 16 }}>play_arrow</span> Kart Modu
+          </button>
+        </div>
+
+        {/* İlerleme çubuğu */}
+        <div className="h-1.5 bg-slate-200 shrink-0">
+          <div className="h-1.5 bg-blue-500 transition-all" style={{ width: `${atanan.length > 0 ? (sayilanAdet / atanan.length) * 100 : 0}%` }} />
+        </div>
+
+        {/* Arama + membran kontroller */}
+        <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200 shrink-0 flex items-center gap-2">
+          <div className="relative flex-1">
+            <span className="ms absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" style={{ fontSize: 14 }}>search</span>
+            <input
+              type="search"
+              value={listeSearch}
+              onChange={e => setListeSearch(e.target.value)}
+              placeholder="Kod / Ad ara…"
+              className="w-full pl-8 pr-3 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-400"
+            />
+          </div>
+          {isMembran && (
+            <>
+              <button onClick={() => setExpandedPalets(null)} className="flex items-center gap-1 px-2.5 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-600 hover:bg-slate-50 shrink-0">
+                <span className="ms" style={{ fontSize: 14 }}>unfold_more</span> Aç
+              </button>
+              <button onClick={() => setExpandedPalets(new Set())} className="flex items-center gap-1 px-2.5 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-600 hover:bg-slate-50 shrink-0">
+                <span className="ms" style={{ fontSize: 14 }}>unfold_less</span> Kapat
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* Tablo */}
+        {rowsLoading ? (
+          <div className="flex-1 flex items-center justify-center text-slate-500 gap-2">
+            <span className="ms animate-spin" style={{ fontSize: 22 }}>progress_activity</span> Yükleniyor…
+          </div>
+        ) : (
+          <div className="flex-1 overflow-auto">
+            <table className="w-full text-left border-collapse" style={{ minWidth: 650 }}>
+              <thead className="sticky top-0 z-10">
+                <tr className="bg-slate-800 text-white text-[11px] mono uppercase tracking-wider">
+                  <th className="px-3 py-2.5 text-center w-8">#</th>
+                  <th className="px-3 py-2.5 w-24">Adres</th>
+                  <th className="px-3 py-2.5 w-28">Kod</th>
+                  <th className="px-3 py-2.5">Ad</th>
+                  <th className="px-3 py-2.5 w-20 text-right sistem-col">Sistem</th>
+                  <th className="px-3 py-2.5 w-24 text-right text-blue-300 sayilan-col">Sayılan ▾</th>
+                  <th className="px-3 py-2.5">Not</th>
+                </tr>
+              </thead>
+              <tbody className="text-[12.5px]">
+                {isMembran ? (
+                  membranGruplar.map(([paletKey, items]) => {
+                    const total   = items.length
+                    const cntd    = items.filter(r => { const m = results[r.id]?.miktar; return m !== undefined && m !== '' }).length
+                    const hasDiff = items.some(r => { const m = results[r.id]?.miktar; return m !== undefined && m !== '' && String(m) !== String(r.sayim) })
+                    const complete = cntd === total && total > 0
+                    const open = expandedPalets === null || expandedPalets.has(paletKey)
+                    let headerBg = 'bg-slate-50'
+                    if (complete && !hasDiff) headerBg = 'bg-emerald-50'
+                    else if (complete && hasDiff) headerBg = 'bg-red-50'
+                    else if (cntd > 0) headerBg = 'bg-amber-50'
+                    return [
+                      <tr
+                        key={'palet-' + paletKey}
+                        className={`${headerBg} border-b border-slate-200 cursor-pointer select-none`}
+                        onClick={() => setExpandedPalets(prev => {
+                          const base = prev === null ? new Set(membranGruplar.map(([k]) => k)) : new Set(prev)
+                          if (base.has(paletKey)) base.delete(paletKey); else base.add(paletKey)
+                          return base
+                        })}
+                      >
+                        <td colSpan={7} className="px-3 py-2">
+                          <div className="flex items-center gap-3">
+                            <span className="ms text-slate-400" style={{ fontSize: 16 }}>{open ? 'expand_more' : 'chevron_right'}</span>
+                            <span className="ms text-violet-500" style={{ fontSize: 16 }}>layers</span>
+                            <span className="font-semibold text-[12.5px] text-slate-800 mono">Palet: {paletKey}</span>
+                            <span className="text-[11.5px] text-slate-400">{total} kalem</span>
+                            <PaletSayimBadge counted={cntd} total={total} hasDiff={hasDiff} />
+                          </div>
+                        </td>
+                      </tr>,
+                      ...(open ? items.map(row => {
+                        rowCounter++
+                        const res = results[row.id] || {}
+                        const hasValue = res.miktar !== undefined && res.miktar !== ''
+                        const isDiff   = hasValue && String(res.miktar) !== String(row.sayim)
+                        return (
+                          <tr key={row.id}
+                            className={isDiff ? 'border-b border-slate-100 hover:bg-red-50' : 'border-b border-slate-100 hover:bg-blue-50/30'}
+                            style={isDiff ? { background: 'rgba(254,242,242,0.6)' } : {}}
+                          >
+                            <td className="px-3 py-2 text-center text-slate-400 mono text-[11px]">{rowCounter}</td>
+                            <td className="px-3 py-2 mono text-slate-600 text-[11.5px]">{row.adres}</td>
+                            <td className="px-3 py-2 mono font-medium text-blue-700 text-[11.5px]">{row.kod}</td>
+                            <td className="px-3 py-2 font-medium text-slate-800">{row.ad}</td>
+                            <td className="px-3 py-2 text-right mono text-slate-500 sistem-col">{row.sayim}</td>
+                            <td className="px-3 py-2 text-right sayilan-col">
+                              <div className="flex items-center justify-end gap-1">
+                                <input type="number" value={res.miktar ?? ''} onChange={e => updateResult(row.id, { miktar: e.target.value })} placeholder="—" className={'input-count ' + (isDiff ? 'input-diff' : hasValue ? 'input-ok' : '')} />
+                                {isDiff && <span className="ms text-red-400" style={{ fontSize: 14 }}>warning</span>}
+                              </div>
+                            </td>
+                            <td className="px-3 py-2"><input type="text" value={res.notlar ?? ''} onChange={e => updateResult(row.id, { notlar: e.target.value })} placeholder="not..." className="w-full bg-transparent border-none text-[12px] text-slate-400 placeholder-slate-300 outline-none min-w-[60px]" /></td>
+                          </tr>
+                        )
+                      }) : [])
+                    ]
+                  })
+                ) : (
+                  filteredAtanan.map((row, i) => {
+                    const res = results[row.id] || {}
+                    const hasValue = res.miktar !== undefined && res.miktar !== ''
+                    const isDiff   = hasValue && String(res.miktar) !== String(row.sayim)
+                    return (
+                      <tr key={row.id}
+                        className={isDiff ? 'border-b border-slate-100 hover:bg-red-50' : 'border-b border-slate-100 hover:bg-blue-50/30'}
+                        style={isDiff ? { background: 'rgba(254,242,242,0.6)' } : i % 2 === 1 ? { background: '#f8fafc' } : {}}
+                      >
+                        <td className="px-3 py-2 text-center text-slate-400 mono text-[11px]">{i + 1}</td>
+                        <td className="px-3 py-2 mono text-slate-600 text-[11.5px]">{row.adres}</td>
+                        <td className="px-3 py-2 mono font-medium text-blue-700 text-[11.5px]">{row.kod}</td>
+                        <td className="px-3 py-2 font-medium text-slate-800">{row.ad}</td>
+                        <td className="px-3 py-2 text-right mono text-slate-500 sistem-col">{row.sayim}</td>
+                        <td className="px-3 py-2 text-right sayilan-col">
+                          <div className="flex items-center justify-end gap-1">
+                            <input type="number" value={res.miktar ?? ''} onChange={e => updateResult(row.id, { miktar: e.target.value })} placeholder="—" className={'input-count ' + (isDiff ? 'input-diff' : hasValue ? 'input-ok' : '')} />
+                            {isDiff && <span className="ms text-red-400" style={{ fontSize: 14 }}>warning</span>}
+                          </div>
+                        </td>
+                        <td className="px-3 py-2"><input type="text" value={res.notlar ?? ''} onChange={e => updateResult(row.id, { notlar: e.target.value })} placeholder="not..." className="w-full bg-transparent border-none text-[12px] text-slate-400 placeholder-slate-300 outline-none min-w-[60px]" /></td>
+                      </tr>
+                    )
+                  })
+                )}
+              </tbody>
+            </table>
+            {filteredAtanan.length === 0 && atanan.length > 0 && (
+              <div className="p-8 text-center text-sm text-slate-400">Aramaya uyan kayıt yok.</div>
             )}
-
-            {/* Ürün listesi — membran'da partiEk gösterilir */}
-            <div className="rounded-2xl border border-white/10 overflow-hidden divide-y divide-white/5 mb-4 max-h-[55vh] overflow-y-auto">
-              {atanan.map((r, i) => <SatirItem key={r.id} r={r} i={i} results={results} showPartiEk={isMembran} />)}
-            </div>
-
-            <button
-              onClick={basla}
-              disabled={atanan.length === 0}
-              className="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white font-bold text-lg flex items-center justify-center gap-2"
-            >
-              <span className="ms" style={{ fontSize: 24 }}>
-                {sayilanAdet > 0 && sayilanAdet < atanan.length ? 'play_arrow' : sayilanAdet === atanan.length ? 'task_alt' : 'play_arrow'}
-              </span>
-              {sayilanAdet > 0 && sayilanAdet < atanan.length ? 'Kaldığı Yerden Devam Et' : sayilanAdet === atanan.length ? 'Özeti Gör' : 'Sayıma Başla'}
-            </button>
-            <button
-              onClick={() => setManuelOpen(true)}
-              className="w-full py-3 mt-2 rounded-2xl border border-white/15 text-slate-200 hover:bg-white/5 font-semibold flex items-center justify-center gap-2"
-            >
-              <span className="ms" style={{ fontSize: 20 }}>add_box</span> Manuel Fazla Stok Girişi
-            </button>
           </div>
         )}
+
+        {/* Alt bar */}
+        <div className="shrink-0 px-4 py-3 bg-white border-t border-slate-200 flex gap-2">
+          <button
+            onClick={basla}
+            disabled={atanan.length === 0}
+            className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white rounded-xl font-bold flex items-center justify-center gap-2"
+          >
+            <span className="ms" style={{ fontSize: 20 }}>
+              {sayilanAdet === atanan.length && atanan.length > 0 ? 'task_alt' : 'play_arrow'}
+            </span>
+            {sayilanAdet === atanan.length && atanan.length > 0 ? 'Özeti Gör' : sayilanAdet > 0 ? 'Kaldığı Yerden Devam Et' : 'Sayıma Başla'}
+          </button>
+          <button onClick={() => setManuelOpen(true)} className="px-4 py-3 border border-slate-300 rounded-xl text-slate-700 font-semibold flex items-center gap-1.5 text-sm hover:bg-slate-50">
+            <span className="ms" style={{ fontSize: 18 }}>add_box</span> Manuel
+          </button>
+        </div>
+
         {manuelOpen && (
-          <ManuelModal
-            onClose={() => setManuelOpen(false)}
-            addManualRow={manuelAddFn}
-            manualRows={manuelRows}
-            isKor={isKor}
-          />
+          <ManuelModal onClose={() => setManuelOpen(false)} addManualRow={manuelAddFn} manualRows={manuelRows} isKor={isKor} />
         )}
-      </Shell>
+      </div>
     )
   }
 
@@ -541,32 +670,12 @@ export default function SayimciEkran({ mode = 'self' }) {
   )
 }
 
-// ── Satır item (liste görünümü) ────────────────────────────────────────────
-function SatirItem({ r, i, results, showPartiEk = false }) {
-  const m = results[r.id]?.miktar
-  const sayildi = m !== undefined && m !== ''
-  const farkli  = sayildi && String(m) !== String(r.sayim)
-  const hasNote = Boolean(results[r.id]?.notlar)
-
-  return (
-    <div className="flex items-center gap-3 px-4 py-3 bg-white/[0.03]">
-      <span className="text-slate-500 mono text-xs w-6 shrink-0">{i + 1}</span>
-      <div className="min-w-0 flex-1">
-        {showPartiEk && r.partiEk && (
-          <p className="text-purple-300 text-[10px] mono mb-0.5">{r.partiEk}</p>
-        )}
-        <p className="text-white text-sm font-semibold truncate">{r.ad}</p>
-        <p className="text-slate-400 text-xs mono truncate">{r.adres} · {r.kod}</p>
-      </div>
-      <div className="flex items-center gap-1 shrink-0">
-        {hasNote && (
-          <span className="ms text-amber-400" style={{ fontSize: 14 }}>sticky_note_2</span>
-        )}
-        {sayildi && farkli  && <span className="ms text-red-400"    style={{ fontSize: 20 }}>close</span>}
-        {sayildi && !farkli && <span className="ms text-emerald-400" style={{ fontSize: 20 }}>check_circle</span>}
-      </div>
-    </div>
-  )
+// ── Palet durum rozeti ────────────────────────────────────────────────────
+function PaletSayimBadge({ counted, total, hasDiff }) {
+  if (counted === 0) return <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[10.5px] font-medium">Bekliyor</span>
+  if (counted < total) return <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10.5px] font-medium">{counted}/{total} sayıldı</span>
+  if (hasDiff) return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 text-red-600 text-[10.5px] font-medium"><span className="ms" style={{ fontSize: 12 }}>warning</span> Fark Var</span>
+  return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10.5px] font-medium"><span className="ms" style={{ fontSize: 12 }}>check_circle</span> Tamamlandı</span>
 }
 
 // ── Yardımcı bileşenler ────────────────────────────────────────────────────
