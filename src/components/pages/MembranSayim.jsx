@@ -1,7 +1,7 @@
 import { useState, useRef, useMemo, useEffect } from 'react'
 import { useReactToPrint } from 'react-to-print'
 import useStore from '../../store/useStore'
-import { sortRows, getCascadedAdresValues, parseAdres } from '../../utils/adresUtils'
+import { sortRows, computeFilterOptions, parseAdres } from '../../utils/adresUtils'
 import { exportResults } from '../../utils/excelExport'
 import PrintSheet from '../print/PrintSheet'
 import MultiSelect from '../shared/MultiSelect'
@@ -72,30 +72,9 @@ export default function MembranSayim({ onNavigate }) {
     [rows]
   )
 
-  // Palet seçenekleri: durum filtresinden sonra
-  const paletler = useMemo(() => {
-    const q = filterSearch.trim().toLowerCase()
-    return [...new Set(membranRows.filter(r => {
-      if (q && !(r.kod?.toLowerCase().includes(q) || r.ad?.toLowerCase().includes(q) || r.parti?.toLowerCase().includes(q))) return false
-      if (filterDurum.length > 0 && !filterDurum.includes(r.durum)) return false
-      return true
-    }).map(r => r.partiEk).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'tr', { numeric: true }))
-  }, [membranRows, filterSearch, filterDurum])
-
-  // Adres seçenekleri: durum + palet filtresinden sonra cascade
-  const preAdres = useMemo(() => {
-    const q = filterSearch.trim().toLowerCase()
-    return membranRows.filter(r => {
-      if (q && !(r.kod?.toLowerCase().includes(q) || r.ad?.toLowerCase().includes(q) || r.parti?.toLowerCase().includes(q))) return false
-      if (filterDurum.length > 0 && !filterDurum.includes(r.durum))       return false
-      if (filterPalet.length > 0 && !filterPalet.includes(r.partiEk))     return false
-      return true
-    })
-  }, [membranRows, filterSearch, filterDurum, filterPalet])
-
-  const adresVals = useMemo(
-    () => getCascadedAdresValues(preAdres, filterRaf, filterSira, filterKolon),
-    [preAdres, filterRaf, filterSira, filterKolon]
+  const filterOptions = useMemo(
+    () => computeFilterOptions(membranRows, { filterSearch, filterDurum, filterPalet, filterRaf, filterSira, filterKolon, filterGoz }),
+    [membranRows, filterSearch, filterDurum, filterPalet, filterRaf, filterSira, filterKolon, filterGoz]
   )
 
   const filtered = useMemo(() => {
@@ -227,13 +206,13 @@ export default function MembranSayim({ onNavigate }) {
           </div>
           <span className="text-[11.5px] text-slate-400 font-medium">Filtre:</span>
           <MultiSelect placeholder="Tüm Durumlar" options={['Normal', 'Bloke', 'SKTG']} value={filterDurum} onChange={setFilterDurum} />
-          {paletler.length > 0 && (
-            <MultiSelect placeholder="Tüm Paletler" options={paletler} value={filterPalet} onChange={setFilterPalet} style={{ borderColor: '#c4b5fd' }} />
+          {filterOptions.paletler?.length > 0 && (
+            <MultiSelect placeholder="Tüm Paletler" options={filterOptions.paletler} value={filterPalet} onChange={setFilterPalet} style={{ borderColor: '#c4b5fd' }} />
           )}
-          <MultiSelect placeholder="Tüm Raflar"   options={adresVals.raflar}   value={filterRaf}   onChange={setFilterRaf} />
-          <MultiSelect placeholder="Tüm Sıralar"  options={adresVals.siralar}  value={filterSira}  onChange={setFilterSira} />
-          <MultiSelect placeholder="Tüm Kolonlar" options={adresVals.kolonlar} value={filterKolon} onChange={setFilterKolon} />
-          <MultiSelect placeholder="Tüm Gözler"   options={adresVals.gozler}   value={filterGoz}   onChange={setFilterGoz} />
+          <MultiSelect placeholder="Tüm Raflar"   options={filterOptions.raflar}   value={filterRaf}   onChange={setFilterRaf} />
+          <MultiSelect placeholder="Tüm Sıralar"  options={filterOptions.siralar}  value={filterSira}  onChange={setFilterSira} />
+          <MultiSelect placeholder="Tüm Kolonlar" options={filterOptions.kolonlar} value={filterKolon} onChange={setFilterKolon} />
+          <MultiSelect placeholder="Tüm Gözler"   options={filterOptions.gozler}   value={filterGoz}   onChange={setFilterGoz} />
           {(filterDurum.length > 0 || filterPalet.length > 0 || filterRaf.length > 0 || filterSira.length > 0 || filterKolon.length > 0 || filterGoz.length > 0 || filterSearch.trim()) && (
             <button
               onClick={() => { setFilterSearch(''); setFilterDurum([]); setFilterPalet([]); setFilterRaf([]); setFilterSira([]); setFilterKolon([]); setFilterGoz([]) }}

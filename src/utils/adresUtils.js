@@ -34,19 +34,63 @@ export function getUniqueAdresValues(rows) {
   }
 }
 
-// Filtre seçeneklerini cascade hesaplar:
-// raflar → tüm base'den, siralar → raf filtrelenmiş base'den, vb.
-export function getCascadedAdresValues(base, filterRaf, filterSira, filterKolon) {
-  const raflar = [...new Set(base.map(r => parseAdres(r.adres).raf).filter(Boolean))].sort()
+/**
+ * Simetrik (mutual) cascade filtre seçenekleri hesaplar.
+ * Her boyutun seçenekleri, o boyutun filtresi HARİÇ diğer tüm aktif filtreler
+ * uygulanmış veriden türetilir.
+ *
+ * filters: { filterSearch, filterDurum, filterKategori, filterPalet?,
+ *            filterRaf, filterSira, filterKolon, filterGoz, filterGirisGun? }
+ */
+export function computeFilterOptions(sourceRows, filters) {
+  const {
+    filterSearch = '',
+    filterDurum = [], filterKategori = [], filterPalet,
+    filterRaf = [], filterSira = [], filterKolon = [], filterGoz = [],
+    filterGirisGun = [],
+  } = filters
 
-  const afterRaf   = filterRaf.length   > 0 ? base.filter(r => filterRaf.includes(parseAdres(r.adres).raf))     : base
-  const siralar    = [...new Set(afterRaf.map(r => parseAdres(r.adres).sira).filter(Boolean))].sort()
+  const hasPalet = filterPalet !== undefined
 
-  const afterSira  = filterSira.length  > 0 ? afterRaf.filter(r => filterSira.includes(parseAdres(r.adres).sira))   : afterRaf
-  const kolonlar   = [...new Set(afterSira.map(r => parseAdres(r.adres).kolon).filter(Boolean))].sort((a, b) => Number(a) - Number(b))
+  function apply(rows, exclude) {
+    const q = filterSearch.trim().toLowerCase()
+    return rows.filter(r => {
+      if (q && !(r.kod?.toLowerCase().includes(q) || r.ad?.toLowerCase().includes(q) || r.parti?.toLowerCase().includes(q))) return false
+      if (exclude !== 'durum'    && filterDurum.length > 0    && !filterDurum.includes(r.durum))       return false
+      if (exclude !== 'kategori' && filterKategori.length > 0 && !filterKategori.includes(r.kategori)) return false
+      if (hasPalet && exclude !== 'palet' && filterPalet.length > 0 && !filterPalet.includes(r.partiEk)) return false
+      if (exclude !== 'girisGun' && filterGirisGun.length > 0) {
+        const g = Number(r.girisGun)
+        const ok = filterGirisGun.some(range => {
+          if (range.startsWith('0-30')   && !isNaN(g) && g > 0 && g <= 30)   return true
+          if (range.startsWith('31-90')  && !isNaN(g) && g >= 31 && g <= 90)  return true
+          if (range.startsWith('91-180') && !isNaN(g) && g >= 91 && g <= 180) return true
+          if (range.startsWith('180+')   && !isNaN(g) && g > 180)             return true
+          return false
+        })
+        if (!ok) return false
+      }
+      const p = parseAdres(r.adres)
+      if (exclude !== 'raf'   && filterRaf.length > 0   && !filterRaf.includes(p.raf))     return false
+      if (exclude !== 'sira'  && filterSira.length > 0  && !filterSira.includes(p.sira))   return false
+      if (exclude !== 'kolon' && filterKolon.length > 0 && !filterKolon.includes(p.kolon)) return false
+      if (exclude !== 'goz'   && filterGoz.length > 0   && !filterGoz.includes(p.goz))     return false
+      return true
+    })
+  }
 
-  const afterKolon = filterKolon.length > 0 ? afterSira.filter(r => filterKolon.includes(parseAdres(r.adres).kolon)) : afterSira
-  const gozler     = [...new Set(afterKolon.map(r => parseAdres(r.adres).goz).filter(Boolean))].sort((a, b) => Number(a) - Number(b))
+  const result = {
+    kategoriler: [...new Set(apply(sourceRows, 'kategori').map(r => r.kategori).filter(Boolean))].sort(),
+    raflar:      [...new Set(apply(sourceRows, 'raf').map(r => parseAdres(r.adres).raf).filter(Boolean))].sort(),
+    siralar:     [...new Set(apply(sourceRows, 'sira').map(r => parseAdres(r.adres).sira).filter(Boolean))].sort(),
+    kolonlar:    [...new Set(apply(sourceRows, 'kolon').map(r => parseAdres(r.adres).kolon).filter(Boolean))].sort((a, b) => Number(a) - Number(b)),
+    gozler:      [...new Set(apply(sourceRows, 'goz').map(r => parseAdres(r.adres).goz).filter(Boolean))].sort((a, b) => Number(a) - Number(b)),
+  }
 
-  return { raflar, siralar, kolonlar, gozler }
+  if (hasPalet) {
+    result.paletler = [...new Set(apply(sourceRows, 'palet').map(r => r.partiEk).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b, 'tr', { numeric: true }))
+  }
+
+  return result
 }

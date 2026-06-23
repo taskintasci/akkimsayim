@@ -1,7 +1,7 @@
 import { useState, useRef, useMemo, useEffect } from 'react'
 import { useReactToPrint } from 'react-to-print'
 import useStore from '../../store/useStore'
-import { sortRows, getCascadedAdresValues, parseAdres } from '../../utils/adresUtils'
+import { sortRows, computeFilterOptions, parseAdres } from '../../utils/adresUtils'
 import { exportResults } from '../../utils/excelExport'
 import PrintSheet from '../print/PrintSheet'
 import MultiSelect from '../shared/MultiSelect'
@@ -55,30 +55,9 @@ export default function StokSayim({ onNavigate }) {
     document.body.classList.toggle('hide-sayilan', next)
   }
 
-  // Durum filtresinden sonra kategori seçenekleri
-  const kategoriler = useMemo(() => {
-    const q = filterSearch.trim().toLowerCase()
-    return [...new Set(rows.filter(r => {
-      if (q && !(r.kod?.toLowerCase().includes(q) || r.ad?.toLowerCase().includes(q) || r.parti?.toLowerCase().includes(q))) return false
-      if (filterDurum.length > 0 && !filterDurum.includes(r.durum)) return false
-      return true
-    }).map(r => r.kategori).filter(Boolean))].sort()
-  }, [rows, filterSearch, filterDurum])
-
-  // Durum + Kategori filtresi sonrası adres seçenekleri (cascade)
-  const preAdres = useMemo(() => {
-    const q = filterSearch.trim().toLowerCase()
-    return rows.filter(r => {
-      if (q && !(r.kod?.toLowerCase().includes(q) || r.ad?.toLowerCase().includes(q) || r.parti?.toLowerCase().includes(q))) return false
-      if (filterDurum.length > 0    && !filterDurum.includes(r.durum))       return false
-      if (filterKategori.length > 0 && !filterKategori.includes(r.kategori)) return false
-      return true
-    })
-  }, [rows, filterSearch, filterDurum, filterKategori])
-
-  const adresVals = useMemo(
-    () => getCascadedAdresValues(preAdres, filterRaf, filterSira, filterKolon),
-    [preAdres, filterRaf, filterSira, filterKolon]
+  const filterOptions = useMemo(
+    () => computeFilterOptions(rows, { filterSearch, filterDurum, filterKategori, filterRaf, filterSira, filterKolon, filterGoz }),
+    [rows, filterSearch, filterDurum, filterKategori, filterRaf, filterSira, filterKolon, filterGoz]
   )
 
   const filteredBase = useMemo(() => {
@@ -189,13 +168,13 @@ export default function StokSayim({ onNavigate }) {
           </div>
           <span className="text-[11.5px] text-slate-400 font-medium">Filtre:</span>
           <MultiSelect placeholder="Tüm Durumlar" options={['Normal', 'Bloke', 'SKTG']} value={filterDurum} onChange={setFilterDurum} />
-          {kategoriler.length > 0 && (
-            <MultiSelect placeholder="Tüm Kategoriler" options={kategoriler} value={filterKategori} onChange={setFilterKategori} />
+          {filterOptions.kategoriler.length > 0 && (
+            <MultiSelect placeholder="Tüm Kategoriler" options={filterOptions.kategoriler} value={filterKategori} onChange={setFilterKategori} />
           )}
-          <MultiSelect placeholder="Tüm Raflar"   options={adresVals.raflar}   value={filterRaf}   onChange={setFilterRaf} />
-          <MultiSelect placeholder="Tüm Sıralar"  options={adresVals.siralar}  value={filterSira}  onChange={setFilterSira} />
-          <MultiSelect placeholder="Tüm Kolonlar" options={adresVals.kolonlar} value={filterKolon} onChange={setFilterKolon} />
-          <MultiSelect placeholder="Tüm Gözler"   options={adresVals.gozler}   value={filterGoz}   onChange={setFilterGoz} />
+          <MultiSelect placeholder="Tüm Raflar"   options={filterOptions.raflar}   value={filterRaf}   onChange={setFilterRaf} />
+          <MultiSelect placeholder="Tüm Sıralar"  options={filterOptions.siralar}  value={filterSira}  onChange={setFilterSira} />
+          <MultiSelect placeholder="Tüm Kolonlar" options={filterOptions.kolonlar} value={filterKolon} onChange={setFilterKolon} />
+          <MultiSelect placeholder="Tüm Gözler"   options={filterOptions.gozler}   value={filterGoz}   onChange={setFilterGoz} />
           <label className="flex items-center gap-1.5 text-[11.5px] text-slate-500 cursor-pointer ml-1">
             <input type="checkbox" checked={onlyDiff} onChange={e => setOnlyDiff(e.target.checked)} className="rounded" />
             Sadece farklılıklar

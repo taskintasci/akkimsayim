@@ -1,7 +1,7 @@
 import { useState, useRef, useMemo, useEffect } from 'react'
 import { useReactToPrint } from 'react-to-print'
 import useStore from '../../store/useStore'
-import { sortRows, getCascadedAdresValues, parseAdres } from '../../utils/adresUtils'
+import { sortRows, computeFilterOptions, parseAdres } from '../../utils/adresUtils'
 import { exportResults } from '../../utils/excelExport'
 import PrintSheet from '../print/PrintSheet'
 import MultiSelect from '../shared/MultiSelect'
@@ -69,28 +69,9 @@ export default function KorSayim({ onNavigate }) {
     return map
   }, [rows])
 
-  const kategoriler = useMemo(() => {
-    const q = filterSearch.trim().toLowerCase()
-    return [...new Set(korMatched.filter(r => {
-      if (q && !(r.kod?.toLowerCase().includes(q) || r.ad?.toLowerCase().includes(q) || r.parti?.toLowerCase().includes(q))) return false
-      if (filterDurum.length > 0 && !filterDurum.includes(r.durum)) return false
-      return true
-    }).map(r => r.kategori).filter(Boolean))].sort()
-  }, [korMatched, filterSearch, filterDurum])
-
-  const preAdres = useMemo(() => {
-    const q = filterSearch.trim().toLowerCase()
-    return korMatched.filter(r => {
-      if (q && !(r.kod?.toLowerCase().includes(q) || r.ad?.toLowerCase().includes(q) || r.parti?.toLowerCase().includes(q))) return false
-      if (filterDurum.length > 0    && !filterDurum.includes(r.durum))       return false
-      if (filterKategori.length > 0 && !filterKategori.includes(r.kategori)) return false
-      return true
-    })
-  }, [korMatched, filterSearch, filterDurum, filterKategori])
-
-  const adresVals = useMemo(
-    () => getCascadedAdresValues(preAdres, filterRaf, filterSira, filterKolon),
-    [preAdres, filterRaf, filterSira, filterKolon]
+  const filterOptions = useMemo(
+    () => computeFilterOptions(korMatched, { filterSearch, filterDurum, filterKategori, filterRaf, filterSira, filterKolon, filterGoz }),
+    [korMatched, filterSearch, filterDurum, filterKategori, filterRaf, filterSira, filterKolon, filterGoz]
   )
 
   const filteredBase = useMemo(() => {
@@ -251,13 +232,13 @@ export default function KorSayim({ onNavigate }) {
           </div>
           <span className="text-[11.5px] text-slate-400 font-medium">Filtre:</span>
           <MultiSelect placeholder="Tüm Durumlar" options={['Normal', 'Bloke', 'SKTG']} value={filterDurum} onChange={setFilterDurum} />
-          {kategoriler.length > 0 && (
-            <MultiSelect placeholder="Tüm Kategoriler" options={kategoriler} value={filterKategori} onChange={setFilterKategori} />
+          {filterOptions.kategoriler.length > 0 && (
+            <MultiSelect placeholder="Tüm Kategoriler" options={filterOptions.kategoriler} value={filterKategori} onChange={setFilterKategori} />
           )}
-          <MultiSelect placeholder="Tüm Raflar"   options={adresVals.raflar}   value={filterRaf}   onChange={setFilterRaf} />
-          <MultiSelect placeholder="Tüm Sıralar"  options={adresVals.siralar}  value={filterSira}  onChange={setFilterSira} />
-          <MultiSelect placeholder="Tüm Kolonlar" options={adresVals.kolonlar} value={filterKolon} onChange={setFilterKolon} />
-          <MultiSelect placeholder="Tüm Gözler"   options={adresVals.gozler}   value={filterGoz}   onChange={setFilterGoz} />
+          <MultiSelect placeholder="Tüm Raflar"   options={filterOptions.raflar}   value={filterRaf}   onChange={setFilterRaf} />
+          <MultiSelect placeholder="Tüm Sıralar"  options={filterOptions.siralar}  value={filterSira}  onChange={setFilterSira} />
+          <MultiSelect placeholder="Tüm Kolonlar" options={filterOptions.kolonlar} value={filterKolon} onChange={setFilterKolon} />
+          <MultiSelect placeholder="Tüm Gözler"   options={filterOptions.gozler}   value={filterGoz}   onChange={setFilterGoz} />
           <label className="flex items-center gap-1.5 text-[11.5px] text-slate-500 cursor-pointer ml-1">
             <input type="checkbox" checked={onlyDiff} onChange={e => setOnlyDiff(e.target.checked)} className="rounded" />
             Sadece farklılıklar
