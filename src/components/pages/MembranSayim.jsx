@@ -379,7 +379,7 @@ export default function MembranSayim({ onNavigate }) {
         <PrintSheet ref={printRef} rows={filtered} results={results} session={session} mode="sayim" hideSayilan={hideSayilan} sayimTuru="Membran Sayımı" paletGrouped />
       </div>
 
-      {gorevModal && <GorevAtaModal rows={filtered} onClose={() => setGorevModal(false)} />}
+      {gorevModal && <GorevAtaModal rows={filtered} onClose={() => setGorevModal(false)} sayimTipi="membran" />}
     </div>
   )
 }

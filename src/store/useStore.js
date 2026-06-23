@@ -107,7 +107,7 @@ const useStore = create((set, get) => ({
   gorevlerLoading: false,
 
   // Yönetici: aktif session'daki seçili satırları bir sayımcıya ata
-  assignGorev: async ({ sayimci, atananRows }) => {
+  assignGorev: async ({ sayimci, atananRows, sayimTipi = 'stok' }) => {
     const { activeSessionId, session, currentUser } = get()
     if (!activeSessionId) throw new Error('Aktif oturum yok')
     const data = {
@@ -118,6 +118,7 @@ const useStore = create((set, get) => ({
       sessionType:  session.type || '',
       depoAdi:      session.depoAdi || '',
       atananRows,                       // array<rowId>
+      sayimTipi:    sayimTipi || 'stok', // 'stok' | 'kor' | 'hareketlilik' | 'membran'
       durum:        'bekliyor',
       createdAt:    serverTimestamp(),
       createdBy:    currentUser?.uid || null,

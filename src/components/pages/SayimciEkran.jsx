@@ -18,13 +18,21 @@ function siralaRows(rows, sira) {
   return arr
 }
 
+function siralamaMembran(rows) {
+  return [...rows].sort((a, b) => {
+    const pa = (a.partiEk || '').localeCompare(b.partiEk || '', 'tr', { numeric: true })
+    if (pa !== 0) return pa
+    return (a.adres || '').localeCompare(b.adres || '', 'tr')
+  })
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // Swipe kart — sağa kaydır = onayla, sola kaydır = eksik/fazla gir
 // ═══════════════════════════════════════════════════════════════════════════
-function SwipeCard({ row, sayilanMiktar, onConfirm, onEdit }) {
+function SwipeCard({ row, sayilanMiktar, onConfirm, onEdit, isMembran }) {
   const [dx, setDx] = useState(0)
   const startX = useRef(null)
-  const TH = 90  // eşik
+  const TH = 90
 
   function onStart(clientX) { startX.current = clientX }
   function onMove(clientX) {
@@ -43,7 +51,6 @@ function SwipeCard({ row, sayilanMiktar, onConfirm, onEdit }) {
 
   return (
     <div className="relative w-full max-w-md select-none" style={{ touchAction: 'pan-y' }}>
-      {/* Arka plan ipuçları */}
       <div className="absolute inset-0 flex items-center justify-between px-6 pointer-events-none">
         <span className="ms text-amber-400" style={{ fontSize: 40, opacity: dx < -40 ? 1 : 0.25 }}>edit_note</span>
         <span className="ms text-emerald-400" style={{ fontSize: 40, opacity: dx > 40 ? 1 : 0.25 }}>check_circle</span>
@@ -65,6 +72,14 @@ function SwipeCard({ row, sayilanMiktar, onConfirm, onEdit }) {
           backdropFilter: 'blur(8px)',
         }}
       >
+        {/* Palet rozeti — sadece membran */}
+        {isMembran && row.partiEk && (
+          <div className="flex items-center gap-2 mb-3">
+            <span className="ms text-purple-300" style={{ fontSize: 18 }}>layers</span>
+            <span className="text-purple-200 font-semibold text-sm mono">{row.partiEk}</span>
+          </div>
+        )}
+
         {/* Raf / Adres */}
         <div className="flex items-center gap-2 mb-5">
           <span className="ms text-blue-300" style={{ fontSize: 26 }}>shelves</span>
@@ -73,7 +88,7 @@ function SwipeCard({ row, sayilanMiktar, onConfirm, onEdit }) {
           </span>
         </div>
 
-        {/* Ürün adı — çok büyük */}
+        {/* Ürün adı */}
         <p className="text-white font-extrabold leading-tight mb-3" style={{ fontSize: 30 }}>
           {row.ad || '—'}
         </p>
@@ -85,7 +100,7 @@ function SwipeCard({ row, sayilanMiktar, onConfirm, onEdit }) {
           {row.durum && <span className="text-slate-400 text-sm">{row.durum}</span>}
         </div>
 
-        {/* Sistem miktarı */}
+        {/* Sistem miktarı + sayılan */}
         <div className="flex items-end justify-between bg-black/20 rounded-2xl px-5 py-4">
           <div>
             <p className="text-slate-400 text-xs uppercase tracking-wide mb-1">Sistem Miktarı</p>
@@ -102,7 +117,7 @@ function SwipeCard({ row, sayilanMiktar, onConfirm, onEdit }) {
         </div>
       </div>
 
-      {/* Butonlar (masaüstü / dokunmatik alternatif) */}
+      {/* Butonlar */}
       <div className="flex gap-3 mt-5">
         <button
           onClick={onEdit}
@@ -127,17 +142,18 @@ export default function SayimciEkran({ mode = 'self' }) {
     currentUser, userProfile,
     gorevler, gorevlerLoading, loadMyGorevler, loadSessionGorevler, updateGorevDurum,
     activeSessionId, rows, rowsLoading, results, updateResult,
-    manualRows, addManualRow,
+    manualRows, addManualRow, korManualRows, addKorManualRow,
   } = useStore()
 
   const setActiveSession = useStore(s => s.setActiveSession)
 
-  const [view, setView]   = useState('gorevler')   // gorevler | liste | sayim | ozet
-  const [gorev, setGorev] = useState(null)
-  const [sira, setSira]   = useState('adres')
-  const [idx, setIdx]     = useState(0)
+  const [view, setView]       = useState('gorevler')  // gorevler | liste | sayim | ozet
+  const [gorev, setGorev]     = useState(null)
+  const [sira, setSira]       = useState('adres')
+  const [idx, setIdx]         = useState(0)
   const [editing, setEditing] = useState(false)
   const [editVal, setEditVal] = useState('')
+  const [editNote, setEditNote] = useState('')
   const [manuelOpen, setManuelOpen] = useState(false)
 
   // Görevleri yükle
@@ -146,18 +162,34 @@ export default function SayimciEkran({ mode = 'self' }) {
     else if (currentUser?.uid) loadMyGorevler(currentUser.uid)
   }, [mode, currentUser?.uid, activeSessionId])
 
+  const isMembran = gorev?.sayimTipi === 'membran'
+  const isKor     = gorev?.sayimTipi === 'kor'
+
   // Atanan satırları sırala
   const atanan = useMemo(() => {
     if (!gorev) return []
     const ids = gorev.atananRows || []
     const base = ids.length > 0 ? rows.filter(r => ids.includes(r.id)) : rows
+    if (isMembran) return siralamaMembran(base)
     return siralaRows(base, sira)
-  }, [gorev, rows, sira])
+  }, [gorev, rows, sira, isMembran])
 
-  const sayilanAdet = atanan.filter(r => {
-    const m = results[r.id]?.miktar
-    return m !== undefined && m !== ''
-  }).length
+  const sayilanAdet = useMemo(() =>
+    atanan.filter(r => { const m = results[r.id]?.miktar; return m !== undefined && m !== '' }).length,
+    [atanan, results]
+  )
+
+  // Membran: palet grupları (for liste view)
+  const membranGruplar = useMemo(() => {
+    if (!isMembran) return []
+    const map = new Map()
+    atanan.forEach(r => {
+      const key = r.partiEk?.trim() || '(Palet Yok)'
+      if (!map.has(key)) map.set(key, [])
+      map.get(key).push(r)
+    })
+    return [...map.entries()]
+  }, [atanan, isMembran])
 
   async function openGorev(g) {
     setGorev(g)
@@ -169,7 +201,13 @@ export default function SayimciEkran({ mode = 'self' }) {
   }
 
   function basla() {
-    setIdx(0)
+    const firstUncounted = atanan.findIndex(r => {
+      const m = results[r.id]?.miktar
+      return m === undefined || m === ''
+    })
+    // Hepsi sayıldıysa özete git
+    if (firstUncounted === -1) { setView('ozet'); return }
+    setIdx(firstUncounted)
     setView('sayim')
   }
 
@@ -177,31 +215,50 @@ export default function SayimciEkran({ mode = 'self' }) {
 
   function ilerle() {
     setEditing(false)
-    if (idx + 1 >= atanan.length) {
+    // Sonraki sayılmamış kalemi bul
+    let nextIdx = -1
+    for (let i = idx + 1; i < atanan.length; i++) {
+      const m = results[atanan[i].id]?.miktar
+      if (m === undefined || m === '') { nextIdx = i; break }
+    }
+    if (nextIdx === -1) {
       setView('ozet')
       if (mode === 'self' && gorev) updateGorevDurum(gorev.sessionId, gorev.id, 'tamamlandi')
     } else {
-      setIdx(i => i + 1)
+      setIdx(nextIdx)
     }
   }
 
   function onayla() {
     if (!current) return
-    updateResult(current.id, { miktar: current.sayim, status: 'Sayıldı' })
+    updateResult(current.id, {
+      miktar: current.sayim,
+      status: 'Sayıldı',
+      notlar: results[current.id]?.notlar || '',
+    })
     ilerle()
   }
 
   function editAc() {
     if (!current) return
     setEditVal(results[current.id]?.miktar ?? '')
+    setEditNote(results[current.id]?.notlar ?? '')
     setEditing(true)
   }
 
   function editKaydet() {
     if (!current) return
-    updateResult(current.id, { miktar: editVal === '' ? '' : Number(editVal), status: 'Sayıldı' })
+    updateResult(current.id, {
+      miktar: editVal === '' ? '' : Number(editVal),
+      status: 'Sayıldı',
+      notlar: editNote,
+    })
     ilerle()
   }
+
+  // Manuel modal için doğru store fonksiyonu
+  const manuelAddFn  = isKor ? addKorManualRow : addManualRow
+  const manuelRows   = isKor ? korManualRows    : manualRows
 
   // ─── GÖREV LİSTESİ ───────────────────────────────────────────────────────
   if (view === 'gorevler') {
@@ -219,23 +276,55 @@ export default function SayimciEkran({ mode = 'self' }) {
           />
         ) : (
           <div className="flex flex-col gap-3 w-full max-w-md">
-            {gorevler.map(g => (
-              <button
-                key={g.id}
-                onClick={() => openGorev(g)}
-                className="text-left rounded-2xl border border-white/15 bg-white/5 hover:bg-white/10 p-5 transition-all"
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-white font-bold text-lg">{g.depoAdi || g.sessionType || 'Sayım'}</span>
-                  <DurumRozet durum={g.durum} />
-                </div>
-                <p className="text-slate-300 text-sm mb-2">{g.sessionType}</p>
-                <div className="flex items-center gap-2 text-slate-400 text-sm">
-                  <span className="ms" style={{ fontSize: 18 }}>inventory_2</span>
-                  {(g.atananRows?.length || 0)} kalem
-                </div>
-              </button>
-            ))}
+            {gorevler.map(g => {
+              // İlerleme: sadece aktif session ise hesaplanabilir
+              const ids = g.atananRows || []
+              const counted = g.sessionId === activeSessionId
+                ? ids.filter(id => { const m = results[id]?.miktar; return m !== undefined && m !== '' }).length
+                : null
+
+              return (
+                <button
+                  key={g.id}
+                  onClick={() => openGorev(g)}
+                  className="text-left rounded-2xl border border-white/15 bg-white/5 hover:bg-white/10 p-5 transition-all"
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-white font-bold text-lg">{g.depoAdi || g.sessionType || 'Sayım'}</span>
+                    <DurumRozet durum={g.durum} />
+                  </div>
+                  <p className="text-slate-300 text-sm mb-2">{g.sessionType}</p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-slate-400 text-sm">
+                      <span className="ms" style={{ fontSize: 18 }}>inventory_2</span>
+                      {ids.length} kalem
+                      {g.sayimTipi === 'membran' && (
+                        <span className="ms text-purple-300 ml-1" style={{ fontSize: 16 }}>layers</span>
+                      )}
+                      {g.sayimTipi === 'kor' && (
+                        <span className="ms text-amber-300 ml-1" style={{ fontSize: 16 }}>visibility_off</span>
+                      )}
+                    </div>
+                    {counted !== null && (
+                      <span className={
+                        'text-sm font-semibold ' +
+                        (counted === ids.length ? 'text-emerald-300' : 'text-blue-300')
+                      }>
+                        {counted}/{ids.length} sayıldı
+                      </span>
+                    )}
+                  </div>
+                  {counted !== null && ids.length > 0 && (
+                    <div className="mt-2 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <div
+                        className="h-1.5 bg-emerald-400 transition-all"
+                        style={{ width: `${(counted / ids.length) * 100}%` }}
+                      />
+                    </div>
+                  )}
+                </button>
+              )
+            })}
           </div>
         )}
       </Shell>
@@ -253,49 +342,70 @@ export default function SayimciEkran({ mode = 'self' }) {
       >
         {rowsLoading ? <Loading /> : (
           <div className="w-full max-w-md flex flex-col">
-            {/* Sıralama seçimi */}
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-slate-400 text-sm shrink-0">Sırala:</span>
-              {SIRA_SECENEK.map(s => (
-                <button
-                  key={s.id}
-                  onClick={() => setSira(s.id)}
-                  className={
-                    'flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm transition-all ' +
-                    (sira === s.id ? 'bg-blue-600 text-white font-semibold' : 'bg-white/5 text-slate-300 hover:bg-white/10')
-                  }
-                >
-                  <span className="ms" style={{ fontSize: 16 }}>{s.icon}</span> {s.label}
-                </button>
-              ))}
-            </div>
+            {/* Sıralama — membran'da gizle (palet sırasına kilitli) */}
+            {!isMembran && (
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-slate-400 text-sm shrink-0">Sırala:</span>
+                {SIRA_SECENEK.map(s => (
+                  <button
+                    key={s.id}
+                    onClick={() => setSira(s.id)}
+                    className={
+                      'flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm transition-all ' +
+                      (sira === s.id ? 'bg-blue-600 text-white font-semibold' : 'bg-white/5 text-slate-300 hover:bg-white/10')
+                    }
+                  >
+                    <span className="ms" style={{ fontSize: 16 }}>{s.icon}</span> {s.label}
+                  </button>
+                ))}
+              </div>
+            )}
 
-            {/* Liste */}
-            <div className="rounded-2xl border border-white/10 overflow-hidden divide-y divide-white/5 mb-4 max-h-[50vh] overflow-y-auto">
-              {atanan.map((r, i) => {
-                const m = results[r.id]?.miktar
-                const sayildi = m !== undefined && m !== ''
-                return (
-                  <div key={r.id} className="flex items-center gap-3 px-4 py-3 bg-white/[0.03]">
-                    <span className="text-slate-500 mono text-xs w-6 shrink-0">{i + 1}</span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-white text-sm font-semibold truncate">{r.ad}</p>
-                      <p className="text-slate-400 text-xs mono truncate">{r.adres} · {r.kod}</p>
+            {/* Membran: palet gruplu liste */}
+            {isMembran ? (
+              <div className="flex flex-col gap-3 mb-4 max-h-[50vh] overflow-y-auto">
+                {membranGruplar.map(([paletKey, paletRows]) => {
+                  const paletSayilan = paletRows.filter(r => { const m = results[r.id]?.miktar; return m !== undefined && m !== '' }).length
+                  const paletTamamlandi = paletSayilan === paletRows.length
+                  return (
+                    <div key={paletKey} className="rounded-2xl border border-white/10 overflow-hidden">
+                      {/* Palet başlığı */}
+                      <div className="flex items-center justify-between px-4 py-2.5 bg-purple-900/30 border-b border-white/5">
+                        <div className="flex items-center gap-2">
+                          <span className="ms text-purple-300" style={{ fontSize: 18 }}>layers</span>
+                          <span className="text-purple-200 font-semibold text-sm">{paletKey}</span>
+                        </div>
+                        <span className={
+                          'text-xs font-semibold ' +
+                          (paletTamamlandi ? 'text-emerald-300' : 'text-slate-400')
+                        }>
+                          {paletSayilan}/{paletRows.length}
+                        </span>
+                      </div>
+                      {/* Palet içindeki ürünler */}
+                      <div className="divide-y divide-white/5">
+                        {paletRows.map((r, i) => <SatirItem key={r.id} r={r} i={i} results={results} />)}
+                      </div>
                     </div>
-                    {sayildi
-                      ? <span className="ms text-emerald-400 shrink-0" style={{ fontSize: 20 }}>check_circle</span>
-                      : <span className="ms text-slate-600 shrink-0" style={{ fontSize: 20 }}>radio_button_unchecked</span>}
-                  </div>
-                )
-              })}
-            </div>
+                  )
+                })}
+              </div>
+            ) : (
+              /* Normal düz liste */
+              <div className="rounded-2xl border border-white/10 overflow-hidden divide-y divide-white/5 mb-4 max-h-[50vh] overflow-y-auto">
+                {atanan.map((r, i) => <SatirItem key={r.id} r={r} i={i} results={results} />)}
+              </div>
+            )}
 
             <button
               onClick={basla}
               disabled={atanan.length === 0}
               className="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white font-bold text-lg flex items-center justify-center gap-2"
             >
-              <span className="ms" style={{ fontSize: 24 }}>play_arrow</span> Sayıma Başla
+              <span className="ms" style={{ fontSize: 24 }}>
+                {sayilanAdet > 0 && sayilanAdet < atanan.length ? 'play_arrow' : sayilanAdet === atanan.length ? 'task_alt' : 'play_arrow'}
+              </span>
+              {sayilanAdet > 0 && sayilanAdet < atanan.length ? 'Kaldığı Yerden Devam Et' : sayilanAdet === atanan.length ? 'Özeti Gör' : 'Sayıma Başla'}
             </button>
             <button
               onClick={() => setManuelOpen(true)}
@@ -305,7 +415,14 @@ export default function SayimciEkran({ mode = 'self' }) {
             </button>
           </div>
         )}
-        {manuelOpen && <ManuelModal onClose={() => setManuelOpen(false)} addManualRow={addManualRow} manualRows={manualRows} />}
+        {manuelOpen && (
+          <ManuelModal
+            onClose={() => setManuelOpen(false)}
+            addManualRow={manuelAddFn}
+            manualRows={manuelRows}
+            isKor={isKor}
+          />
+        )}
       </Shell>
     )
   }
@@ -316,13 +433,16 @@ export default function SayimciEkran({ mode = 'self' }) {
       <Shell
         mode={mode}
         title={gorev?.depoAdi || 'Sayım'}
-        subtitle={`${idx + 1} / ${atanan.length}`}
+        subtitle={`${sayilanAdet} / ${atanan.length} sayıldı`}
         onBack={() => setView('liste')}
       >
         {/* İlerleme çubuğu */}
         <div className="w-full max-w-md mb-6">
           <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-            <div className="h-2 bg-blue-400 transition-all" style={{ width: `${(idx / atanan.length) * 100}%` }} />
+            <div
+              className="h-2 bg-blue-400 transition-all"
+              style={{ width: `${atanan.length > 0 ? (sayilanAdet / atanan.length) * 100 : 0}%` }}
+            />
           </div>
         </div>
 
@@ -332,22 +452,34 @@ export default function SayimciEkran({ mode = 'self' }) {
             sayilanMiktar={results[current.id]?.miktar}
             onConfirm={onayla}
             onEdit={editAc}
+            isMembran={isMembran}
           />
         )}
 
-        {/* Eksik/Fazla miktar girişi */}
+        {/* Eksik/Fazla + Not alanı */}
         {current && editing && (
           <div className="w-full max-w-md rounded-3xl border border-amber-400/30 bg-amber-500/10 p-7" style={{ backdropFilter: 'blur(8px)' }}>
             <p className="text-amber-200 font-bold text-lg mb-1">{current.ad}</p>
             <p className="text-slate-400 text-sm mono mb-5">{current.adres} · {current.kod}</p>
+
             <label className="block text-slate-300 text-sm mb-2">Sayılan Gerçek Miktar ({current.birim})</label>
             <input
               autoFocus type="number" inputMode="decimal" value={editVal}
               onChange={e => setEditVal(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && editKaydet()}
               placeholder={`Sistem: ${current.sayim ?? '—'}`}
-              className="w-full bg-black/30 border border-white/20 rounded-2xl px-5 py-4 text-white text-3xl font-bold mono text-center focus:outline-none focus:border-amber-400"
+              className="w-full bg-black/30 border border-white/20 rounded-2xl px-5 py-4 text-white text-3xl font-bold mono text-center focus:outline-none focus:border-amber-400 mb-4"
             />
+
+            <label className="block text-slate-300 text-sm mb-2">Not (opsiyonel)</label>
+            <textarea
+              value={editNote}
+              onChange={e => setEditNote(e.target.value)}
+              placeholder="Açıklama, fark nedeni..."
+              rows={2}
+              className="w-full bg-black/30 border border-white/20 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-400 resize-none"
+            />
+
             <div className="flex gap-3 mt-5">
               <button onClick={() => setEditing(false)} className="flex-1 py-4 rounded-2xl border border-white/15 text-slate-200 font-bold">
                 Vazgeç
@@ -365,7 +497,14 @@ export default function SayimciEkran({ mode = 'self' }) {
         >
           <span className="ms" style={{ fontSize: 18 }}>add_box</span> Manuel fazla stok ekle
         </button>
-        {manuelOpen && <ManuelModal onClose={() => setManuelOpen(false)} addManualRow={addManualRow} manualRows={manualRows} />}
+        {manuelOpen && (
+          <ManuelModal
+            onClose={() => setManuelOpen(false)}
+            addManualRow={manuelAddFn}
+            manualRows={manuelRows}
+            isKor={isKor}
+          />
+        )}
       </Shell>
     )
   }
@@ -377,8 +516,8 @@ export default function SayimciEkran({ mode = 'self' }) {
         <span className="ms text-emerald-400 mb-4" style={{ fontSize: 72 }}>task_alt</span>
         <p className="text-white font-bold text-2xl mb-2">Tebrikler!</p>
         <p className="text-slate-300 mb-1">{atanan.length} kalem sayıldı.</p>
-        {manualRows.length > 0 && (
-          <p className="text-amber-300 text-sm mb-6">+ {manualRows.length} manuel fazla stok girişi</p>
+        {manuelRows.length > 0 && (
+          <p className="text-amber-300 text-sm mb-6">+ {manuelRows.length} manuel fazla stok girişi</p>
         )}
         <button
           onClick={() => { setView('gorevler'); setGorev(null) }}
@@ -388,6 +527,31 @@ export default function SayimciEkran({ mode = 'self' }) {
         </button>
       </div>
     </Shell>
+  )
+}
+
+// ── Satır item (liste görünümü) ────────────────────────────────────────────
+function SatirItem({ r, i, results }) {
+  const m = results[r.id]?.miktar
+  const sayildi = m !== undefined && m !== ''
+  const farkli  = sayildi && String(m) !== String(r.sayim)
+  const hasNote = Boolean(results[r.id]?.notlar)
+
+  return (
+    <div className="flex items-center gap-3 px-4 py-3 bg-white/[0.03]">
+      <span className="text-slate-500 mono text-xs w-6 shrink-0">{i + 1}</span>
+      <div className="min-w-0 flex-1">
+        <p className="text-white text-sm font-semibold truncate">{r.ad}</p>
+        <p className="text-slate-400 text-xs mono truncate">{r.adres} · {r.kod}</p>
+      </div>
+      <div className="flex items-center gap-1 shrink-0">
+        {hasNote && (
+          <span className="ms text-amber-400" style={{ fontSize: 14 }}>sticky_note_2</span>
+        )}
+        {sayildi && farkli  && <span className="ms text-red-400"    style={{ fontSize: 20 }}>close</span>}
+        {sayildi && !farkli && <span className="ms text-emerald-400" style={{ fontSize: 20 }}>check_circle</span>}
+      </div>
+    </div>
   )
 }
 
@@ -446,9 +610,9 @@ function Empty({ icon, title, text }) {
 
 function DurumRozet({ durum }) {
   const map = {
-    bekliyor:    { cls: 'bg-slate-500/20 text-slate-300', label: 'Bekliyor' },
-    devam:       { cls: 'bg-blue-500/20 text-blue-300',   label: 'Devam' },
-    tamamlandi:  { cls: 'bg-emerald-500/20 text-emerald-300', label: 'Tamamlandı' },
+    bekliyor:   { cls: 'bg-slate-500/20 text-slate-300',   label: 'Bekliyor' },
+    devam:      { cls: 'bg-blue-500/20 text-blue-300',     label: 'Devam' },
+    tamamlandi: { cls: 'bg-emerald-500/20 text-emerald-300', label: 'Tamamlandı' },
   }
   const d = map[durum] || map.bekliyor
   return <span className={'px-2 py-0.5 rounded-full text-xs font-medium ' + d.cls}>{d.label}</span>
@@ -456,7 +620,7 @@ function DurumRozet({ durum }) {
 
 const MANUEL_BOS = { kod: '', ad: '', adres: '', miktar: '', birim: '' }
 
-function ManuelModal({ onClose, addManualRow, manualRows }) {
+function ManuelModal({ onClose, addManualRow, manualRows, isKor }) {
   const [form, setForm] = useState(MANUEL_BOS)
   const [saving, setSaving] = useState(false)
 
@@ -485,12 +649,16 @@ function ManuelModal({ onClose, addManualRow, manualRows }) {
           <h3 className="text-white font-bold text-lg flex items-center gap-2">
             <span className="ms text-amber-400" style={{ fontSize: 22 }}>add_box</span>
             Manuel Fazla Stok
+            {isKor && <span className="text-xs font-normal text-amber-300 ml-1">(Kör Sayım)</span>}
           </h3>
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-white/10">
             <span className="ms" style={{ fontSize: 20 }}>close</span>
           </button>
         </div>
-        <p className="text-slate-400 text-xs mb-4">Sistemde bulunmayan ürün. Rapor sayfasındaki manuel listeye eklenir.</p>
+        <p className="text-slate-400 text-xs mb-4">
+          Sistemde bulunmayan ürün.
+          {isKor ? ' Kör sayım raporu' : ' Stok sayım raporu'}'ndaki manuel listeye eklenir.
+        </p>
         <form onSubmit={kaydet} className="flex flex-col gap-3">
           <input value={form.kod} onChange={e => setForm(f => ({ ...f, kod: e.target.value }))}
             placeholder="Ürün Kodu *" className="bg-black/30 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-400" />

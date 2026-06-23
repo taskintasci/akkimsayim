@@ -3,7 +3,7 @@ import useStore from '../../store/useStore'
 
 // Yöneticinin seçili satırları bir sayımcıya görev olarak atadığı modal.
 // `rows` = atanacak satırlar (filtrelenmiş liste). onClose = kapat.
-export default function GorevAtaModal({ rows, onClose }) {
+export default function GorevAtaModal({ rows, onClose, sayimTipi = 'stok' }) {
   const { users, usersLoading, loadUsers, assignGorev } = useStore()
   const [selected, setSelected] = useState(null)
   const [saving, setSaving]     = useState(false)
@@ -17,7 +17,7 @@ export default function GorevAtaModal({ rows, onClose }) {
     if (!selected || rows.length === 0) return
     setSaving(true)
     try {
-      await assignGorev({ sayimci: selected, atananRows: rows.map(r => r.id) })
+      await assignGorev({ sayimci: selected, atananRows: rows.map(r => r.id), sayimTipi })
       setDone(true)
       setTimeout(onClose, 1400)
     } catch (err) {
