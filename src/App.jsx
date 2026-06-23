@@ -50,8 +50,7 @@ function ErisimYok() {
 
 function Spinner() {
   return (
-    <div className="h-screen flex items-center justify-center"
-      style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0f172a 100%)' }}>
+    <div className="h-screen flex items-center justify-center bg-slate-100">
       <span className="ms text-blue-400 animate-spin" style={{ fontSize: 40 }}>progress_activity</span>
     </div>
   )

@@ -40,13 +40,13 @@ function SwipeCard({ row, sayilanMiktar, onConfirm, onEdit, isMembran }) {
     startX.current = null
   }
 
-  const bg = dx > 40 ? 'rgba(16,185,129,0.18)' : dx < -40 ? 'rgba(245,158,11,0.18)' : 'rgba(255,255,255,0.05)'
+  const bg = dx > 40 ? 'rgba(16,185,129,0.08)' : dx < -40 ? 'rgba(245,158,11,0.08)' : '#ffffff'
 
   return (
     <div className="relative w-full max-w-md select-none" style={{ touchAction: 'pan-y' }}>
       <div className="absolute inset-0 flex items-center justify-between px-6 pointer-events-none">
-        <span className="ms text-amber-400" style={{ fontSize: 40, opacity: dx < -40 ? 1 : 0.25 }}>edit_note</span>
-        <span className="ms text-emerald-400" style={{ fontSize: 40, opacity: dx > 40 ? 1 : 0.25 }}>check_circle</span>
+        <span className="ms text-amber-500" style={{ fontSize: 40, opacity: dx < -40 ? 1 : 0.2 }}>edit_note</span>
+        <span className="ms text-emerald-500" style={{ fontSize: 40, opacity: dx > 40 ? 1 : 0.2 }}>check_circle</span>
       </div>
 
       <div
@@ -57,12 +57,11 @@ function SwipeCard({ row, sayilanMiktar, onConfirm, onEdit, isMembran }) {
         onMouseMove={e => startX.current != null && onMove(e.clientX)}
         onMouseUp={onEnd}
         onMouseLeave={() => { if (startX.current != null) onEnd() }}
-        className="relative rounded-3xl border border-white/15 shadow-2xl cursor-grab active:cursor-grabbing flex flex-col"
+        className="relative rounded-3xl border border-slate-200 shadow-md cursor-grab active:cursor-grabbing flex flex-col"
         style={{
           transform: `translateX(${dx}px) rotate(${dx * 0.03}deg)`,
           transition: startX.current == null ? 'transform 0.25s ease' : 'none',
           background: bg,
-          backdropFilter: 'blur(8px)',
           height: 340,
           padding: '28px 28px 24px',
         }}
@@ -70,52 +69,52 @@ function SwipeCard({ row, sayilanMiktar, onConfirm, onEdit, isMembran }) {
         {/* Palet rozeti — sadece membran */}
         {isMembran && row.partiEk && (
           <div className="flex items-center gap-2 mb-2 shrink-0">
-            <span className="ms text-purple-300" style={{ fontSize: 16 }}>layers</span>
-            <span className="text-purple-200 font-semibold text-sm mono">{row.partiEk}</span>
+            <span className="ms text-purple-500" style={{ fontSize: 16 }}>layers</span>
+            <span className="text-purple-700 font-semibold text-sm mono">{row.partiEk}</span>
           </div>
         )}
 
         {/* Raf / Adres */}
         <div className="flex items-center gap-2 mb-3 shrink-0">
-          <span className="ms text-blue-300" style={{ fontSize: 22 }}>shelves</span>
-          <span className="text-blue-200 font-bold tracking-tight mono" style={{ fontSize: 26 }}>
+          <span className="ms text-blue-500" style={{ fontSize: 22 }}>shelves</span>
+          <span className="text-blue-700 font-bold tracking-tight mono" style={{ fontSize: 26 }}>
             {row.adres || '—'}
           </span>
         </div>
 
-        {/* Ürün adı — 2 satırla sınırlı */}
-        <p className="text-white font-extrabold leading-tight mb-2 overflow-hidden" style={{ fontSize: 26, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+        {/* Ürün adı */}
+        <p className="text-slate-900 font-extrabold leading-tight mb-2 overflow-hidden" style={{ fontSize: 26, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
           {row.ad || '—'}
         </p>
 
         {/* Kod + parti */}
         <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mb-3 shrink-0">
-          <span className="text-slate-300 mono" style={{ fontSize: 15 }}>{row.kod}</span>
+          <span className="text-slate-500 mono" style={{ fontSize: 15 }}>{row.kod}</span>
           {row.parti && <span className="text-slate-400 mono text-xs">Parti: {row.parti}</span>}
         </div>
 
-        {/* Sistem miktarı + sayılan — flex-1 altta */}
-        <div className="flex items-end justify-between bg-black/20 rounded-2xl px-4 py-3 mt-auto shrink-0">
+        {/* Sistem miktarı + sayılan */}
+        <div className="flex items-end justify-between bg-slate-100 rounded-2xl px-4 py-3 mt-auto shrink-0">
           <div>
             <p className="text-slate-400 text-xs uppercase tracking-wide mb-0.5">Sistem</p>
-            <p className="text-white font-bold" style={{ fontSize: 30 }}>
+            <p className="text-slate-900 font-bold" style={{ fontSize: 30 }}>
               {row.sayim ?? '—'} <span className="text-slate-400 text-base font-normal">{row.birim}</span>
             </p>
           </div>
           {sayilanMiktar !== undefined && sayilanMiktar !== '' && (
             <div className="text-right">
-              <p className="text-emerald-300 text-xs uppercase tracking-wide mb-0.5">Sayılan</p>
-              <p className="text-emerald-200 font-bold" style={{ fontSize: 26 }}>{sayilanMiktar}</p>
+              <p className="text-emerald-600 text-xs uppercase tracking-wide mb-0.5">Sayılan</p>
+              <p className="text-emerald-700 font-bold" style={{ fontSize: 26 }}>{sayilanMiktar}</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Butonlar — her zaman kartın altında, sabit */}
+      {/* Butonlar */}
       <div className="flex gap-3 mt-4 shrink-0">
         <button
           onClick={onEdit}
-          className="flex-1 py-4 rounded-2xl bg-amber-500/90 hover:bg-amber-500 active:scale-95 text-white font-bold text-lg flex items-center justify-center gap-2 transition-all"
+          className="flex-1 py-4 rounded-2xl bg-amber-500 hover:bg-amber-400 active:scale-95 text-white font-bold text-lg flex items-center justify-center gap-2 transition-all"
           style={{ minHeight: 56 }}
         >
           <span className="ms" style={{ fontSize: 24 }}>edit_note</span> Eksik / Fazla
@@ -143,7 +142,7 @@ export default function SayimciEkran({ mode = 'self' }) {
 
   const setActiveSession = useStore(s => s.setActiveSession)
 
-  const [view, setView]       = useState('gorevler')  // gorevler | liste | sayim | ozet
+  const [view, setView]       = useState('gorevler')
   const [gorev, setGorev]     = useState(null)
   const [sira, setSira]       = useState('adres')
   const [deletingId, setDeletingId] = useState(null)
@@ -155,11 +154,10 @@ export default function SayimciEkran({ mode = 'self' }) {
   const [editNote, setEditNote] = useState('')
   const [manuelOpen, setManuelOpen] = useState(false)
   const [listeSearch, setListeSearch] = useState('')
-  const [expandedPalets, setExpandedPalets] = useState(null) // null = hepsi açık
+  const [expandedPalets, setExpandedPalets] = useState(null)
 
   function setIdx(n) { idxRef.current = n; _setIdx(n) }
 
-  // Görevleri yükle
   useEffect(() => {
     if (mode === 'preview') loadSessionGorevler(activeSessionId)
     else if (currentUser?.uid) loadMyGorevler(currentUser.uid)
@@ -168,7 +166,6 @@ export default function SayimciEkran({ mode = 'self' }) {
   const isMembran = gorev?.sayimTipi === 'membran'
   const isKor     = gorev?.sayimTipi === 'kor'
 
-  // Atanan satırları sırala
   const atanan = useMemo(() => {
     if (!gorev) return []
     const ids = gorev.atananRows || []
@@ -216,7 +213,6 @@ export default function SayimciEkran({ mode = 'self' }) {
       const m = results[r.id]?.miktar
       return m === undefined || m === ''
     })
-    // Hepsi sayıldıysa özete git
     if (firstUncounted === -1) { setView('ozet'); return }
     setIdx(firstUncounted)
     setView('sayim')
@@ -226,7 +222,6 @@ export default function SayimciEkran({ mode = 'self' }) {
 
   function ilerle() {
     setEditing(false)
-    // idxRef kullan (stale closure olmaz)
     let nextIdx = -1
     for (let i = idxRef.current + 1; i < atanan.length; i++) {
       const m = results[atanan[i].id]?.miktar
@@ -270,7 +265,6 @@ export default function SayimciEkran({ mode = 'self' }) {
     ilerle()
   }
 
-  // Manuel modal için doğru store fonksiyonu
   const manuelAddFn  = isKor ? addKorManualRow : addManualRow
   const manuelRows   = isKor ? korManualRows    : manualRows
 
@@ -298,11 +292,10 @@ export default function SayimciEkran({ mode = 'self' }) {
               const isDeleting = deletingId === g.id
 
               return (
-                <div key={g.id} className="rounded-2xl border border-white/15 bg-white/5 hover:bg-white/10 hover:border-white/25 transition-all p-5">
-                  {/* Silme onayı */}
+                <div key={g.id} className="rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm transition-all p-5">
                   {isDeleting ? (
                     <div className="flex items-center justify-between">
-                      <p className="text-white text-sm font-semibold">Bu görevi silmek istediğinizden emin misiniz?</p>
+                      <p className="text-slate-800 text-sm font-semibold">Bu görevi silmek istediğinizden emin misiniz?</p>
                       <div className="flex items-center gap-2 ml-3 shrink-0">
                         <button
                           onClick={async () => { await deleteGorev(g.sessionId, g.id); setDeletingId(null) }}
@@ -312,7 +305,7 @@ export default function SayimciEkran({ mode = 'self' }) {
                         </button>
                         <button
                           onClick={() => setDeletingId(null)}
-                          className="px-3 py-1 text-slate-300 hover:text-white text-xs rounded-lg border border-white/20"
+                          className="px-3 py-1 text-slate-600 hover:text-slate-800 text-xs rounded-lg border border-slate-300"
                         >
                           İptal
                         </button>
@@ -322,14 +315,14 @@ export default function SayimciEkran({ mode = 'self' }) {
                     <>
                       <div className="flex items-center justify-between mb-1">
                         <button className="flex-1 text-left" onClick={() => openGorev(g)}>
-                          <span className="text-white font-bold text-lg">{g.depoAdi || g.sessionType || 'Sayım'}</span>
+                          <span className="text-slate-900 font-bold text-lg">{g.depoAdi || g.sessionType || 'Sayım'}</span>
                         </button>
                         <div className="flex items-center gap-2 shrink-0">
                           <DurumRozet durum={g.durum} />
                           {userRole === 'yonetici' && (
                             <button
                               onClick={() => setDeletingId(g.id)}
-                              className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                              className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
                               title="Görevi Sil"
                             >
                               <span className="ms" style={{ fontSize: 17 }}>delete</span>
@@ -338,31 +331,31 @@ export default function SayimciEkran({ mode = 'self' }) {
                         </div>
                       </div>
                       <button className="w-full text-left" onClick={() => openGorev(g)}>
-                        <p className="text-slate-300 text-sm mb-2">{g.sessionType}</p>
+                        <p className="text-slate-500 text-sm mb-2">{g.sessionType}</p>
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2 text-slate-400 text-sm">
+                          <div className="flex items-center gap-2 text-slate-500 text-sm">
                             <span className="ms" style={{ fontSize: 18 }}>inventory_2</span>
                             {ids.length} kalem
                             {g.sayimTipi === 'membran' && (
-                              <span className="ms text-purple-300 ml-1" style={{ fontSize: 16 }}>layers</span>
+                              <span className="ms text-purple-500 ml-1" style={{ fontSize: 16 }}>layers</span>
                             )}
                             {g.sayimTipi === 'kor' && (
-                              <span className="ms text-amber-300 ml-1" style={{ fontSize: 16 }}>visibility_off</span>
+                              <span className="ms text-amber-500 ml-1" style={{ fontSize: 16 }}>visibility_off</span>
                             )}
                           </div>
                           {counted !== null && (
                             <span className={
                               'text-sm font-semibold ' +
-                              (counted === ids.length ? 'text-emerald-300' : 'text-blue-300')
+                              (counted === ids.length ? 'text-emerald-600' : 'text-blue-600')
                             }>
                               {counted}/{ids.length} sayıldı
                             </span>
                           )}
                         </div>
                         {counted !== null && ids.length > 0 && (
-                          <div className="mt-2 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                          <div className="mt-2 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                             <div
-                              className="h-1.5 bg-emerald-400 transition-all"
+                              className="h-1.5 bg-emerald-500 transition-all"
                               style={{ width: `${(counted / ids.length) * 100}%` }}
                             />
                           </div>
@@ -385,21 +378,21 @@ export default function SayimciEkran({ mode = 'self' }) {
     return (
       <div className={mode === 'preview' ? 'flex-1 flex flex-col overflow-hidden bg-white' : 'h-screen flex flex-col overflow-hidden bg-white'}>
         {/* Üst bar */}
-        <div className="bg-slate-800 px-4 py-3 flex items-center gap-3 shrink-0">
+        <div className="bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3 shrink-0">
           <button
             onClick={() => { setView('gorevler'); setGorev(null); setListeSearch('') }}
-            className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-300 hover:bg-white/10 shrink-0"
+            className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 shrink-0"
           >
             <span className="ms" style={{ fontSize: 24 }}>arrow_back</span>
           </button>
           <div className="flex-1 min-w-0">
-            <p className="text-white font-bold text-sm truncate">{gorev?.depoAdi || 'Sayım Listesi'}</p>
+            <p className="text-slate-900 font-bold text-sm truncate">{gorev?.depoAdi || 'Sayım Listesi'}</p>
             <p className="text-slate-400 text-xs">{atanan.length} kalem · {sayilanAdet} sayıldı</p>
           </div>
           <button
             onClick={basla}
             disabled={atanan.length === 0}
-            className="flex items-center gap-1.5 px-3 py-2 bg-blue-500 hover:bg-blue-400 active:scale-95 disabled:opacity-40 text-white rounded-xl text-sm font-bold shrink-0 transition-all"
+            className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 active:scale-95 disabled:opacity-40 text-white rounded-xl text-sm font-bold shrink-0 transition-all"
           >
             <span className="ms" style={{ fontSize: 16 }}>play_arrow</span> Kart Modu
           </button>
@@ -443,13 +436,13 @@ export default function SayimciEkran({ mode = 'self' }) {
           <div className="flex-1 overflow-auto">
             <table className="w-full text-left border-collapse" style={{ minWidth: 650 }}>
               <thead className="sticky top-0 z-10">
-                <tr className="bg-slate-800 text-white text-[11px] mono uppercase tracking-wider">
+                <tr className="bg-slate-100 text-slate-600 text-[11px] mono uppercase tracking-wider border-b border-slate-200">
                   <th className="px-3 py-2.5 text-center w-8">#</th>
                   <th className="px-3 py-2.5 w-24">Adres</th>
                   <th className="px-3 py-2.5 w-28">Kod</th>
                   <th className="px-3 py-2.5">Ad</th>
                   <th className="px-3 py-2.5 w-20 text-right sistem-col">Sistem</th>
-                  <th className="px-3 py-2.5 w-24 text-right text-blue-300 sayilan-col">Sayılan ▾</th>
+                  <th className="px-3 py-2.5 w-24 text-right text-blue-600 sayilan-col">Sayılan ▾</th>
                   <th className="px-3 py-2.5">Not</th>
                 </tr>
               </thead>
@@ -551,7 +544,7 @@ export default function SayimciEkran({ mode = 'self' }) {
           <button
             onClick={basla}
             disabled={atanan.length === 0}
-            className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white rounded-xl font-bold flex items-center justify-center gap-2"
+            className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white rounded-xl font-bold flex items-center justify-center gap-2"
           >
             <span className="ms" style={{ fontSize: 20 }}>
               {sayilanAdet === atanan.length && atanan.length > 0 ? 'task_alt' : 'play_arrow'}
@@ -581,9 +574,9 @@ export default function SayimciEkran({ mode = 'self' }) {
       >
         {/* İlerleme çubuğu */}
         <div className="w-full max-w-md mb-6">
-          <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+          <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
             <div
-              className="h-2 bg-blue-400 transition-all"
+              className="h-2 bg-blue-500 transition-all"
               style={{ width: `${atanan.length > 0 ? (sayilanAdet / atanan.length) * 100 : 0}%` }}
             />
           </div>
@@ -601,30 +594,30 @@ export default function SayimciEkran({ mode = 'self' }) {
 
         {/* Eksik/Fazla + Not alanı */}
         {current && editing && (
-          <div className="w-full max-w-md rounded-3xl border border-amber-400/30 bg-amber-500/10 p-7" style={{ backdropFilter: 'blur(8px)' }}>
-            <p className="text-amber-200 font-bold text-lg mb-1">{current.ad}</p>
-            <p className="text-slate-400 text-sm mono mb-5">{current.adres} · {current.kod}</p>
+          <div className="w-full max-w-md rounded-3xl border border-amber-300 bg-amber-50 p-7">
+            <p className="text-amber-800 font-bold text-lg mb-1">{current.ad}</p>
+            <p className="text-slate-500 text-sm mono mb-5">{current.adres} · {current.kod}</p>
 
-            <label className="block text-slate-300 text-sm mb-2">Sayılan Gerçek Miktar ({current.birim})</label>
+            <label className="block text-slate-600 text-sm mb-2">Sayılan Gerçek Miktar ({current.birim})</label>
             <input
               autoFocus type="number" inputMode="decimal" value={editVal}
               onChange={e => setEditVal(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && editKaydet()}
               placeholder={`Sistem: ${current.sayim ?? '—'}`}
-              className="w-full bg-black/30 border border-white/20 rounded-2xl px-5 py-4 text-white text-3xl font-bold mono text-center focus:outline-none focus:border-amber-400 mb-4"
+              className="w-full bg-white border border-slate-300 rounded-2xl px-5 py-4 text-slate-900 text-3xl font-bold mono text-center focus:outline-none focus:border-amber-400 mb-4"
             />
 
-            <label className="block text-slate-300 text-sm mb-2">Not (opsiyonel)</label>
+            <label className="block text-slate-600 text-sm mb-2">Not (opsiyonel)</label>
             <textarea
               value={editNote}
               onChange={e => setEditNote(e.target.value)}
               placeholder="Açıklama, fark nedeni..."
               rows={2}
-              className="w-full bg-black/30 border border-white/20 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-400 resize-none"
+              className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3 text-slate-800 text-sm focus:outline-none focus:border-amber-400 resize-none"
             />
 
             <div className="flex gap-3 mt-5">
-              <button onClick={() => setEditing(false)} className="flex-1 py-4 rounded-2xl border border-white/15 text-slate-200 font-bold">
+              <button onClick={() => setEditing(false)} className="flex-1 py-4 rounded-2xl border border-slate-300 text-slate-700 font-bold">
                 Vazgeç
               </button>
               <button onClick={editKaydet} className="flex-1 py-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-white font-bold flex items-center justify-center gap-2">
@@ -636,7 +629,7 @@ export default function SayimciEkran({ mode = 'self' }) {
 
         <button
           onClick={() => setManuelOpen(true)}
-          className="mt-6 text-slate-300 hover:text-white text-sm flex items-center gap-1.5"
+          className="mt-6 text-slate-500 hover:text-slate-700 text-sm flex items-center gap-1.5"
         >
           <span className="ms" style={{ fontSize: 18 }}>add_box</span> Manuel fazla stok ekle
         </button>
@@ -656,15 +649,15 @@ export default function SayimciEkran({ mode = 'self' }) {
   return (
     <Shell mode={mode} title="Sayım Tamamlandı" subtitle={gorev?.depoAdi}>
       <div className="flex flex-col items-center text-center w-full max-w-md">
-        <span className="ms text-emerald-400 mb-4" style={{ fontSize: 72 }}>task_alt</span>
-        <p className="text-white font-bold text-2xl mb-2">Tebrikler!</p>
-        <p className="text-slate-300 mb-1">{atanan.length} kalem sayıldı.</p>
+        <span className="ms text-emerald-500 mb-4" style={{ fontSize: 72 }}>task_alt</span>
+        <p className="text-slate-900 font-bold text-2xl mb-2">Tebrikler!</p>
+        <p className="text-slate-600 mb-1">{atanan.length} kalem sayıldı.</p>
         {manuelRows.length > 0 && (
-          <p className="text-amber-300 text-sm mb-6">+ {manuelRows.length} manuel fazla stok girişi</p>
+          <p className="text-amber-700 text-sm mb-6">+ {manuelRows.length} manuel fazla stok girişi</p>
         )}
         <button
           onClick={() => { setView('gorevler'); setGorev(null) }}
-          className="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-lg mt-4"
+          className="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg mt-4"
         >
           Görevlere Dön
         </button>
@@ -684,29 +677,26 @@ function PaletSayimBadge({ counted, total, hasDiff }) {
 // ── Yardımcı bileşenler ────────────────────────────────────────────────────
 function Shell({ children, title, subtitle, onBack, mode }) {
   return (
-    <div
-      className={mode === 'preview' ? 'flex-1 flex flex-col overflow-hidden' : 'h-screen flex flex-col overflow-hidden'}
-      style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0f172a 100%)' }}
-    >
-      <header className="flex items-center justify-between px-5 py-4 border-b border-white/10 shrink-0">
+    <div className={`${mode === 'preview' ? 'flex-1' : 'h-screen'} flex flex-col overflow-hidden bg-slate-100`}>
+      <header className="flex items-center justify-between px-5 py-4 bg-white border-b border-slate-200 shrink-0">
         <div className="flex items-center gap-3 min-w-0">
           {onBack && (
-            <button onClick={onBack} className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-300 hover:bg-white/10 shrink-0">
+            <button onClick={onBack} className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 shrink-0">
               <span className="ms" style={{ fontSize: 22 }}>arrow_back</span>
             </button>
           )}
           <div className="min-w-0">
-            <p className="text-white font-bold text-base truncate">{title}</p>
-            {subtitle && <p className="text-slate-400 text-xs truncate">{subtitle}</p>}
+            <p className="text-slate-900 font-bold text-base truncate">{title}</p>
+            {subtitle && <p className="text-slate-500 text-xs truncate">{subtitle}</p>}
           </div>
         </div>
         {mode === 'self' && (
-          <button onClick={() => signOut(auth)} className="flex items-center gap-1.5 text-slate-300 hover:text-white text-sm shrink-0">
+          <button onClick={() => signOut(auth)} className="flex items-center gap-1.5 text-slate-500 hover:text-slate-700 text-sm shrink-0">
             <span className="ms" style={{ fontSize: 18 }}>logout</span>
           </button>
         )}
         {mode === 'preview' && (
-          <span className="px-2 py-1 rounded-md bg-white/10 text-slate-300 text-xs shrink-0">Önizleme</span>
+          <span className="px-2 py-1 rounded-md bg-slate-100 text-slate-500 text-xs shrink-0">Önizleme</span>
         )}
       </header>
       <div className="flex-1 overflow-y-auto flex flex-col items-center px-5 py-6">
@@ -718,7 +708,7 @@ function Shell({ children, title, subtitle, onBack, mode }) {
 
 function Loading() {
   return (
-    <div className="flex items-center gap-2 text-slate-300 mt-10">
+    <div className="flex items-center gap-2 text-slate-500 mt-10">
       <span className="ms animate-spin" style={{ fontSize: 22 }}>progress_activity</span> Yükleniyor…
     </div>
   )
@@ -727,18 +717,18 @@ function Loading() {
 function Empty({ icon, title, text }) {
   return (
     <div className="flex flex-col items-center text-center mt-12 max-w-sm">
-      <span className="ms text-slate-500 mb-3" style={{ fontSize: 56 }}>{icon}</span>
-      <p className="text-white font-bold text-lg mb-1">{title}</p>
-      <p className="text-slate-400 text-sm">{text}</p>
+      <span className="ms text-slate-300 mb-3" style={{ fontSize: 56 }}>{icon}</span>
+      <p className="text-slate-800 font-bold text-lg mb-1">{title}</p>
+      <p className="text-slate-500 text-sm">{text}</p>
     </div>
   )
 }
 
 function DurumRozet({ durum }) {
   const map = {
-    bekliyor:   { cls: 'bg-slate-500/20 text-slate-300',   label: 'Bekliyor' },
-    devam:      { cls: 'bg-blue-500/20 text-blue-300',     label: 'Devam' },
-    tamamlandi: { cls: 'bg-emerald-500/20 text-emerald-300', label: 'Tamamlandı' },
+    bekliyor:   { cls: 'bg-slate-100 text-slate-600',     label: 'Bekliyor' },
+    devam:      { cls: 'bg-blue-100 text-blue-700',        label: 'Devam' },
+    tamamlandi: { cls: 'bg-emerald-100 text-emerald-700',  label: 'Tamamlandı' },
   }
   const d = map[durum] || map.bekliyor
   return <span className={'px-2 py-0.5 rounded-full text-xs font-medium ' + d.cls}>{d.label}</span>
@@ -769,34 +759,34 @@ function ManuelModal({ onClose, addManualRow, manualRows, isKor }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-4" onClick={onClose}>
-      <div className="w-full max-w-md bg-slate-900 border border-white/15 rounded-3xl p-6" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div className="w-full max-w-md bg-white border border-slate-200 rounded-3xl p-6 shadow-xl" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-white font-bold text-lg flex items-center gap-2">
-            <span className="ms text-amber-400" style={{ fontSize: 22 }}>add_box</span>
+          <h3 className="text-slate-900 font-bold text-lg flex items-center gap-2">
+            <span className="ms text-amber-500" style={{ fontSize: 22 }}>add_box</span>
             Manuel Fazla Stok
-            {isKor && <span className="text-xs font-normal text-amber-300 ml-1">(Kör Sayım)</span>}
+            {isKor && <span className="text-xs font-normal text-amber-700 ml-1">(Kör Sayım)</span>}
           </h3>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-white/10">
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100">
             <span className="ms" style={{ fontSize: 20 }}>close</span>
           </button>
         </div>
-        <p className="text-slate-400 text-xs mb-4">
+        <p className="text-slate-500 text-xs mb-4">
           Sistemde bulunmayan ürün.
           {isKor ? ' Kör sayım raporu' : ' Stok sayım raporu'}'ndaki manuel listeye eklenir.
         </p>
         <form onSubmit={kaydet} className="flex flex-col gap-3">
           <input value={form.kod} onChange={e => setForm(f => ({ ...f, kod: e.target.value }))}
-            placeholder="Ürün Kodu *" className="bg-black/30 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-400" />
+            placeholder="Ürün Kodu *" className="border border-slate-300 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-400" />
           <input value={form.ad} onChange={e => setForm(f => ({ ...f, ad: e.target.value }))}
-            placeholder="Ürün Adı" className="bg-black/30 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-400" />
+            placeholder="Ürün Adı" className="border border-slate-300 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-400" />
           <input value={form.adres} onChange={e => setForm(f => ({ ...f, adres: e.target.value }))}
-            placeholder="Raf / Adres" className="bg-black/30 border border-white/20 rounded-xl px-4 py-3 text-white mono placeholder-slate-500 focus:outline-none focus:border-blue-400" />
+            placeholder="Raf / Adres" className="border border-slate-300 rounded-xl px-4 py-3 text-slate-900 mono placeholder-slate-400 focus:outline-none focus:border-blue-400" />
           <div className="flex gap-3">
             <input value={form.miktar} onChange={e => setForm(f => ({ ...f, miktar: e.target.value }))}
-              type="number" inputMode="decimal" placeholder="Miktar *" className="flex-1 bg-black/30 border border-white/20 rounded-xl px-4 py-3 text-white mono placeholder-slate-500 focus:outline-none focus:border-blue-400" />
+              type="number" inputMode="decimal" placeholder="Miktar *" className="flex-1 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 mono placeholder-slate-400 focus:outline-none focus:border-blue-400" />
             <input value={form.birim} onChange={e => setForm(f => ({ ...f, birim: e.target.value }))}
-              placeholder="Birim" className="w-28 bg-black/30 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-400" />
+              placeholder="Birim" className="w-28 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-400" />
           </div>
           <button type="submit" disabled={saving || !form.kod.trim() || form.miktar === ''}
             className="py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-white font-bold flex items-center justify-center gap-2 mt-1">
@@ -805,7 +795,7 @@ function ManuelModal({ onClose, addManualRow, manualRows, isKor }) {
           </button>
         </form>
         {manualRows.length > 0 && (
-          <p className="text-slate-500 text-xs text-center mt-3">{manualRows.length} manuel kayıt eklendi</p>
+          <p className="text-slate-400 text-xs text-center mt-3">{manualRows.length} manuel kayıt eklendi</p>
         )}
       </div>
     </div>
