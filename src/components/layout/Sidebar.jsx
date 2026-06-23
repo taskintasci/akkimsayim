@@ -1,4 +1,6 @@
-import useStore from '../../store/useStore'
+import { signOut } from 'firebase/auth'
+import { auth } from '../../firebase/index'
+import useStore, { ROLE_LABELS } from '../../store/useStore'
 
 function NavBtn({ item, activePage, onNavigate }) {
   const active = activePage === item.id
@@ -22,12 +24,39 @@ function Divider() {
   return <div className="my-1.5 border-t border-slate-100" />
 }
 
-export default function Sidebar({ activePage, onNavigate }) {
-  const { session, setActiveSession } = useStore()
+// Menü öğeleri — her birinin hangi rollere görüneceği tanımlı
+const MENU = [
+  { id: 'panel',        icon: 'grid_view',      label: 'Panel',                   roles: ['yonetici', 'kontrolcu'] },
+  { divider: true,      roles: ['yonetici', 'kontrolcu'] },
+  { id: 'sayim',        icon: 'fact_check',     label: 'Tüm Stok Sayımı',         roles: ['yonetici'] },
+  { id: 'analiz',       icon: 'monitoring',     label: 'Tüm Stok Sayım Analizi',  roles: ['yonetici', 'kontrolcu'] },
+  { id: 'rapor',        icon: 'analytics',      label: 'Tüm Stok Rapor',          roles: ['yonetici', 'kontrolcu'] },
+  { divider: true,      roles: ['yonetici', 'kontrolcu'] },
+  { id: 'kor',          icon: 'visibility_off', label: 'Kör Stok Sayımı',         roles: ['yonetici'] },
+  { id: 'koranaliz',    icon: 'query_stats',    label: 'Kör Stok Sayım Analizi',  roles: ['yonetici', 'kontrolcu'] },
+  { id: 'korrapor',     icon: 'summarize',      label: 'Kör Stok Sayım Raporu',   roles: ['yonetici', 'kontrolcu'] },
+  { divider: true,      roles: ['yonetici'] },
+  { id: 'hareketlilik', icon: 'trending_up',    label: 'Hareketlilik Sayımı',     roles: ['yonetici'] },
+  { id: 'membran',      icon: 'layers',         label: 'Membran Sayımı',          roles: ['yonetici'] },
+  { divider: true,      roles: ['yonetici', 'kontrolcu'] },
+  { id: 'sayimciekran', icon: 'swipe',          label: 'Sayımcı Ekranı',          roles: ['yonetici', 'kontrolcu'] },
+  { id: 'kullanicilar', icon: 'group',          label: 'Kullanıcı Yönetimi',      roles: ['yonetici'] },
+  { id: 'ayarlar',      icon: 'settings',       label: 'Ayarlar',                 roles: ['yonetici'] },
+]
 
-  const nav = (id, icon, label) => (
-    <NavBtn key={id} item={{ id, icon, label }} activePage={activePage} onNavigate={onNavigate} />
-  )
+export default function Sidebar({ activePage, onNavigate }) {
+  const { session, setActiveSession, userProfile, userRole } = useStore()
+
+  const initials = (userProfile?.displayName || userProfile?.email || '??')
+    .split(/[\s.@]+/).filter(Boolean).slice(0, 2).map(s => s[0]?.toUpperCase()).join('')
+
+  // Rol ardışık divider'larla biten/başlayan boşlukları temizle
+  const visible = MENU.filter(m => m.roles.includes(userRole))
+  const cleaned = visible.filter((m, i) => {
+    if (!m.divider) return true
+    const prev = visible[i - 1]
+    return prev && !prev.divider   // baştaki ve ardışık divider'ları at
+  })
 
   return (
     <aside className="w-56 shrink-0 bg-white border-r border-slate-200 flex flex-col h-full">
@@ -50,18 +79,11 @@ export default function Sidebar({ activePage, onNavigate }) {
 
       {/* Main nav */}
       <nav className="flex-1 px-3 py-3 overflow-y-auto space-y-0.5">
-        {nav('panel', 'grid_view', 'Panel')}
-        <Divider />
-        {nav('sayim',  'fact_check',      'Tüm Stok Sayımı')}
-        {nav('analiz', 'monitoring',      'Tüm Stok Sayım Analizi')}
-        {nav('rapor',  'analytics',       'Tüm Stok Rapor')}
-        <Divider />
-        {nav('kor',          'visibility_off', 'Kör Stok Sayımı')}
-        {nav('koranaliz',    'query_stats',    'Kör Stok Sayım Analizi')}
-        {nav('korrapor',     'summarize',      'Kör Stok Sayım Raporu')}
-        <Divider />
-        {nav('hareketlilik', 'trending_up',    'Hareketlilik Sayımı')}
-        {nav('membran',      'layers',          'Membran Sayımı')}
+        {cleaned.map((m, i) =>
+          m.divider
+            ? <Divider key={'d' + i} />
+            : <NavBtn key={m.id} item={m} activePage={activePage} onNavigate={onNavigate} />
+        )}
       </nav>
 
       {/* Aktif sayım + kullanıcı */}
@@ -73,12 +95,19 @@ export default function Sidebar({ activePage, onNavigate }) {
         </div>
         <div className="flex items-center gap-2.5">
           <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-[11px] font-bold text-slate-600 shrink-0">
-            TT
+            {initials || '??'}
           </div>
-          <div className="min-w-0">
-            <p className="text-[12px] font-semibold text-slate-700 truncate">Taskin T.</p>
-            <p className="text-[11px] text-slate-400 truncate">Depo Sorumlusu</p>
+          <div className="min-w-0 flex-1">
+            <p className="text-[12px] font-semibold text-slate-700 truncate">{userProfile?.displayName || userProfile?.email || 'Kullanıcı'}</p>
+            <p className="text-[11px] text-slate-400 truncate">{ROLE_LABELS[userRole] || '—'}</p>
           </div>
+          <button
+            onClick={() => signOut(auth)}
+            title="Çıkış Yap"
+            className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors shrink-0"
+          >
+            <span className="ms" style={{ fontSize: 16 }}>logout</span>
+          </button>
         </div>
       </div>
     </aside>

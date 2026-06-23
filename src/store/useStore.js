@@ -1,9 +1,10 @@
 import { create } from 'zustand'
 import {
-  collection, doc, addDoc, getDocs, updateDoc, setDoc, deleteDoc,
-  onSnapshot, orderBy, query, serverTimestamp, writeBatch, limit,
+  collection, collectionGroup, doc, addDoc, getDoc, getDocs, updateDoc, setDoc, deleteDoc,
+  onSnapshot, orderBy, query, where, serverTimestamp, writeBatch, limit,
 } from 'firebase/firestore'
-import { db } from '../firebase/index'
+import { createUserWithEmailAndPassword, signOut as secondarySignOut } from 'firebase/auth'
+import { db, getSecondaryAuth } from '../firebase/index'
 import { parseExcelFile } from '../utils/excelImport'
 import { uploadRows, downloadRows } from '../firebase/rowStorage'
 
@@ -17,6 +18,152 @@ const useStore = create((set, get) => ({
   // ── Auth ──────────────────────────────────────────────────────────────────
   currentUser: null,
   setCurrentUser: (user) => set({ currentUser: user }),
+
+  // ── Kullanıcı profili & rol ───────────────────────────────────────────────
+  userProfile: null,          // /users/{uid} dokümanı
+  userRole: null,             // 'yonetici' | 'kontrolcu' | 'sayimci'
+  profileLoading: false,
+
+  // Giriş yapan kullanıcının profilini yükle (yoksa varsayılan sayımcı oluştur)
+  loadUserProfile: async (user) => {
+    if (!user) { set({ userProfile: null, userRole: null, profileLoading: false }); return }
+    set({ profileLoading: true })
+    try {
+      const ref  = doc(db, 'users', user.uid)
+      const snap = await getDoc(ref)
+      if (snap.exists()) {
+        const data = snap.data()
+        set({ userProfile: { uid: user.uid, ...data }, userRole: data.rol || 'sayimci' })
+      } else {
+        // Bootstrap: profili olmayan kullanıcı varsayılan olarak sayımcı olur.
+        // İlk yönetici, Firebase Console'da rol alanı 'yonetici' yapılarak terfi ettirilir.
+        const profile = {
+          email:       user.email,
+          displayName: user.displayName || (user.email || '').split('@')[0],
+          rol:         'sayimci',
+          createdAt:   serverTimestamp(),
+          createdBy:   user.uid,
+        }
+        await setDoc(ref, profile)
+        set({ userProfile: { uid: user.uid, ...profile }, userRole: 'sayimci' })
+      }
+    } catch (err) {
+      console.error('Profil yüklenemedi:', err)
+      set({ userProfile: null, userRole: null })
+    } finally {
+      set({ profileLoading: false })
+    }
+  },
+
+  // ── Kullanıcı yönetimi (yalnızca yönetici) ────────────────────────────────
+  users: [],
+  usersLoading: false,
+
+  loadUsers: async () => {
+    set({ usersLoading: true })
+    try {
+      const snap = await getDocs(query(collection(db, 'users'), orderBy('createdAt', 'desc')))
+      set({ users: snap.docs.map(d => ({ uid: d.id, ...d.data() })) })
+    } catch (err) {
+      console.error('Kullanıcılar yüklenemedi:', err)
+    } finally {
+      set({ usersLoading: false })
+    }
+  },
+
+  // Yeni kullanıcı: secondary auth ile oluştur (yöneticinin oturumu bozulmaz)
+  createUserAccount: async ({ email, password, displayName, rol }) => {
+    const { currentUser } = get()
+    const secAuth = getSecondaryAuth()
+    const cred = await createUserWithEmailAndPassword(secAuth, email, password)
+    const uid  = cred.user.uid
+    const profile = {
+      email,
+      displayName: displayName || email.split('@')[0],
+      rol:         rol || 'sayimci',
+      createdAt:   serverTimestamp(),
+      createdBy:   currentUser?.uid || null,
+    }
+    await setDoc(doc(db, 'users', uid), profile)
+    await secondarySignOut(secAuth)
+    set(state => ({ users: [{ uid, ...profile, createdAt: new Date() }, ...state.users] }))
+    return uid
+  },
+
+  updateUserRole: async (uid, rol) => {
+    await updateDoc(doc(db, 'users', uid), { rol })
+    set(state => ({ users: state.users.map(u => u.uid === uid ? { ...u, rol } : u) }))
+  },
+
+  // Not: Firebase Auth hesabı client'tan silinemez; yalnızca profili sileriz
+  // (kullanıcı uygulamaya giremez çünkü rol/profil bulunmaz → erişim engellenir).
+  deleteUserDoc: async (uid) => {
+    await deleteDoc(doc(db, 'users', uid))
+    set(state => ({ users: state.users.filter(u => u.uid !== uid) }))
+  },
+
+  // ── Sayımcı görevleri ─────────────────────────────────────────────────────
+  gorevler: [],               // aktif kullanıcıya atanan görevler
+  gorevlerLoading: false,
+
+  // Yönetici: aktif session'daki seçili satırları bir sayımcıya ata
+  assignGorev: async ({ sayimci, atananRows }) => {
+    const { activeSessionId, session, currentUser } = get()
+    if (!activeSessionId) throw new Error('Aktif oturum yok')
+    const data = {
+      sayimciUid:   sayimci.uid,
+      sayimciEmail: sayimci.email,
+      sayimciAd:    sayimci.displayName || sayimci.email,
+      sessionId:    activeSessionId,
+      sessionType:  session.type || '',
+      depoAdi:      session.depoAdi || '',
+      atananRows,                       // array<rowId>
+      durum:        'bekliyor',
+      createdAt:    serverTimestamp(),
+      createdBy:    currentUser?.uid || null,
+    }
+    const ref = await addDoc(collection(db, 'sessions', activeSessionId, 'sayimciGorevler'), data)
+    return ref.id
+  },
+
+  // Sayımcı: kendisine atanan tüm görevleri (tüm oturumlardan) yükle
+  loadMyGorevler: async (uid) => {
+    if (!uid) return
+    set({ gorevlerLoading: true })
+    try {
+      const snap = await getDocs(
+        query(collectionGroup(db, 'sayimciGorevler'), where('sayimciUid', '==', uid))
+      )
+      const list = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      list.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))
+      set({ gorevler: list })
+    } catch (err) {
+      console.error('Görevler yüklenemedi:', err)
+    } finally {
+      set({ gorevlerLoading: false })
+    }
+  },
+
+  // Yönetici/Kontrolcü önizleme: aktif oturumdaki tüm görevleri yükle
+  loadSessionGorevler: async (sessionId) => {
+    if (!sessionId) return
+    set({ gorevlerLoading: true })
+    try {
+      const snap = await getDocs(
+        query(collection(db, 'sessions', sessionId, 'sayimciGorevler'), orderBy('createdAt', 'desc'))
+      )
+      set({ gorevler: snap.docs.map(d => ({ id: d.id, ...d.data() })) })
+    } catch (err) {
+      console.error('Oturum görevleri yüklenemedi:', err)
+    } finally {
+      set({ gorevlerLoading: false })
+    }
+  },
+
+  updateGorevDurum: async (sessionId, gorevId, durum) => {
+    await updateDoc(doc(db, 'sessions', sessionId, 'sayimciGorevler', gorevId), { durum })
+    set(state => ({ gorevler: state.gorevler.map(g => g.id === gorevId ? { ...g, durum } : g) }))
+  },
 
   // ── Sessions ──────────────────────────────────────────────────────────────
   sessions: [],
@@ -426,5 +573,11 @@ const useStore = create((set, get) => ({
     set({ rows: [], results: {}, korCodes: [], korMatched: [] })
   },
 }))
+
+export const ROLE_LABELS = {
+  yonetici:  'Yönetici',
+  kontrolcu: 'Kontrolcü',
+  sayimci:   'Sayımcı',
+}
 
 export default useStore

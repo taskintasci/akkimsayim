@@ -1,6 +1,15 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // Kullanıcının rolünü /users/{uid}.rol alanından okur
+    function userRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.rol;
+    }
+    function isYonetici() {
+      return request.auth != null && userRole() == 'yonetici';
+    }
+
     match /sessions/{sessionId} {
       allow read, write: if request.auth != null;
 
@@ -11,10 +20,21 @@ service cloud.firestore {
       match /rowChunks/{chunkId} {
         allow read, write: if request.auth != null;
       }
+
+      // Sayımcı görevleri: yönetici yazar, ilgili sayımcı + yetkililer okur
+      match /sayimciGorevler/{gorevId} {
+        allow read:  if request.auth != null;
+        allow write: if isYonetici();
+      }
     }
 
     match /users/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      // Kendi profilini herkes okuyabilir; yönetici tüm kullanıcıları okur
+      allow read:   if request.auth != null && (request.auth.uid == uid || isYonetici());
+      // Yönetici yeni kullanıcı dokümanı yazar; kullanıcı kendi profilini (bootstrap) bir kez yaratabilir
+      allow create: if request.auth != null && (request.auth.uid == uid || isYonetici());
+      // Rol değiştirme / silme yalnızca yöneticide
+      allow update, delete: if isYonetici();
     }
   }
 }

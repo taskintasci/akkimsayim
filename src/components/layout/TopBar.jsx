@@ -8,6 +8,12 @@ const PAGE_NAMES = {
   rapor: 'Rapor',
   analiz: 'Sayım Analizi',
   ayarlar: 'Ayarlar',
+  koranaliz: 'Kör Sayım Analizi',
+  korrapor: 'Kör Sayım Raporu',
+  hareketlilik: 'Hareketlilik Sayımı',
+  membran: 'Membran Sayımı',
+  kullanicilar: 'Kullanıcı Yönetimi',
+  sayimciekran: 'Sayımcı Ekranı',
 }
 
 export default function TopBar({ activePage }) {

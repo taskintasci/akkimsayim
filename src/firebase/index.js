@@ -25,3 +25,14 @@ export const db      = initializeFirestore(app, {
   }),
 })
 export const storage = getStorage(app)
+
+// İkinci (yardımcı) app — yeni kullanıcı oluştururken yöneticinin oturumunu
+// bozmamak için kullanılır. createUserWithEmailAndPassword aktif oturumu
+// değiştirir; bu izole instance ile yönetici oturumu korunur.
+let _secondaryApp = null
+export function getSecondaryAuth() {
+  if (!_secondaryApp) {
+    _secondaryApp = initializeApp(firebaseConfig, 'secondary')
+  }
+  return getAuth(_secondaryApp)
+}
