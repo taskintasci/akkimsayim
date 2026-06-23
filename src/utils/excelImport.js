@@ -63,6 +63,10 @@ const RAPOR5_MAP = {
   'kategori kodu'      : 'kategori',
   'ürün grubu'         : 'kategori',
   'urun grubu'         : 'kategori',
+  'parti ek'           : 'partiEk',
+  'partiek'            : 'partiEk',
+  'palet no'           : 'partiEk',
+  'palet no.'          : 'partiEk',
 }
 
 // RAPOR5 ayırt edici başlıkları

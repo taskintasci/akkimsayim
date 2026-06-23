@@ -61,6 +61,7 @@ export default function Sidebar({ activePage, onNavigate }) {
         {nav('korrapor',     'summarize',      'Kör Stok Sayım Raporu')}
         <Divider />
         {nav('hareketlilik', 'trending_up',    'Hareketlilik Sayımı')}
+        {nav('membran',      'layers',          'Membran Sayımı')}
       </nav>
 
       {/* Aktif sayım + kullanıcı */}

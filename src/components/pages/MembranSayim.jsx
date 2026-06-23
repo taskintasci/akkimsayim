@@ -1,0 +1,384 @@
+import { useState, useRef, useMemo, useEffect } from 'react'
+import { useReactToPrint } from 'react-to-print'
+import useStore from '../../store/useStore'
+import { sortRows, getUniqueAdresValues, parseAdres } from '../../utils/adresUtils'
+import { exportResults } from '../../utils/excelExport'
+import PrintSheet from '../print/PrintSheet'
+
+function DurumBadge({ durum }) {
+  return (
+    <span className={
+      'badge ' +
+      (durum === 'Normal' ? 'badge-normal' : durum === 'Bloke' ? 'badge-bloke' : durum === 'SKTG' ? 'badge-sktg' : 'badge-normal')
+    }>
+      {durum || '—'}
+    </span>
+  )
+}
+
+function PaletStatusBadge({ counted, total, hasDiff }) {
+  if (counted === 0) {
+    return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[10.5px] font-medium">Bekliyor</span>
+  }
+  if (counted < total) {
+    return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10.5px] font-medium">{counted}/{total} sayıldı</span>
+  }
+  if (hasDiff) {
+    return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 text-red-600 text-[10.5px] font-medium"><span className="ms" style={{ fontSize: 12 }}>warning</span> Fark Var</span>
+  }
+  return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10.5px] font-medium"><span className="ms" style={{ fontSize: 12 }}>check_circle</span> Tamamlandı</span>
+}
+
+export default function MembranSayim({ onNavigate }) {
+  const { rows, results, session, updateResult, fillFromSistem, pendingKodFilter, clearPendingKodFilter } = useStore()
+  const printRef = useRef()
+
+  const [hideSistem, setHideSistem]   = useState(false)
+  const [hideSayilan, setHideSayilan] = useState(false)
+  const [filterSearch, setFilterSearch] = useState('')
+  const [filterDurum, setFilterDurum]   = useState('')
+  const [filterPalet, setFilterPalet]   = useState('')
+  const [filterRaf, setFilterRaf]       = useState('')
+  const [filterSira, setFilterSira]     = useState('')
+  const [filterKolon, setFilterKolon]   = useState('')
+  const [filterGoz, setFilterGoz]       = useState('')
+  const [sortType, setSortType]         = useState('1')
+  const [expandedPallets, setExpandedPallets] = useState(null) // null = hepsi açık
+
+  const handlePrint = useReactToPrint({ contentRef: printRef })
+
+  useEffect(() => {
+    if (pendingKodFilter) {
+      setFilterSearch(pendingKodFilter)
+      clearPendingKodFilter()
+    }
+  }, [pendingKodFilter])
+
+  function toggleSistem() {
+    const next = !hideSistem
+    setHideSistem(next)
+    document.body.classList.toggle('hide-sistem', next)
+  }
+  function toggleSayilan() {
+    const next = !hideSayilan
+    setHideSayilan(next)
+    document.body.classList.toggle('hide-sayilan', next)
+  }
+
+  // Yalnızca Membran kategorisi
+  const membranRows = useMemo(
+    () => rows.filter(r => r.kategori?.toLowerCase() === 'membran'),
+    [rows]
+  )
+
+  const adresVals = useMemo(() => getUniqueAdresValues(membranRows), [membranRows])
+  const paletler  = useMemo(
+    () => [...new Set(membranRows.map(r => r.partiEk).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'tr', { numeric: true })),
+    [membranRows]
+  )
+
+  const filtered = useMemo(() => {
+    const q = filterSearch.trim().toLowerCase()
+    let result = membranRows.filter(r => {
+      if (q && !(
+        r.kod?.toLowerCase().includes(q) ||
+        r.ad?.toLowerCase().includes(q) ||
+        r.parti?.toLowerCase().includes(q)
+      )) return false
+      if (filterDurum && r.durum !== filterDurum) return false
+      if (filterPalet && r.partiEk !== filterPalet) return false
+      const p = parseAdres(r.adres)
+      if (filterRaf   && p.raf   !== filterRaf)   return false
+      if (filterSira  && p.sira  !== filterSira)  return false
+      if (filterKolon && p.kolon !== filterKolon) return false
+      if (filterGoz   && p.goz   !== filterGoz)   return false
+      return true
+    })
+    return sortRows(result, sortType)
+  }, [membranRows, filterSearch, filterDurum, filterPalet, filterRaf, filterSira, filterKolon, filterGoz, sortType])
+
+  // Palet grupları: partiEk → satırlar
+  const grouped = useMemo(() => {
+    const map = new Map()
+    filtered.forEach(r => {
+      const key = r.partiEk?.trim() || '(Palet Yok)'
+      if (!map.has(key)) map.set(key, [])
+      map.get(key).push(r)
+    })
+    return [...map.entries()].sort(([a], [b]) => a.localeCompare(b, 'tr', { numeric: true }))
+  }, [filtered])
+
+  // expandedPallets === null → hepsi açık; Set → yalnızca Set içindekiler açık
+  const allKeys = useMemo(() => new Set(grouped.map(([k]) => k)), [grouped])
+
+  function isPaletOpen(key) {
+    if (expandedPallets === null) return true
+    return expandedPallets.has(key)
+  }
+
+  function togglePalet(key) {
+    setExpandedPallets(prev => {
+      const base = prev === null ? new Set(allKeys) : new Set(prev)
+      if (base.has(key)) { base.delete(key) } else { base.add(key) }
+      return base
+    })
+  }
+
+  function expandAll()  { setExpandedPallets(null) }
+  function collapseAll() { setExpandedPallets(new Set()) }
+
+  const totalMembran  = membranRows.length
+  const counted       = useMemo(() => membranRows.filter(r => results[r.id]?.miktar !== undefined && results[r.id]?.miktar !== '').length, [membranRows, results])
+  const diffCount     = useMemo(() => membranRows.filter(r => { const m = results[r.id]?.miktar; return m !== undefined && m !== '' && String(m) !== String(r.sayim) }).length, [membranRows, results])
+
+  let rowCounter = 0
+
+  return (
+    <div className="flex flex-col h-full overflow-hidden">
+
+      {/* ── Üst Bar ── */}
+      <div className="px-5 pt-3 pb-2 bg-white border-b border-slate-200 shrink-0">
+
+        {/* Satır 1: Başlık + Aksiyon */}
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h1 className="text-[15px] font-bold text-slate-900">Membran Sayımı</h1>
+            <p className="text-[11.5px] text-slate-400 mono">
+              {totalMembran.toLocaleString('tr')} kalem · {grouped.length} palet
+              {counted > 0 && ` · %${totalMembran ? Math.round(counted / totalMembran * 100) : 0} sayıldı`}
+              {diffCount > 0 && ` · ${diffCount} fark`}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 no-print">
+            <button
+              onClick={expandAll}
+              className="flex items-center gap-1 px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[12px] text-slate-600 hover:bg-slate-50"
+            >
+              <span className="ms" style={{ fontSize: 14 }}>unfold_more</span> Tümünü Aç
+            </button>
+            <button
+              onClick={collapseAll}
+              className="flex items-center gap-1 px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[12px] text-slate-600 hover:bg-slate-50"
+            >
+              <span className="ms" style={{ fontSize: 14 }}>unfold_less</span> Tümünü Kapat
+            </button>
+            <button onClick={toggleSistem} className={'toggle-btn ' + (hideSistem ? 'active-hide' : '')}>
+              <span className="ms" style={{ fontSize: 16 }}>{hideSistem ? 'visibility_off' : 'visibility'}</span>
+              <span>{hideSistem ? 'Sistemi Göster' : 'Sistemi Gizle'}</span>
+            </button>
+            <button onClick={toggleSayilan} className={'toggle-btn ' + (hideSayilan ? 'active-hide' : '')}>
+              <span className="ms" style={{ fontSize: 16 }}>{hideSayilan ? 'edit' : 'edit_off'}</span>
+              <span>{hideSayilan ? 'Sayılanı Göster' : 'Sayılanı Gizle'}</span>
+            </button>
+            <button onClick={handlePrint} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
+              <span className="ms" style={{ fontSize: 15 }}>print</span> Yazdır
+            </button>
+            <button onClick={() => exportResults(membranRows, results, session)} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
+              <span className="ms" style={{ fontSize: 15 }}>download</span> Excel'e Aktar
+            </button>
+            <button
+              onClick={() => {
+                if (window.confirm(`${filtered.length} satırın sayılan miktarı sistem miktarıyla doldurulsun mu?`))
+                  fillFromSistem(filtered)
+              }}
+              disabled={filtered.length === 0}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40"
+            >
+              <span className="ms" style={{ fontSize: 15 }}>content_copy</span> Sistemden Doldur
+            </button>
+          </div>
+        </div>
+
+        {/* Satır 2: Filtreler */}
+        <div className="flex items-center gap-2 flex-wrap no-print">
+          <div className="relative">
+            <span className="ms absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" style={{ fontSize: 14 }}>search</span>
+            <input
+              type="text"
+              value={filterSearch}
+              onChange={e => setFilterSearch(e.target.value)}
+              placeholder="Kod / Ad / Parti ara…"
+              className="pl-7 pr-7 py-1 border border-slate-200 rounded-lg text-[12px] focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 w-44"
+            />
+            {filterSearch && (
+              <button onClick={() => setFilterSearch('')} className="ms absolute right-2 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500" style={{ fontSize: 14 }}>close</button>
+            )}
+          </div>
+          <span className="text-[11.5px] text-slate-400 font-medium">Filtre:</span>
+          <select className="fsel" value={filterDurum} onChange={e => setFilterDurum(e.target.value)}>
+            <option value="">Tüm Durumlar</option>
+            <option>Normal</option><option>Bloke</option><option>SKTG</option>
+          </select>
+          {paletler.length > 0 && (
+            <select className="fsel" style={{ borderColor: '#c4b5fd' }} value={filterPalet} onChange={e => setFilterPalet(e.target.value)}>
+              <option value="">Tüm Paletler</option>
+              {paletler.map(p => <option key={p}>{p}</option>)}
+            </select>
+          )}
+          <select className="fsel" value={filterRaf} onChange={e => setFilterRaf(e.target.value)}>
+            <option value="">Tüm Raflar</option>
+            {adresVals.raflar.map(v => <option key={v}>{v}</option>)}
+          </select>
+          <select className="fsel" value={filterSira} onChange={e => setFilterSira(e.target.value)}>
+            <option value="">Tüm Sıralar</option>
+            {adresVals.siralar.map(v => <option key={v}>{v}</option>)}
+          </select>
+          <select className="fsel" value={filterKolon} onChange={e => setFilterKolon(e.target.value)}>
+            <option value="">Tüm Kolonlar</option>
+            {adresVals.kolonlar.map(v => <option key={v}>{v}</option>)}
+          </select>
+          <select className="fsel" value={filterGoz} onChange={e => setFilterGoz(e.target.value)}>
+            <option value="">Tüm Gözler</option>
+            {adresVals.gozler.map(v => <option key={v}>{v}</option>)}
+          </select>
+          <div className="ml-auto flex items-center gap-1.5">
+            <span className="text-[11.5px] text-slate-400 font-medium">Sıra:</span>
+            <select className="fsel" style={{ borderColor: '#93c5fd' }} value={sortType} onChange={e => setSortType(e.target.value)}>
+              <option value="1">Raf › Sıra › Kolon › Göz</option>
+              <option value="2">Raf › Sıra › Göz › Kolon</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* ── İçerik ── */}
+      {membranRows.length === 0 ? (
+        <div className="flex-1 flex flex-col items-center justify-center bg-slate-50">
+          <div className="w-16 h-16 rounded-2xl bg-white border border-slate-200 flex items-center justify-center mb-4 shadow-sm">
+            <span className="ms text-slate-300" style={{ fontSize: 32 }}>layers</span>
+          </div>
+          <div className="text-slate-600 font-semibold text-sm mb-1">Membran ürün bulunamadı</div>
+          <div className="text-slate-400 text-[13px] mb-4">Excel'de Kategori = "Membran" olan satır yok</div>
+          <button onClick={() => onNavigate('upload')} className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-semibold hover:bg-blue-700">
+            <span className="ms" style={{ fontSize: 18 }}>upload_file</span> Excel Yükle
+          </button>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="flex-1 flex items-center justify-center text-[12px] text-slate-400">Filtreye uyan kayıt yok.</div>
+      ) : (
+        <div className="flex-1 overflow-auto">
+          <table className="w-full text-left border-collapse" style={{ minWidth: 1100 }}>
+            <thead className="sticky top-0 z-10">
+              <tr className="bg-slate-800 text-white text-[11px] mono uppercase tracking-wider">
+                <th className="px-3 py-2.5 text-center w-8">#</th>
+                <th className="px-3 py-2.5 w-24">Adres</th>
+                <th className="px-3 py-2.5 w-28">Kod</th>
+                <th className="px-3 py-2.5">Ad</th>
+                <th className="px-3 py-2.5 w-28">Parti</th>
+                <th className="px-3 py-2.5 w-20 text-center">Durum</th>
+                <th className="px-3 py-2.5 w-12 text-right">Adet</th>
+                <th className="px-3 py-2.5 w-24">Ambalaj</th>
+                <th className="px-3 py-2.5 w-20 text-right sistem-col">Sistem</th>
+                <th className="px-3 py-2.5 w-24 text-right text-blue-300 sayilan-col">Sayılan ▾</th>
+                <th className="px-3 py-2.5 w-12">Birim</th>
+                <th className="px-3 py-2.5">Not</th>
+              </tr>
+            </thead>
+            <tbody className="text-[12.5px]">
+              {grouped.map(([paletKey, items]) => {
+                const total    = items.length
+                const cntd     = items.filter(r => results[r.id]?.miktar !== undefined && results[r.id]?.miktar !== '').length
+                const hasDiff  = items.some(r => { const m = results[r.id]?.miktar; return m !== undefined && m !== '' && String(m) !== String(r.sayim) })
+                const complete = cntd === total && total > 0
+                const open     = isPaletOpen(paletKey)
+
+                let headerBg = 'bg-slate-50'
+                if (complete && !hasDiff) headerBg = 'bg-emerald-50'
+                else if (complete && hasDiff) headerBg = 'bg-red-50'
+                else if (cntd > 0) headerBg = 'bg-amber-50'
+
+                return [
+                  // Palet başlık satırı
+                  <tr
+                    key={'palet-' + paletKey}
+                    className={`${headerBg} border-b border-slate-200 cursor-pointer select-none`}
+                    onClick={() => togglePalet(paletKey)}
+                  >
+                    <td colSpan={12} className="px-3 py-2">
+                      <div className="flex items-center gap-3">
+                        <span className="ms text-slate-400" style={{ fontSize: 16 }}>
+                          {open ? 'expand_more' : 'chevron_right'}
+                        </span>
+                        <span className="ms text-violet-500" style={{ fontSize: 16 }}>layers</span>
+                        <span className="font-semibold text-[12.5px] text-slate-800 mono">Palet: {paletKey}</span>
+                        <span className="text-[11.5px] text-slate-400">{total} kalem</span>
+                        <PaletStatusBadge counted={cntd} total={total} hasDiff={hasDiff} />
+                      </div>
+                    </td>
+                  </tr>,
+
+                  // Ürün satırları (açıksa)
+                  ...(open ? items.map(row => {
+                    rowCounter++
+                    const localNum = rowCounter
+                    const res      = results[row.id] || {}
+                    const hasValue = res.miktar !== undefined && res.miktar !== ''
+                    const isDiff   = hasValue && String(res.miktar) !== String(row.sayim)
+                    return (
+                      <tr
+                        key={row.id}
+                        className={isDiff ? 'border-b border-slate-100 hover:bg-red-50' : 'border-b border-slate-100 hover:bg-blue-50/30'}
+                        style={isDiff ? { background: 'rgba(254,242,242,0.6)' } : {}}
+                      >
+                        <td className="px-3 py-2 text-center text-slate-400 mono text-[11px]">{localNum}</td>
+                        <td className="px-3 py-2 mono text-slate-600 text-[11.5px]">{row.adres}</td>
+                        <td className="px-3 py-2 mono font-medium text-blue-700 text-[11.5px]">{row.kod}</td>
+                        <td className="px-3 py-2 font-medium text-slate-800">{row.ad}</td>
+                        <td className="px-3 py-2 mono text-slate-500 text-[11px]">{row.parti}</td>
+                        <td className="px-3 py-2 text-center"><DurumBadge durum={row.durum} /></td>
+                        <td className="px-3 py-2 text-right mono">{row.adet1}</td>
+                        <td className="px-3 py-2 text-slate-500 text-[12px]">{row.ambalaj}</td>
+                        <td className="px-3 py-2 text-right mono text-slate-500 sistem-col">{row.sayim}</td>
+                        <td className="px-3 py-2 text-right sayilan-col">
+                          <div className="flex items-center justify-end gap-1">
+                            <input
+                              type="number"
+                              value={res.miktar ?? ''}
+                              onChange={e => updateResult(row.id, { miktar: e.target.value })}
+                              placeholder="—"
+                              className={'input-count ' + (isDiff ? 'input-diff' : hasValue ? 'input-ok' : '')}
+                            />
+                            {isDiff && <span className="ms text-red-400" style={{ fontSize: 14 }}>warning</span>}
+                          </div>
+                        </td>
+                        <td className="px-3 py-2 text-slate-400 text-[12px]">{row.birim}</td>
+                        <td className="px-3 py-2">
+                          <input
+                            type="text"
+                            value={res.notlar ?? ''}
+                            onChange={e => updateResult(row.id, { notlar: e.target.value })}
+                            placeholder="not..."
+                            className="w-full bg-transparent border-none text-[12px] text-slate-400 placeholder-slate-300 outline-none"
+                          />
+                        </td>
+                      </tr>
+                    )
+                  }) : [])
+                ]
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* ── Alt Bar ── */}
+      {membranRows.length > 0 && (
+        <div className="px-5 py-2 bg-white border-t border-slate-200 flex items-center justify-between shrink-0 no-print">
+          <div className="flex items-center gap-2 text-[11.5px] text-slate-400">
+            <span className="ms text-emerald-400" style={{ fontSize: 14 }}>cloud_done</span>
+            <span>Otomatik kaydediliyor</span>
+            <span className="text-slate-300">·</span>
+            <span>{filtered.length.toLocaleString('tr')} kayıt · {grouped.length} palet</span>
+          </div>
+          <button onClick={() => onNavigate('rapor')} className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-[12.5px] font-semibold hover:bg-blue-700">
+            Sayımı Tamamla <span className="ms" style={{ fontSize: 17 }}>arrow_forward</span>
+          </button>
+        </div>
+      )}
+
+      <div className="hidden">
+        <PrintSheet ref={printRef} rows={filtered} results={results} session={session} mode="sayim" hideSayilan={hideSayilan} sayimTuru="Membran Sayımı" />
+      </div>
+    </div>
+  )
+}

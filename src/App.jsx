@@ -16,6 +16,7 @@ const SayimAnalizi    = lazy(() => import('./components/pages/SayimAnalizi'))
 const KorSayimAnalizi = lazy(() => import('./components/pages/KorSayimAnalizi'))
 const KorSayimRapor       = lazy(() => import('./components/pages/KorSayimRapor'))
 const HareketlilikSayim   = lazy(() => import('./components/pages/HareketlilikSayim'))
+const MembranSayim        = lazy(() => import('./components/pages/MembranSayim'))
 const Ayarlar             = lazy(() => import('./components/pages/Ayarlar'))
 
 const PAGES = {
@@ -28,6 +29,7 @@ const PAGES = {
   koranaliz: { Component: KorSayimAnalizi,  fullHeight: false },
   korrapor:      { Component: KorSayimRapor,      fullHeight: false },
   hareketlilik:  { Component: HareketlilikSayim,  fullHeight: true  },
+  membran:       { Component: MembranSayim,       fullHeight: true  },
   ayarlar:       { Component: Ayarlar,            fullHeight: false },
 }
 
