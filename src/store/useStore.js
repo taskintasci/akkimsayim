@@ -259,6 +259,11 @@ const useStore = create((set, get) => ({
   setActiveSession: async (id) => {
     if (resultsUnsub) { resultsUnsub(); resultsUnsub = null }
 
+    if (!id) {
+      set({ activeSessionId: null, rows: [], results: {}, korCodes: [], korMatched: [], manualRows: [], korManualRows: [], rowsLoading: false, resultsLoading: false, session: null })
+      return
+    }
+
     set({ activeSessionId: id, rows: [], results: {}, korCodes: [], korMatched: [], manualRows: [], korManualRows: [], rowsLoading: true, resultsLoading: true })
 
     const sessionData = get().sessions.find(s => s.id === id)
