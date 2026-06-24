@@ -138,6 +138,20 @@ export function parseExcelFile(file) {
 
         const ws = wb.Sheets[wb.SheetNames[0]]
 
+        // SAP ve bazı ERP sistemleri ws['!ref'] değerini (kullanılan alan)
+        // gerçek veriden daha küçük set eder; xlsx bu sınırda durur.
+        // Tüm hücre anahtarlarını tarayıp gerçek son satırı buluyoruz.
+        if (ws['!ref']) {
+          const actualMaxRow = Object.keys(ws)
+            .filter(k => !k.startsWith('!'))
+            .reduce((max, k) => Math.max(max, XLSX.utils.decode_cell(k).r), 0)
+          const range = XLSX.utils.decode_range(ws['!ref'])
+          if (actualMaxRow > range.e.r) {
+            range.e.r = actualMaxRow
+            ws['!ref'] = XLSX.utils.encode_range(range)
+          }
+        }
+
         // 2D dizi olarak al — her satır string dizisi
         const rawArr = XLSX.utils.sheet_to_json(ws, {
           header: 1,
