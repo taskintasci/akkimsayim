@@ -375,7 +375,7 @@ const useStore = create((set, get) => ({
       return
     }
     try {
-      const { rows, format, rawCount, diag } = await parseExcelFile(file)
+      const { rows, format, rawCount } = await parseExcelFile(file)
       set({ rows, results: {}, importFormat: format })
 
       const { activeSessionId } = get()
@@ -403,8 +403,8 @@ const useStore = create((set, get) => ({
         const mismatch = storedRows.length !== rows.length
         get().addEvent({
           icon: mismatch ? 'warning' : 'upload_file',
-          text: `Excel: ${diag || ''}`,
-          sub: `Okunan: ${rawCount} · Geçerli kod: ${rows.length} · Kaydedilen: ${storedRows.length}`,
+          text: `Excel dosyası yüklendi`,
+          sub: `${storedRows.length.toLocaleString('tr')} kalem · ${format || ''}`,
           badge: mismatch ? 'Uyarı' : 'Tamamlandı',
           badgeCls: mismatch ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700',
           iconBg: mismatch ? 'bg-amber-50' : 'bg-blue-50',
@@ -412,7 +412,7 @@ const useStore = create((set, get) => ({
         })
 
         if (mismatch) {
-          alert(`Uyarı: ${rows.length} satır parse edildi ama Firestore'a yalnızca ${storedRows.length} satır yazıldı.\nLütfen ekran görüntüsü alıp bildirin.`)
+          alert(`Uyarı: ${rows.length} satır okundu ama Firestore'a ${storedRows.length} yazıldı.`)
         }
       } else {
         get().addEvent({
