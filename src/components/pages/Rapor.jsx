@@ -1,11 +1,20 @@
 import { useState } from 'react'
 import useStore from '../../store/useStore'
 import { exportRaporFarklar } from '../../utils/excelExport'
+import { useShallow } from 'zustand/react/shallow'
 
 const EMPTY_FORM = { kod: '', ad: '', adres: '', parti: '', durum: '', miktar: '', birim: '', not: '' }
 
 export default function Rapor({ onNavigate }) {
-  const { rows, results, session, setPendingKodFilter, approveSession, manualRows, addManualRow, removeManualRow, korManualRows, removeKorManualRow, resultsLoading } = useStore()
+  const { rows, results, session, setPendingKodFilter, approveSession, manualRows, addManualRow, removeManualRow, korManualRows, removeKorManualRow, resultsLoading, userRole } = useStore(
+    useShallow(s => ({
+      rows: s.rows, results: s.results, session: s.session,
+      setPendingKodFilter: s.setPendingKodFilter, approveSession: s.approveSession,
+      manualRows: s.manualRows, addManualRow: s.addManualRow, removeManualRow: s.removeManualRow,
+      korManualRows: s.korManualRows, removeKorManualRow: s.removeKorManualRow,
+      resultsLoading: s.resultsLoading, userRole: s.userRole,
+    }))
+  )
   const allManualRows = [
     ...manualRows.map(r => ({ ...r, _kaya: 'stok' })),
     ...korManualRows.map(r => ({ ...r, _kaya: 'kor' })),
@@ -104,7 +113,7 @@ export default function Rapor({ onNavigate }) {
           >
             <span className="ms" style={{ fontSize: 16 }}>download</span> Excel İndir
           </button>
-          {approved ? (
+          {userRole === 'yonetici' && (approved ? (
             <div className="flex items-center gap-1.5 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg text-[13px] font-bold">
               <span className="ms" style={{ fontSize: 16 }}>check_circle</span> Onaylandı
             </div>
@@ -117,7 +126,7 @@ export default function Rapor({ onNavigate }) {
               <span className="ms" style={{ fontSize: 16 }}>{approving ? 'hourglass_empty' : 'check_circle'}</span>
               {approving ? 'Onaylanıyor…' : 'Onayla'}
             </button>
-          )}
+          ))}
         </div>
       </div>
 
