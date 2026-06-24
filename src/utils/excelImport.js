@@ -149,7 +149,9 @@ export function parseExcelFile(file) {
     reader.onload = async (e) => {
       try {
         const XLSX = await loadXLSX()
-        const wb = XLSX.read(new Uint8Array(e.target.result), {
+        const buf = e.target.result
+        const byteLen = buf.byteLength
+        const wb = XLSX.read(new Uint8Array(buf), {
           type: 'array',
           cellDates: false,
           raw: false,
@@ -159,8 +161,11 @@ export function parseExcelFile(file) {
           ? XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false })
           : []
 
+        // TEŞHİS: tarayıcı kaç byte okudu, kaç sheet, ref ne
+        const diag = `size=${file.size} byteLen=${byteLen} ref=${ws ? ws['!ref'] : '-'} rows=${rawArr.length}`
+
         if (rawArr.length < 2) {
-          reject(new Error('Excel dosyası boş veya çok az satır içeriyor.'))
+          reject(new Error('Excel dosyası boş veya çok az satır içeriyor. ' + diag))
           return
         }
 
@@ -209,6 +214,7 @@ export function parseExcelFile(file) {
           rows,
           format: bestFormat,
           rawCount: rawArr.length - (headerRowIdx + 1),
+          diag,
         })
       } catch (err) {
         reject(err)
