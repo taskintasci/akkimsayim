@@ -130,11 +130,8 @@ export function parseExcelFile(file) {
     reader.onload = async (e) => {
       try {
         const XLSX = await import('xlsx')
-        // Vite ESM build (xlsx.mjs) eski .xls binary formatini type:'array'
-        // ile eksik okuyabiliyor. type:'binary' + readAsBinaryString tum
-        // build variantlarinda tutarli calisir.
-        const wb = XLSX.read(e.target.result, {
-          type: 'binary',
+        const wb = XLSX.read(new Uint8Array(e.target.result), {
+          type: 'array',
           cellDates: false,
           raw: false,
         })
@@ -200,6 +197,6 @@ export function parseExcelFile(file) {
       }
     }
     reader.onerror = reject
-    reader.readAsBinaryString(file)
+    reader.readAsArrayBuffer(file)
   })
 }
