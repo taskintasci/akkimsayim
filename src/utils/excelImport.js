@@ -130,27 +130,16 @@ export function parseExcelFile(file) {
     reader.onload = async (e) => {
       try {
         const XLSX = await import('xlsx')
+        // Vite ESM build (xlsx.mjs) eski .xls binary formatini type:'array'
+        // ile eksik okuyabiliyor. type:'binary' + readAsBinaryString tum
+        // build variantlarinda tutarli calisir.
         const wb = XLSX.read(e.target.result, {
-          type: 'array',
+          type: 'binary',
           cellDates: false,
           raw: false,
         })
 
         const ws = wb.Sheets[wb.SheetNames[0]]
-
-        // SAP ve bazı ERP sistemleri ws['!ref'] değerini (kullanılan alan)
-        // gerçek veriden daha küçük set eder; xlsx bu sınırda durur.
-        // Tüm hücre anahtarlarını tarayıp gerçek son satırı buluyoruz.
-        if (ws['!ref']) {
-          const actualMaxRow = Object.keys(ws)
-            .filter(k => !k.startsWith('!'))
-            .reduce((max, k) => Math.max(max, XLSX.utils.decode_cell(k).r), 0)
-          const range = XLSX.utils.decode_range(ws['!ref'])
-          if (actualMaxRow > range.e.r) {
-            range.e.r = actualMaxRow
-            ws['!ref'] = XLSX.utils.encode_range(range)
-          }
-        }
 
         // 2D dizi olarak al — her satır string dizisi
         const rawArr = XLSX.utils.sheet_to_json(ws, {
@@ -211,6 +200,6 @@ export function parseExcelFile(file) {
       }
     }
     reader.onerror = reject
-    reader.readAsArrayBuffer(file)
+    reader.readAsBinaryString(file)
   })
 }
