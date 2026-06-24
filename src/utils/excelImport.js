@@ -205,7 +205,7 @@ export function parseExcelFile(file) {
           })
           .filter(r => r.kod && String(r.kod).trim())
 
-        resolve({ rows, format: bestFormat })
+        resolve({ rows, format: bestFormat, rawCount: rawArr.length - (headerRowIdx + 1) })
       } catch (err) {
         reject(err)
       }
