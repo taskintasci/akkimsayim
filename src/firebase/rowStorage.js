@@ -1,20 +1,28 @@
 import { collection, doc, getDocs, writeBatch } from 'firebase/firestore'
 import { db } from './index'
 
-// 150 satır/doküman → ~75KB, Firestore 1MB limitinden güvenli uzaklıkta
-const CHUNK_SIZE = 150
-// Tek writeBatch max 500 op; 480 bırakıyoruz
+// Her doküman CHUNK_SIZE satır taşır. RAPOR5 satırı ~300-400 byte;
+// 500 satır ≈ 200KB, Firestore 1MB doküman limitinden güvenli uzaklıkta.
+const CHUNK_SIZE = 500
+// Tek writeBatch en fazla 500 işlem alır; 480 ile güvenli sınırda kalıyoruz.
 const BATCH_OPS  = 480
+
+// İşlemleri BATCH_OPS'luk gruplara bölerek commit et.
+async function commitInBatches(refsOrChunks, apply) {
+  for (let i = 0; i < refsOrChunks.length; i += BATCH_OPS) {
+    const batch = writeBatch(db)
+    refsOrChunks.slice(i, i + BATCH_OPS).forEach(item => apply(batch, item))
+    await batch.commit()
+  }
+}
 
 export async function uploadRows(sessionId, rows) {
   const chunksRef = collection(db, 'sessions', sessionId, 'rowChunks')
 
-  // 1) Mevcut chunk'ları sil — eski yükleme kalıntısı olmadan temiz yükle
+  // 1) Mevcut chunk'ları sil — eski yükleme kalıntısı yeni veriyle karışmasın
   const existing = await getDocs(chunksRef)
   if (!existing.empty) {
-    const delBatch = writeBatch(db)
-    existing.docs.forEach(d => delBatch.delete(d.ref))
-    await delBatch.commit()
+    await commitInBatches(existing.docs, (batch, d) => batch.delete(d.ref))
   }
 
   // 2) Satırları chunk'lara böl
@@ -26,14 +34,10 @@ export async function uploadRows(sessionId, rows) {
     })
   }
 
-  // 3) Chunk'ları BATCH_OPS'luk gruplar halinde yaz
-  for (let b = 0; b < chunks.length; b += BATCH_OPS) {
-    const batch = writeBatch(db)
-    chunks.slice(b, b + BATCH_OPS).forEach(chunk => {
-      batch.set(doc(chunksRef, chunk.id), { rows: chunk.rows })
-    })
-    await batch.commit()
-  }
+  // 3) Chunk'ları yaz
+  await commitInBatches(chunks, (batch, chunk) =>
+    batch.set(doc(chunksRef, chunk.id), { rows: chunk.rows })
+  )
 }
 
 export async function downloadRows(sessionId) {

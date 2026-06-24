@@ -375,55 +375,35 @@ const useStore = create((set, get) => ({
       return
     }
     try {
-      const { rows, format, rawCount, diag } = await parseExcelFile(file)
+      const { rows, format } = await parseExcelFile(file)
       set({ rows, results: {}, importFormat: format })
+
+      get().addEvent({
+        icon: 'upload_file',
+        text: `Excel dosyası yüklendi`,
+        sub: `${rows.length.toLocaleString('tr')} kalem · ${format || ''}`,
+        badge: 'Tamamlandı',
+        badgeCls: 'bg-emerald-50 text-emerald-700',
+        iconBg: 'bg-blue-50',
+        iconColor: 'text-blue-500',
+      })
 
       const { activeSessionId } = get()
       if (activeSessionId) {
         await uploadRows(activeSessionId, rows)
-
-        // Firestore'a yazılanı doğrula
-        const storedRows = await downloadRows(activeSessionId)
-
         await updateDoc(doc(db, 'sessions', activeSessionId), {
           rowsUploaded: true,
-          kalemSayisi:  storedRows.length,
+          kalemSayisi:  rows.length,
           importFormat: format,
           updatedAt:    serverTimestamp(),
         })
         set(state => ({
-          rows: storedRows,
           sessions: state.sessions.map(s =>
             s.id === activeSessionId
-              ? { ...s, rowsUploaded: true, kalemSayisi: storedRows.length }
+              ? { ...s, rowsUploaded: true, kalemSayisi: rows.length }
               : s
           ),
         }))
-
-        const mismatch = storedRows.length !== rows.length
-        get().addEvent({
-          icon: mismatch ? 'warning' : 'upload_file',
-          text: `[v2] ${diag || ''}`,
-          sub: `${storedRows.length.toLocaleString('tr')} kalem · ${format || ''}`,
-          badge: mismatch ? 'Uyarı' : 'Tamamlandı',
-          badgeCls: mismatch ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700',
-          iconBg: mismatch ? 'bg-amber-50' : 'bg-blue-50',
-          iconColor: mismatch ? 'text-amber-500' : 'text-blue-500',
-        })
-
-        if (mismatch) {
-          alert(`Uyarı: ${rows.length} satır okundu ama Firestore'a ${storedRows.length} yazıldı.`)
-        }
-      } else {
-        get().addEvent({
-          icon: 'upload_file',
-          text: `Excel dosyası yüklendi (oturum yok)`,
-          sub: `Okunan: ${rawCount} · Geçerli kod: ${rows.length} · Oturum seçilmedi`,
-          badge: 'Uyarı',
-          badgeCls: 'bg-amber-50 text-amber-700',
-          iconBg: 'bg-amber-50',
-          iconColor: 'text-amber-500',
-        })
       }
     } catch (err) {
       devErr('Excel import hatası:', err)
