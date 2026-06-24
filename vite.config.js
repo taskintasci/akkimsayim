@@ -2,7 +2,11 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
-  base: '/akkimsayim/',
+  // Göreceli base: assetler index.html'e göre çözülür. Böylece hem
+  // GitHub Pages (/akkimsayim/) hem Firebase (root) tek build ile çalışır.
+  // Uygulama URL tabanlı yönlendirme kullanmıyor (state-based onNavigate),
+  // bu yüzden göreceli yollar güvenli.
+  base: './',
   plugins: [react()],
   css: {
     transformer: 'postcss',
