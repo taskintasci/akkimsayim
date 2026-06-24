@@ -375,7 +375,7 @@ const useStore = create((set, get) => ({
       return
     }
     try {
-      const { rows, format, rawCount } = await parseExcelFile(file)
+      const { rows, format, rawCount, diag } = await parseExcelFile(file)
       set({ rows, results: {}, importFormat: format })
 
       const { activeSessionId } = get()
@@ -403,7 +403,7 @@ const useStore = create((set, get) => ({
         const mismatch = storedRows.length !== rows.length
         get().addEvent({
           icon: mismatch ? 'warning' : 'upload_file',
-          text: `Excel dosyası yüklendi`,
+          text: `Excel: ${diag || ''}`,
           sub: `Okunan: ${rawCount} · Geçerli kod: ${rows.length} · Kaydedilen: ${storedRows.length}`,
           badge: mismatch ? 'Uyarı' : 'Tamamlandı',
           badgeCls: mismatch ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700',

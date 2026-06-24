@@ -116,6 +116,44 @@ const VALID_MIMES = [
 ]
 const MAX_FILE_SIZE = 30 * 1024 * 1024 // 30MB
 
+// ArrayBuffer → binary string (xlsx type:'binary' için)
+function ab2bin(buf) {
+  const bytes = new Uint8Array(buf)
+  let s = ''
+  const CHUNK = 0x8000
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    s += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK))
+  }
+  return s
+}
+
+// Bir workbook'tan 2D satır dizisini çıkar; ws['!ref'] eksikse gerçek
+// son satırı hücrelerden bulup genişlet.
+function wbToRows(XLSX, wb) {
+  const ws = wb.Sheets[wb.SheetNames[0]]
+  if (!ws) return { rawArr: [], ref: '(sheet yok)' }
+
+  const ref0 = ws['!ref'] || '(ref yok)'
+
+  // !ref gerçek veriden küçükse (SAP/BIFF) hücreleri tarayıp genişlet
+  if (ws['!ref']) {
+    let maxRow = 0
+    for (const k of Object.keys(ws)) {
+      if (k[0] === '!') continue
+      const r = XLSX.utils.decode_cell(k).r
+      if (r > maxRow) maxRow = r
+    }
+    const range = XLSX.utils.decode_range(ws['!ref'])
+    if (maxRow > range.e.r) {
+      range.e.r = maxRow
+      ws['!ref'] = XLSX.utils.encode_range(range)
+    }
+  }
+
+  const rawArr = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false })
+  return { rawArr, ref: ref0, refFixed: ws['!ref'] }
+}
+
 export function parseExcelFile(file) {
   return new Promise((resolve, reject) => {
     if (file.size > MAX_FILE_SIZE) {
@@ -130,23 +168,32 @@ export function parseExcelFile(file) {
     reader.onload = async (e) => {
       try {
         const XLSX = await import('xlsx')
-        const wb = XLSX.read(new Uint8Array(e.target.result), {
-          type: 'array',
-          cellDates: false,
-          raw: false,
-        })
+        const buf = e.target.result
 
-        const ws = wb.Sheets[wb.SheetNames[0]]
+        // Birden fazla okuma stratejisi dene; en çok satır vereni kullan.
+        const attempts = []
+        const tryRead = (label, input, opts) => {
+          try {
+            const wb = XLSX.read(input, opts)
+            const { rawArr, ref, refFixed } = wbToRows(XLSX, wb)
+            attempts.push({ label, count: rawArr.length, ref, refFixed, rawArr })
+          } catch (err) {
+            attempts.push({ label, count: -1, error: err.message })
+          }
+        }
 
-        // 2D dizi olarak al — her satır string dizisi
-        const rawArr = XLSX.utils.sheet_to_json(ws, {
-          header: 1,
-          defval: '',
-          raw: false,
-        })
+        tryRead('array',  new Uint8Array(buf), { type: 'array',  cellDates: false, raw: false })
+        tryRead('binary', ab2bin(buf),         { type: 'binary', cellDates: false, raw: false })
 
+        // En çok satır veren stratejiyi seç
+        const best = attempts.reduce((a, b) => (b.count > a.count ? b : a), { count: -1 })
+        const diag = attempts
+          .map(a => `${a.label}:${a.count >= 0 ? a.count : 'HATA'}`)
+          .join(' | ') + (best.ref ? ` [ref ${best.ref}→${best.refFixed}]` : '')
+
+        const rawArr = best.rawArr || []
         if (rawArr.length < 2) {
-          reject(new Error('Excel dosyası boş veya çok az satır içeriyor'))
+          reject(new Error('Excel dosyası boş veya çok az satır içeriyor. ' + diag))
           return
         }
 
@@ -191,7 +238,12 @@ export function parseExcelFile(file) {
           })
           .filter(r => r.kod && String(r.kod).trim())
 
-        resolve({ rows, format: bestFormat, rawCount: rawArr.length - (headerRowIdx + 1) })
+        resolve({
+          rows,
+          format: bestFormat,
+          rawCount: rawArr.length - (headerRowIdx + 1),
+          diag,
+        })
       } catch (err) {
         reject(err)
       }
