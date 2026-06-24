@@ -116,6 +116,28 @@ const VALID_MIMES = [
 ]
 const MAX_FILE_SIZE = 30 * 1024 * 1024 // 30MB
 
+// SheetJS standalone (full) build'i origin'den yükle.
+// Vite/Rollup ile bundle edilen xlsx, codepage modülünü tarayıcıya
+// taşıyamadığı için büyük eski .xls (BIFF) dosyalarını erken kesiyordu.
+// Full build codepage'i içinde gömülü taşır → tam parse.
+let _xlsxPromise = null
+function loadXLSX() {
+  if (typeof window !== 'undefined' && window.XLSX) return Promise.resolve(window.XLSX)
+  if (_xlsxPromise) return _xlsxPromise
+  _xlsxPromise = new Promise((resolve, reject) => {
+    const s = document.createElement('script')
+    s.src = `${import.meta.env.BASE_URL}vendor/xlsx.full.min.js`
+    s.async = true
+    s.onload = () => {
+      if (window.XLSX) resolve(window.XLSX)
+      else reject(new Error('XLSX global yüklenemedi'))
+    }
+    s.onerror = () => reject(new Error('xlsx.full.min.js yüklenemedi'))
+    document.head.appendChild(s)
+  })
+  return _xlsxPromise
+}
+
 // ArrayBuffer → binary string (xlsx type:'binary' için)
 function ab2bin(buf) {
   const bytes = new Uint8Array(buf)
@@ -167,7 +189,7 @@ export function parseExcelFile(file) {
     const reader = new FileReader()
     reader.onload = async (e) => {
       try {
-        const XLSX = await import('xlsx')
+        const XLSX = await loadXLSX()
         const buf = e.target.result
 
         // Birden fazla okuma stratejisi dene; en çok satır vereni kullan.

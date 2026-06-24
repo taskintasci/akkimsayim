@@ -4,11 +4,6 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   base: '/akkimsayim/',
   plugins: [react()],
-  resolve: {
-    // xlsx.mjs (ESM build) eski .xls formatini eksik parse ediyor.
-    // xlsx.js (CJS/UMD build) tam destekli; Vite'i buna yonlendir.
-    alias: { xlsx: 'xlsx/xlsx.js' },
-  },
   css: {
     transformer: 'postcss',
   },
