@@ -266,7 +266,16 @@ const useStore = create((set, get) => ({
 
     set({ activeSessionId: id, rows: [], results: {}, korCodes: [], korMatched: [], manualRows: [], korManualRows: [], rowsLoading: true, resultsLoading: true })
 
-    const sessionData = get().sessions.find(s => s.id === id)
+    // Sayımcı rolünde loadSessions hiç çağrılmaz; yerel listede yoksa doğrudan Firestore'dan çek
+    let sessionData = get().sessions.find(s => s.id === id)
+    if (!sessionData) {
+      try {
+        const snap = await getDoc(doc(db, 'sessions', id))
+        if (snap.exists()) sessionData = { id: snap.id, ...snap.data() }
+      } catch (err) {
+        devErr('Oturum dokümanı yüklenemedi:', err)
+      }
+    }
     if (sessionData) {
       set({
         session: {
