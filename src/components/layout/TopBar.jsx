@@ -15,25 +15,32 @@ const PAGE_NAMES = {
   sayimciekran: 'Sayımcı Ekranı',
 }
 
-export default function TopBar({ activePage }) {
+export default function TopBar({ activePage, onMenu }) {
   const session = useStore(s => s.session)
   const pageName = PAGE_NAMES[activePage] || activePage
 
   return (
-    <header className="h-10 shrink-0 bg-white border-b border-slate-200 flex items-center px-5 gap-2 text-sm text-slate-500">
-      <span className="text-slate-800 font-semibold">{pageName}</span>
+    <header className="h-10 shrink-0 bg-white border-b border-slate-200 flex items-center px-3 md:px-5 gap-2 text-sm text-slate-500 min-w-0">
+      <button
+        onClick={onMenu}
+        className="md:hidden w-10 h-10 -ml-2 flex items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 shrink-0"
+        aria-label="Menüyü aç"
+      >
+        <span className="ms" style={{ fontSize: 20 }}>menu</span>
+      </button>
+      <span className="text-slate-800 font-semibold whitespace-nowrap">{pageName}</span>
       <span className="text-slate-300">·</span>
-      <span>{session.type || 'Yıl Sonu Sayımı'}</span>
+      <span className="truncate">{session.type || 'Yıl Sonu Sayımı'}</span>
       {session.tarih && (
         <>
-          <span className="text-slate-300">·</span>
-          <span className="mono text-xs">{session.tarih}</span>
+          <span className="text-slate-300 hidden sm:inline">·</span>
+          <span className="mono text-xs hidden sm:inline">{session.tarih}</span>
         </>
       )}
       {session.depoAdi && (
         <>
-          <span className="text-slate-300">·</span>
-          <span>{session.depoAdi}</span>
+          <span className="text-slate-300 hidden sm:inline">·</span>
+          <span className="hidden sm:inline truncate">{session.depoAdi}</span>
         </>
       )}
     </header>

@@ -47,7 +47,7 @@ export default function Panel({ onNavigate }) {
       </div>
 
       {/* 4 İstatistik Kartı */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {/* Toplam SKU */}
         <div className="bg-white rounded-xl border border-slate-200 p-4 relative overflow-hidden hover:border-slate-300 hover:shadow-sm transition-all">
           <div className="absolute top-0 left-0 w-1 h-full bg-slate-400 rounded-l-xl" />

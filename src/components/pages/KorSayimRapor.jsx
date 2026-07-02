@@ -73,12 +73,12 @@ export default function KorSayimRapor({ onNavigate }) {
   return (
     <div className="flex flex-col gap-5 print-content">
       {/* Başlık */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-y-2">
         <div>
           <h1 className="text-xl font-bold text-slate-900">Kör Stok Sayım Raporu</h1>
           <p className="text-[13px] text-slate-500 mt-0.5">Onaydan önce tüm farklılıkları inceleyin</p>
         </div>
-        <div className="flex gap-2 no-print">
+        <div className="flex flex-wrap gap-2 no-print">
           <button onClick={() => window.print()} className="flex items-center gap-1.5 px-4 py-2 bg-white border border-slate-300 rounded-lg text-[13px] font-medium text-slate-700 hover:bg-slate-50">
             <span className="ms" style={{ fontSize: 16 }}>print</span> Yazdır
           </button>
@@ -92,7 +92,7 @@ export default function KorSayimRapor({ onNavigate }) {
       </div>
 
       {/* 3 İstatistik Kartı */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white rounded-xl border border-slate-200 p-4">
           <p className="text-[11px] text-slate-400 mono uppercase tracking-wide mb-2">Sayılan Toplam</p>
           <p className="text-3xl font-bold text-slate-900">{counted.length.toLocaleString('tr')}</p>
@@ -136,48 +136,50 @@ export default function KorSayimRapor({ onNavigate }) {
               <input type="checkbox" className="rounded" checked={onlyBigDiff} onChange={e => setOnlyBigDiff(e.target.checked)} /> Sadece büyük farklar (±%10)
             </label>
           </div>
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 text-[11px] mono text-slate-500 uppercase tracking-wider border-b border-slate-200">
-                <th className="px-3 py-1.5">Kod / Ad</th>
-                <th className="px-3 py-1.5">Parti</th>
-                <th className="px-3 py-1.5">Durum</th>
-                <th className="px-3 py-1.5">Adres</th>
-                <th className="px-3 py-1.5 text-right">Sistem</th>
-                <th className="px-3 py-1.5 text-right">Sayılan</th>
-                <th className="px-3 py-1.5 text-right">Fark</th>
-                <th className="px-3 py-1.5 text-center">İşlem</th>
-              </tr>
-            </thead>
-            <tbody className="text-[12.5px] divide-y divide-slate-50">
-              {visibleDiscrepancies.map((row, i) => (
-                <tr key={row.id} className={i % 2 === 1 ? 'bg-slate-50/50 hover:bg-slate-50' : 'hover:bg-slate-50'}>
-                  <td className="px-3 py-1.5">
-                    <p className="mono font-semibold text-blue-700 text-[11px]">{row.kod}</p>
-                    <p className="text-slate-700">{row.ad}</p>
-                  </td>
-                  <td className="px-3 py-1.5 mono text-slate-500 text-[12px]">{row.parti || '—'}</td>
-                  <td className="px-3 py-1.5 text-[12px] text-slate-500">{row.durum || '—'}</td>
-                  <td className="px-3 py-1.5 mono text-slate-500 text-[12px]">{row.adres}</td>
-                  <td className="px-3 py-1.5 text-right mono font-medium">
-                    {row.sayim} <span className="text-slate-400 text-[11px]">{row.birim}</span>
-                  </td>
-                  <td className="px-3 py-1.5 text-right mono font-bold text-red-600">
-                    {row.sayilan} <span className="text-red-400 text-[11px]">{row.birim}</span>
-                  </td>
-                  <td className={`px-3 py-1.5 text-right mono font-bold ${row.fark > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                    {row.fark > 0 ? '+' : ''}{row.fark.toLocaleString('tr', { maximumFractionDigits: 2 })} <span className="opacity-60 text-[11px]">{row.birim}</span>
-                  </td>
-                  <td className="px-3 py-1.5 text-center">
-                    <button
-                      onClick={() => { setPendingKodFilter(row.kod); onNavigate('kor') }}
-                      className="text-[12px] text-blue-600 hover:underline font-medium"
-                    >İncele</button>
-                  </td>
+          <div className="table-scroll">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 text-[11px] mono text-slate-500 uppercase tracking-wider border-b border-slate-200">
+                  <th className="px-3 py-1.5">Kod / Ad</th>
+                  <th className="px-3 py-1.5">Parti</th>
+                  <th className="px-3 py-1.5">Durum</th>
+                  <th className="px-3 py-1.5">Adres</th>
+                  <th className="px-3 py-1.5 text-right">Sistem</th>
+                  <th className="px-3 py-1.5 text-right">Sayılan</th>
+                  <th className="px-3 py-1.5 text-right">Fark</th>
+                  <th className="px-3 py-1.5 text-center">İşlem</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="text-[12.5px] divide-y divide-slate-50">
+                {visibleDiscrepancies.map((row, i) => (
+                  <tr key={row.id} className={i % 2 === 1 ? 'bg-slate-50/50 hover:bg-slate-50' : 'hover:bg-slate-50'}>
+                    <td className="px-3 py-1.5">
+                      <p className="mono font-semibold text-blue-700 text-[11px]">{row.kod}</p>
+                      <p className="text-slate-700">{row.ad}</p>
+                    </td>
+                    <td className="px-3 py-1.5 mono text-slate-500 text-[12px]">{row.parti || '—'}</td>
+                    <td className="px-3 py-1.5 text-[12px] text-slate-500">{row.durum || '—'}</td>
+                    <td className="px-3 py-1.5 mono text-slate-500 text-[12px]">{row.adres}</td>
+                    <td className="px-3 py-1.5 text-right mono font-medium">
+                      {row.sayim} <span className="text-slate-400 text-[11px]">{row.birim}</span>
+                    </td>
+                    <td className="px-3 py-1.5 text-right mono font-bold text-red-600">
+                      {row.sayilan} <span className="text-red-400 text-[11px]">{row.birim}</span>
+                    </td>
+                    <td className={`px-3 py-1.5 text-right mono font-bold ${row.fark > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                      {row.fark > 0 ? '+' : ''}{row.fark.toLocaleString('tr', { maximumFractionDigits: 2 })} <span className="opacity-60 text-[11px]">{row.birim}</span>
+                    </td>
+                    <td className="px-3 py-1.5 text-center">
+                      <button
+                        onClick={() => { setPendingKodFilter(row.kod); onNavigate('kor') }}
+                        className="text-[12px] text-blue-600 hover:underline font-medium"
+                      >İncele</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -203,7 +205,7 @@ export default function KorSayimRapor({ onNavigate }) {
         {/* Ekleme Formu */}
         {showForm && (
           <form onSubmit={handleAddManual} className="px-4 py-3 border-b border-amber-100 bg-amber-50/40 no-print flex flex-col gap-2">
-            <div className="grid grid-cols-6 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
               <div>
                 <label className="block text-[11px] text-slate-500 mb-1">Stok Kodu *</label>
                 <input
@@ -257,7 +259,7 @@ export default function KorSayimRapor({ onNavigate }) {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-6 gap-2 items-end">
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-2 items-end">
               <div>
                 <label className="block text-[11px] text-slate-500 mb-1">Sayılan Miktar *</label>
                 <div className="flex gap-1">
@@ -278,7 +280,7 @@ export default function KorSayimRapor({ onNavigate }) {
                   />
                 </div>
               </div>
-              <div className="col-span-4">
+              <div className="col-span-2 md:col-span-4">
                 <label className="block text-[11px] text-slate-500 mb-1">Not</label>
                 <input
                   type="text"
@@ -307,51 +309,53 @@ export default function KorSayimRapor({ onNavigate }) {
             Sistemde bulunmayan ürün eklemek için "Manuel Ekle" butonunu kullanın.
           </div>
         ) : (
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 text-[11px] mono text-slate-500 uppercase tracking-wider border-b border-slate-200">
-                <th className="px-3 py-1.5">Kod / Ad</th>
-                <th className="px-3 py-1.5">Parti</th>
-                <th className="px-3 py-1.5">Durum</th>
-                <th className="px-3 py-1.5">Adres</th>
-                <th className="px-3 py-1.5 text-right">Sistem</th>
-                <th className="px-3 py-1.5 text-right">Sayılan</th>
-                <th className="px-3 py-1.5 text-right">Fark</th>
-                <th className="px-3 py-1.5">Not</th>
-                <th className="px-3 py-1.5 no-print"></th>
-              </tr>
-            </thead>
-            <tbody className="text-[12.5px] divide-y divide-slate-50">
-              {korManualRows.map((row, i) => (
-                <tr key={row.id} className={i % 2 === 1 ? 'bg-amber-50/30' : ''}>
-                  <td className="px-3 py-1.5">
-                    <p className="mono font-semibold text-amber-700 text-[11px]">{row.kod}</p>
-                    <p className="text-slate-700">{row.ad || <span className="text-slate-400 italic">—</span>}</p>
-                  </td>
-                  <td className="px-3 py-1.5 mono text-slate-500 text-[12px]">{row.parti || '—'}</td>
-                  <td className="px-3 py-1.5 text-slate-500 text-[12px]">{row.durum || '—'}</td>
-                  <td className="px-3 py-1.5 mono text-slate-500 text-[12px]">{row.adres || '—'}</td>
-                  <td className="px-3 py-1.5 text-right mono text-slate-400">0</td>
-                  <td className="px-3 py-1.5 text-right mono font-bold text-emerald-600">
-                    +{row.miktar} <span className="text-emerald-400 text-[11px]">{row.birim}</span>
-                  </td>
-                  <td className="px-3 py-1.5 text-right mono font-bold text-emerald-600">
-                    +{row.miktar} <span className="opacity-60 text-[11px]">{row.birim}</span>
-                  </td>
-                  <td className="px-3 py-1.5 text-slate-500 text-[12px]">{row.not || '—'}</td>
-                  <td className="px-3 py-1.5 text-center no-print">
-                    <button
-                      onClick={() => removeKorManualRow(row.id)}
-                      className="text-slate-400 hover:text-red-500 transition-colors"
-                      title="Sil"
-                    >
-                      <span className="ms" style={{ fontSize: 16 }}>delete</span>
-                    </button>
-                  </td>
+          <div className="table-scroll">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 text-[11px] mono text-slate-500 uppercase tracking-wider border-b border-slate-200">
+                  <th className="px-3 py-1.5">Kod / Ad</th>
+                  <th className="px-3 py-1.5">Parti</th>
+                  <th className="px-3 py-1.5">Durum</th>
+                  <th className="px-3 py-1.5">Adres</th>
+                  <th className="px-3 py-1.5 text-right">Sistem</th>
+                  <th className="px-3 py-1.5 text-right">Sayılan</th>
+                  <th className="px-3 py-1.5 text-right">Fark</th>
+                  <th className="px-3 py-1.5">Not</th>
+                  <th className="px-3 py-1.5 no-print"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="text-[12.5px] divide-y divide-slate-50">
+                {korManualRows.map((row, i) => (
+                  <tr key={row.id} className={i % 2 === 1 ? 'bg-amber-50/30' : ''}>
+                    <td className="px-3 py-1.5">
+                      <p className="mono font-semibold text-amber-700 text-[11px]">{row.kod}</p>
+                      <p className="text-slate-700">{row.ad || <span className="text-slate-400 italic">—</span>}</p>
+                    </td>
+                    <td className="px-3 py-1.5 mono text-slate-500 text-[12px]">{row.parti || '—'}</td>
+                    <td className="px-3 py-1.5 text-slate-500 text-[12px]">{row.durum || '—'}</td>
+                    <td className="px-3 py-1.5 mono text-slate-500 text-[12px]">{row.adres || '—'}</td>
+                    <td className="px-3 py-1.5 text-right mono text-slate-400">0</td>
+                    <td className="px-3 py-1.5 text-right mono font-bold text-emerald-600">
+                      +{row.miktar} <span className="text-emerald-400 text-[11px]">{row.birim}</span>
+                    </td>
+                    <td className="px-3 py-1.5 text-right mono font-bold text-emerald-600">
+                      +{row.miktar} <span className="opacity-60 text-[11px]">{row.birim}</span>
+                    </td>
+                    <td className="px-3 py-1.5 text-slate-500 text-[12px]">{row.not || '—'}</td>
+                    <td className="px-3 py-1.5 text-center no-print">
+                      <button
+                        onClick={() => removeKorManualRow(row.id)}
+                        className="text-slate-400 hover:text-red-500 transition-colors"
+                        title="Sil"
+                      >
+                        <span className="ms" style={{ fontSize: 16 }}>delete</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

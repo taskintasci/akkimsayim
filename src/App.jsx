@@ -71,6 +71,9 @@ export default function App() {
     }))
   )
   const [activePage, setActivePage] = useState('panel')
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  function handleNavigate(page) { setActivePage(page); setMenuOpen(false) }
 
   useEffect(() => {
     return onAuthStateChanged(auth, user => {
@@ -129,19 +132,27 @@ export default function App() {
 
   return (
     <div className="h-screen flex overflow-hidden bg-slate-100">
-      <Sidebar activePage={activePage} onNavigate={setActivePage} />
+      {menuOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div className="absolute inset-0 bg-slate-900/50" onClick={() => setMenuOpen(false)} aria-hidden="true" />
+          <div className="absolute inset-y-0 left-0 shadow-xl">
+            <Sidebar activePage={activePage} onNavigate={handleNavigate} />
+          </div>
+        </div>
+      )}
+      <Sidebar activePage={activePage} onNavigate={handleNavigate} className="hidden md:flex" />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <TopBar activePage={activePage} />
+        <TopBar activePage={activePage} onMenu={() => setMenuOpen(true)} />
         <Suspense fallback={<div className="flex-1 flex items-center justify-center text-slate-400 text-[13px]">Yükleniyor…</div>}>
           {!yetkili ? (
             <ErisimYok />
           ) : fullHeight ? (
             <div className="flex-1 overflow-hidden flex flex-col">
-              <PageComponent onNavigate={setActivePage} mode="preview" />
+              <PageComponent onNavigate={handleNavigate} mode="preview" />
             </div>
           ) : (
-            <div className="flex-1 overflow-y-auto p-6">
-              <PageComponent onNavigate={setActivePage} />
+            <div className="flex-1 overflow-y-auto p-4 md:p-6">
+              <PageComponent onNavigate={handleNavigate} />
             </div>
           )}
         </Suspense>

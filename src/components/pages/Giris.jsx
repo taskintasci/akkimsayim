@@ -56,7 +56,7 @@ export default function Giris({ onNavigate }) {
   return (
     <div className="h-screen flex flex-col bg-slate-100">
       {/* Logo bar */}
-      <div className="flex items-center justify-between px-10 pt-7 pb-5 bg-white border-b border-slate-200">
+      <div className="flex items-center justify-between px-4 sm:px-10 pt-7 pb-5 bg-white border-b border-slate-200">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center">
             <span className="ms text-white" style={{ fontSize: 20 }}>warehouse</span>
@@ -78,7 +78,7 @@ export default function Giris({ onNavigate }) {
       <div className="flex flex-1 overflow-hidden">
 
         {/* Sol panel: Geçmiş Sayımlar */}
-        <div className={`${userRole === 'yonetici' ? 'w-[420px] shrink-0 border-r border-slate-200' : 'flex-1 max-w-lg mx-auto'} flex flex-col px-8 py-6 overflow-y-auto`}>
+        <div className={`${userRole === 'yonetici' ? 'w-[420px] shrink-0 border-r border-slate-200' : 'flex-1 max-w-lg mx-auto'} flex flex-col px-4 sm:px-8 py-6 overflow-y-auto`}>
           <h2 className="text-slate-700 font-semibold text-sm flex items-center gap-2 mb-4">
             <span className="ms text-blue-500" style={{ fontSize: 18 }}>history</span>
             Geçmiş Sayımlar

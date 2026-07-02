@@ -81,14 +81,14 @@ export default function KorSayimAnalizi({ onNavigate }) {
   return (
     <div className="flex flex-col gap-5 print-content">
       {/* Başlık */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-y-2">
         <div>
           <h1 className="text-xl font-bold text-slate-900">Kör Stok Sayım Analizi</h1>
           <p className="text-[13px] text-slate-500 mt-0.5">
             {session.type || 'Sayım'}{session.depoAdi ? ` · ${session.depoAdi}` : ''}{tarihStr ? ` · ${tarihStr}` : ''}
           </p>
         </div>
-        <div className="flex gap-2 no-print">
+        <div className="flex flex-wrap gap-2 no-print">
           <button onClick={() => window.print()} className="flex items-center gap-1.5 px-4 py-2 bg-white border border-slate-300 rounded-lg text-[13px] font-medium text-slate-700 hover:bg-slate-50">
             <span className="ms" style={{ fontSize: 16 }}>print</span> Yazdır
           </button>
@@ -99,14 +99,14 @@ export default function KorSayimAnalizi({ onNavigate }) {
       </div>
 
       {/* Genel Doğruluk — Büyük Kart */}
-      <div className="bg-gradient-to-br from-blue-700 to-blue-900 rounded-2xl p-6 flex items-center gap-8">
+      <div className="bg-gradient-to-br from-blue-700 to-blue-900 rounded-2xl p-4 md:p-6 flex flex-col md:flex-row items-stretch md:items-center gap-6 md:gap-8">
         <div className="shrink-0">
           <p className="text-blue-200 text-[12px] mono uppercase tracking-widest mb-1">Kör Sayım Genel Doğruluk</p>
           <p className="text-white font-black leading-none" style={{ fontSize: 52 }}>%{genelPct.toLocaleString('tr', { maximumFractionDigits: 2 })}</p>
           <p className="text-blue-300 text-[12px] mt-1">AVERAGE(Adres%, Stok%, SKU%)</p>
         </div>
-        <div className="w-px bg-blue-600 self-stretch mx-2" />
-        <div className="flex-1 grid grid-cols-3 gap-4">
+        <div className="hidden md:block w-px bg-blue-600 self-stretch mx-2" />
+        <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="bg-white/10 rounded-xl p-4">
             <p className="text-blue-200 text-[11px] mono uppercase tracking-wide mb-2">Adres Doğruluk</p>
             <p className="text-white text-2xl font-bold">%{adresPct.toLocaleString('tr', { maximumFractionDigits: 2 })}</p>
@@ -135,7 +135,7 @@ export default function KorSayimAnalizi({ onNavigate }) {
       </div>
 
       {/* 3 Detay Kartı */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
           <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center gap-2">

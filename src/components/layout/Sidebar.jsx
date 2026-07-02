@@ -43,7 +43,7 @@ const MENU = [
   { id: 'sayimciekran', icon: 'swipe',          label: 'Sayımcı Ekranı',          roles: ['yonetici', 'kontrolcu'] },
 ]
 
-export default function Sidebar({ activePage, onNavigate, onSettings }) {
+export default function Sidebar({ activePage, onNavigate, onSettings, className = 'flex' }) {
   const { session, setActiveSession, userProfile, userRole } = useStore(
     useShallow(s => ({ session: s.session, setActiveSession: s.setActiveSession, userProfile: s.userProfile, userRole: s.userRole }))
   )
@@ -60,7 +60,7 @@ export default function Sidebar({ activePage, onNavigate, onSettings }) {
   })
 
   return (
-    <aside className="w-56 shrink-0 bg-white border-r border-slate-200 flex flex-col h-full">
+    <aside className={`w-56 shrink-0 bg-white border-r border-slate-200 ${className} flex-col h-full`}>
       {/* Logo */}
       <div className="px-5 pt-5 pb-4 border-b border-slate-100">
         <div className="flex items-center gap-2 mb-1">
