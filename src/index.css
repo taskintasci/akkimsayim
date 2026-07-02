@@ -18,6 +18,37 @@
 
 * { font-family: 'Inter', sans-serif; }
 
+/* ── Mobil dokunmatik temeller ───────────────────────────────────────────── */
+/* Çift dokunma zoom'unu engelle (hızlı ardışık Onayla dokunuşları) */
+button, a, input, select, textarea, label { touch-action: manipulation; }
+body { -webkit-tap-highlight-color: transparent; }
+
+/* iOS Safari: 16px altındaki input odaklanınca sayfayı zoom'lar ve öyle kalır.
+   Dokunmatik cihazlarda tüm form alanlarını 16px tabanına sabitle. */
+@media (hover: none) and (pointer: coarse) {
+  input, select, textarea { font-size: 16px !important; }
+  .input-count { width: 92px; padding: 8px 8px; }
+}
+
+/* iOS Safari: 100vh araç çubuğunun arkasına taşar; dvh görünür alanı verir.
+   Alt bardaki birincil CTA'nın (Sayıma Başla) araç çubuğu altında kalmasını önler. */
+@supports (height: 100dvh) {
+  .h-screen { height: 100dvh; }
+}
+
+/* Çentikli cihazlarda home indicator'ün alt barı örtmemesi için */
+.safe-bottom { padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px)); }
+
+/* ── Responsive tablo kaydırma (yalnız ekran, <768px; yazdırmada etkisiz) ── */
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+@media (max-width: 767.98px) {
+  .table-scroll > table { min-width: 640px; }
+}
+@media print {
+  .table-scroll { overflow: visible !important; }
+  .table-scroll > table { min-width: 0 !important; }
+}
+
 .mono { font-family: 'JetBrains Mono', monospace; }
 
 /* ── Skeleton shimmer ────────────────────────────────────────────────────── */

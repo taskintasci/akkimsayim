@@ -292,7 +292,7 @@ export default function SayimciEkran({ mode = 'self' }) {
               const isDeleting = deletingId === g.id
 
               return (
-                <div key={g.id} className="rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm transition-all p-5">
+                <div key={g.id} className="rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm active:scale-[0.99] transition-all p-5">
                   {isDeleting ? (
                     <div className="flex items-center justify-between">
                       <p className="text-slate-800 text-sm font-semibold">Bu görevi silmek istediğinizden emin misiniz?</p>
@@ -322,7 +322,7 @@ export default function SayimciEkran({ mode = 'self' }) {
                           {userRole === 'yonetici' && (
                             <button
                               onClick={() => setDeletingId(g.id)}
-                              className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                              className="w-11 h-11 -my-2 -mr-2 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
                               title="Görevi Sil"
                             >
                               <span className="ms" style={{ fontSize: 17 }}>delete</span>
@@ -381,7 +381,7 @@ export default function SayimciEkran({ mode = 'self' }) {
         <div className="bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3 shrink-0">
           <button
             onClick={() => { setView('gorevler'); setGorev(null); setListeSearch('') }}
-            className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 shrink-0"
+            className="w-11 h-11 flex items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 shrink-0"
           >
             <span className="ms" style={{ fontSize: 24 }}>arrow_back</span>
           </button>
@@ -392,7 +392,8 @@ export default function SayimciEkran({ mode = 'self' }) {
           <button
             onClick={basla}
             disabled={atanan.length === 0}
-            className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 active:scale-95 disabled:opacity-40 text-white rounded-xl text-sm font-bold shrink-0 transition-all"
+            className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 active:scale-95 disabled:opacity-40 text-white rounded-xl text-sm font-bold shrink-0 transition-all"
+            style={{ minHeight: 44 }}
           >
             <span className="ms" style={{ fontSize: 16 }}>play_arrow</span> Kart Modu
           </button>
@@ -412,15 +413,15 @@ export default function SayimciEkran({ mode = 'self' }) {
               value={listeSearch}
               onChange={e => setListeSearch(e.target.value)}
               placeholder="Kod / Ad ara…"
-              className="w-full pl-8 pr-3 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-400"
+              className="w-full pl-8 pr-3 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-400"
             />
           </div>
           {isMembran && (
             <>
-              <button onClick={() => setExpandedPalets(null)} className="flex items-center gap-1 px-2.5 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-600 hover:bg-slate-50 shrink-0">
+              <button onClick={() => setExpandedPalets(null)} className="flex items-center gap-1 px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-600 hover:bg-slate-50 shrink-0" style={{ minHeight: 44 }}>
                 <span className="ms" style={{ fontSize: 14 }}>unfold_more</span> Aç
               </button>
-              <button onClick={() => setExpandedPalets(new Set())} className="flex items-center gap-1 px-2.5 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-600 hover:bg-slate-50 shrink-0">
+              <button onClick={() => setExpandedPalets(new Set())} className="flex items-center gap-1 px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-600 hover:bg-slate-50 shrink-0" style={{ minHeight: 44 }}>
                 <span className="ms" style={{ fontSize: 14 }}>unfold_less</span> Kapat
               </button>
             </>
@@ -540,7 +541,7 @@ export default function SayimciEkran({ mode = 'self' }) {
         )}
 
         {/* Alt bar */}
-        <div className="shrink-0 px-4 py-3 bg-white border-t border-slate-200 flex gap-2">
+        <div className="shrink-0 px-4 py-3 safe-bottom bg-white border-t border-slate-200 flex gap-2">
           <button
             onClick={basla}
             disabled={atanan.length === 0}
@@ -681,7 +682,7 @@ function Shell({ children, title, subtitle, onBack, mode }) {
       <header className="flex items-center justify-between px-5 py-4 bg-white border-b border-slate-200 shrink-0">
         <div className="flex items-center gap-3 min-w-0">
           {onBack && (
-            <button onClick={onBack} className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 shrink-0">
+            <button onClick={onBack} className="w-11 h-11 flex items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 shrink-0">
               <span className="ms" style={{ fontSize: 22 }}>arrow_back</span>
             </button>
           )}
@@ -691,8 +692,8 @@ function Shell({ children, title, subtitle, onBack, mode }) {
           </div>
         </div>
         {mode === 'self' && (
-          <button onClick={() => signOut(auth)} className="flex items-center gap-1.5 text-slate-500 hover:text-slate-700 text-sm shrink-0">
-            <span className="ms" style={{ fontSize: 18 }}>logout</span>
+          <button onClick={() => signOut(auth)} className="w-11 h-11 flex items-center justify-center rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 shrink-0" title="Çıkış Yap">
+            <span className="ms" style={{ fontSize: 20 }}>logout</span>
           </button>
         )}
         {mode === 'preview' && (

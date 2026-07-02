@@ -61,7 +61,7 @@ export default function Login() {
                 onChange={e => setEmail(e.target.value)}
                 placeholder="ornek@akkim.com.tr"
                 required
-                className="w-full border border-slate-300 rounded-lg px-3 py-3 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                className="w-full border border-slate-300 rounded-lg px-3 py-3 text-slate-900 text-base placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
             <div>
@@ -72,7 +72,7 @@ export default function Login() {
                 onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="w-full border border-slate-300 rounded-lg px-3 py-3 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                className="w-full border border-slate-300 rounded-lg px-3 py-3 text-slate-900 text-base placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
 
