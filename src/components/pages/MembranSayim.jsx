@@ -99,19 +99,21 @@ export default function MembranSayim({ onNavigate }) {
     return sortRows(result, sortType)
   }, [membranRows, filterSearch, filterDurum, filterPalet, filterRaf, filterSira, filterKolon, filterGoz, sortType])
 
-  // Palet grupları: partiEk → satırlar
+  // Palet grupları: partiEk tek başına benzersiz değil (farklı kodlarda tekrar edebilir),
+  // bu yüzden kod + partiEk birleşimi gerçek paleti belirler.
   const grouped = useMemo(() => {
     const map = new Map()
     filtered.forEach(r => {
-      const key = r.partiEk?.trim() || '(Palet Yok)'
-      if (!map.has(key)) map.set(key, [])
-      map.get(key).push(r)
+      const paletNo = r.partiEk?.trim() || '(Palet Yok)'
+      const key = [r.kod?.trim() || '', paletNo].join('||')
+      if (!map.has(key)) map.set(key, { key, paletNo, items: [] })
+      map.get(key).items.push(r)
     })
-    return [...map.entries()].sort(([a], [b]) => a.localeCompare(b, 'tr', { numeric: true }))
+    return [...map.values()].sort((a, b) => a.paletNo.localeCompare(b.paletNo, 'tr', { numeric: true }) || a.key.localeCompare(b.key, 'tr', { numeric: true }))
   }, [filtered])
 
   // expandedPallets === null → hepsi açık; Set → yalnızca Set içindekiler açık
-  const allKeys = useMemo(() => new Set(grouped.map(([k]) => k)), [grouped])
+  const allKeys = useMemo(() => new Set(grouped.map(g => g.key)), [grouped])
 
   function isPaletOpen(key) {
     if (expandedPallets === null) return true
@@ -264,12 +266,13 @@ export default function MembranSayim({ onNavigate }) {
               </tr>
             </thead>
             <tbody className="text-[12.5px]">
-              {grouped.map(([paletKey, items]) => {
+              {grouped.map(({ key: paletKey, paletNo, items }) => {
                 const total    = items.length
                 const cntd     = items.filter(r => results[r.id]?.miktar !== undefined && results[r.id]?.miktar !== '').length
                 const hasDiff  = items.some(r => { const m = results[r.id]?.miktar; return m !== undefined && m !== '' && String(m) !== String(r.sayim) })
                 const complete = cntd === total && total > 0
                 const open     = isPaletOpen(paletKey)
+                const kod      = items[0]?.kod
 
                 let headerBg = 'bg-slate-50'
                 if (complete && !hasDiff) headerBg = 'bg-emerald-50'
@@ -289,7 +292,8 @@ export default function MembranSayim({ onNavigate }) {
                           {open ? 'expand_more' : 'chevron_right'}
                         </span>
                         <span className="ms text-violet-500" style={{ fontSize: 16 }}>layers</span>
-                        <span className="font-semibold text-[12.5px] text-slate-800 mono">Palet: {paletKey}</span>
+                        <span className="font-semibold text-[12.5px] text-slate-800 mono">Palet: {paletNo}</span>
+                        {kod && <span className="text-[11.5px] text-blue-600 mono">{kod}</span>}
                         <span className="text-[11.5px] text-slate-400">{total} kalem</span>
                         <PaletStatusBadge counted={cntd} total={total} hasDiff={hasDiff} />
                       </div>

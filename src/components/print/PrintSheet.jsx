@@ -36,20 +36,22 @@ const PrintSheet = forwardRef(function PrintSheet(
     </div>
   )
 
-  // Palet gruplu mod: partiEk'e göre sırala + ara başlık satırları ekle
+  // Palet gruplu mod: partiEk tek başına benzersiz değil (farklı kodlarda tekrar edebilir),
+  // bu yüzden kod + partiEk birleşimi gerçek paleti belirler.
   let flatItems = rows
   if (paletGrouped) {
     const map = new Map()
     ;[...rows]
       .sort((a, b) => (a.partiEk || '').localeCompare(b.partiEk || '', 'tr', { numeric: true }))
       .forEach(r => {
-        const key = r.partiEk?.trim() || '(Palet Yok)'
-        if (!map.has(key)) map.set(key, [])
-        map.get(key).push(r)
+        const paletNo = r.partiEk?.trim() || '(Palet Yok)'
+        const key = [r.kod?.trim() || '', paletNo].join('||')
+        if (!map.has(key)) map.set(key, { paletNo, kod: r.kod, items: [] })
+        map.get(key).items.push(r)
       })
     flatItems = []
-    map.forEach((items, key) => {
-      flatItems.push({ __header: true, paletKey: key, count: items.length })
+    map.forEach(({ paletNo, kod, items }) => {
+      flatItems.push({ __header: true, paletKey: paletNo, kod, count: items.length })
       items.forEach(r => flatItems.push(r))
     })
   }
@@ -133,7 +135,7 @@ const PrintSheet = forwardRef(function PrintSheet(
                         color: '#3730a3',
                         letterSpacing: '0.03em',
                       }}>
-                        ▶ PALET: {item.paletKey} <span style={{ fontWeight: 400, color: '#64748b', marginLeft: 8 }}>{item.count} kalem</span>
+                        ▶ PALET: {item.paletKey}{item.kod && ` · ${item.kod}`} <span style={{ fontWeight: 400, color: '#64748b', marginLeft: 8 }}>{item.count} kalem</span>
                       </td>
                     </tr>
                   )
