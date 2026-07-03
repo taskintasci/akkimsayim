@@ -149,6 +149,13 @@ body.hide-sayilan .sayilan-col { opacity: 0; pointer-events: none; }
   .print-content, .print-content * { visibility: visible; }
   .print-content { position: absolute; top: 0; left: 0; width: 100%; }
 
+  /* Sayım Analizi / Kör Sayım Analizi: %70 ölçek + sayfaya ortalanmış */
+  .print-content-analiz {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.7);
+  }
+
   .no-print { display: none !important; }
 
   table { border-collapse: collapse; width: 100%; font-size: 7pt; }

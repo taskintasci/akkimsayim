@@ -67,7 +67,7 @@ export default function SayimAnalizi() {
   const fmt = (n) => n.toLocaleString('tr', { maximumFractionDigits: 2 })
 
   return (
-    <div className="flex flex-col gap-5 print-content">
+    <div className="flex flex-col gap-5 print-content print-content-analiz">
       {/* Başlık */}
       <div className="flex flex-wrap items-center justify-between gap-y-2">
         <div>

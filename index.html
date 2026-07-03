@@ -26,9 +26,13 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" />
     <style>
-      /* Font yüklenene kadar ikon adlarını gizle */
-      .ms { visibility: hidden; }
-      body.ms-loaded .ms { visibility: visible; }
+      /* Font yüklenene kadar ikon adlarını gizle (yalnızca ekranda —
+         aksi halde yazdırmada bu kural, gizlenmesi gereken kenar çubuğu
+         ikonlarını specificity üstünlüğüyle görünür bırakıyordu) */
+      @media screen {
+        .ms { visibility: hidden; }
+        body.ms-loaded .ms { visibility: visible; }
+      }
     </style>
   </head>
   <body>
