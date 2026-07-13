@@ -1,7 +1,7 @@
 import { useState, useRef, useMemo, useEffect } from 'react'
 import { useReactToPrint } from 'react-to-print'
 import useStore from '../../store/useStore'
-import { sortRows, computeFilterOptions, parseAdres } from '../../utils/adresUtils'
+import { sortRows, computeFilterOptions, parseAdres, getUrunTipi } from '../../utils/adresUtils'
 import { exportResults } from '../../utils/excelExport'
 import PrintSheet from '../print/PrintSheet'
 import MultiSelect from '../shared/MultiSelect'
@@ -40,6 +40,7 @@ export default function MembranSayim({ onNavigate }) {
   const [filterSearch, setFilterSearch] = useState('')
   const [filterDurum, setFilterDurum]   = useState([])
   const [filterPalet, setFilterPalet]   = useState([])
+  const [filterUrunTipi, setFilterUrunTipi] = useState([])
   const [filterRaf, setFilterRaf]       = useState([])
   const [filterSira, setFilterSira]     = useState([])
   const [filterKolon, setFilterKolon]   = useState([])
@@ -75,8 +76,8 @@ export default function MembranSayim({ onNavigate }) {
   )
 
   const filterOptions = useMemo(
-    () => computeFilterOptions(membranRows, { filterSearch, filterDurum, filterPalet, filterRaf, filterSira, filterKolon, filterGoz }),
-    [membranRows, filterSearch, filterDurum, filterPalet, filterRaf, filterSira, filterKolon, filterGoz]
+    () => computeFilterOptions(membranRows, { filterSearch, filterDurum, filterPalet, filterUrunTipi, filterRaf, filterSira, filterKolon, filterGoz }),
+    [membranRows, filterSearch, filterDurum, filterPalet, filterUrunTipi, filterRaf, filterSira, filterKolon, filterGoz]
   )
 
   const filtered = useMemo(() => {
@@ -89,6 +90,7 @@ export default function MembranSayim({ onNavigate }) {
       )) return false
       if (filterDurum.length > 0 && !filterDurum.includes(r.durum))     return false
       if (filterPalet.length > 0 && !filterPalet.includes(r.partiEk))   return false
+      if (filterUrunTipi.length > 0 && !filterUrunTipi.includes(getUrunTipi(r.kod))) return false
       const p = parseAdres(r.adres)
       if (filterRaf.length > 0   && !filterRaf.includes(p.raf))         return false
       if (filterSira.length > 0  && !filterSira.includes(p.sira))       return false
@@ -97,7 +99,7 @@ export default function MembranSayim({ onNavigate }) {
       return true
     })
     return sortRows(result, sortType)
-  }, [membranRows, filterSearch, filterDurum, filterPalet, filterRaf, filterSira, filterKolon, filterGoz, sortType])
+  }, [membranRows, filterSearch, filterDurum, filterPalet, filterUrunTipi, filterRaf, filterSira, filterKolon, filterGoz, sortType])
 
   // Palet grupları: partiEk tek başına benzersiz değil (farklı kodlarda tekrar edebilir),
   // bu yüzden kod + partiEk birleşimi gerçek paleti belirler.
@@ -207,6 +209,9 @@ export default function MembranSayim({ onNavigate }) {
           </div>
           <span className="text-[11.5px] text-slate-400 font-medium">Filtre:</span>
           <MultiSelect placeholder="Tüm Durumlar" options={filterOptions.durumlar} value={filterDurum} onChange={setFilterDurum} />
+          {filterOptions.urunTipleri.length > 0 && (
+            <MultiSelect placeholder="Tüm Ürün Tipleri" options={filterOptions.urunTipleri} value={filterUrunTipi} onChange={setFilterUrunTipi} style={{ borderColor: '#fbbf24' }} />
+          )}
           {filterOptions.paletler?.length > 0 && (
             <MultiSelect placeholder="Tüm Paletler" options={filterOptions.paletler} value={filterPalet} onChange={setFilterPalet} style={{ borderColor: '#c4b5fd' }} />
           )}
@@ -214,9 +219,9 @@ export default function MembranSayim({ onNavigate }) {
           <MultiSelect placeholder="Tüm Sıralar"  options={filterOptions.siralar}  value={filterSira}  onChange={setFilterSira} />
           <MultiSelect placeholder="Tüm Kolonlar" options={filterOptions.kolonlar} value={filterKolon} onChange={setFilterKolon} />
           <MultiSelect placeholder="Tüm Gözler"   options={filterOptions.gozler}   value={filterGoz}   onChange={setFilterGoz} />
-          {(filterDurum.length > 0 || filterPalet.length > 0 || filterRaf.length > 0 || filterSira.length > 0 || filterKolon.length > 0 || filterGoz.length > 0 || filterSearch.trim()) && (
+          {(filterDurum.length > 0 || filterPalet.length > 0 || filterUrunTipi.length > 0 || filterRaf.length > 0 || filterSira.length > 0 || filterKolon.length > 0 || filterGoz.length > 0 || filterSearch.trim()) && (
             <button
-              onClick={() => { setFilterSearch(''); setFilterDurum([]); setFilterPalet([]); setFilterRaf([]); setFilterSira([]); setFilterKolon([]); setFilterGoz([]) }}
+              onClick={() => { setFilterSearch(''); setFilterDurum([]); setFilterPalet([]); setFilterUrunTipi([]); setFilterRaf([]); setFilterSira([]); setFilterKolon([]); setFilterGoz([]) }}
               className="flex items-center gap-1 px-2 py-1 text-[11.5px] text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
             >
               <span className="ms" style={{ fontSize: 13 }}>filter_list_off</span> Temizle

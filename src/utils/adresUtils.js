@@ -3,6 +3,14 @@ export function parseAdres(adres) {
   return { raf: parts[0] || '', sira: parts[1] || '', kolon: parts[2] || '', goz: parts[3] || '' }
 }
 
+const URUN_TIPI_MAP = { A: 'Ambalaj', M: 'Mamul', H: 'Hammadde', Y: 'Yardımcı Madde' }
+
+/** Stok kodunun ilk harfine göre ürün tipini döndürür (A/M/H/Y). Eşleşmezse null. */
+export function getUrunTipi(kod) {
+  const harf = String(kod || '').trim().charAt(0).toUpperCase()
+  return URUN_TIPI_MAP[harf] || null
+}
+
 export function sortRows(rows, sortType) {
   return [...rows].sort((a, b) => {
     const pa = parseAdres(a.adres), pb = parseAdres(b.adres)
@@ -39,13 +47,13 @@ export function getUniqueAdresValues(rows) {
  * Her boyutun seçenekleri, o boyutun filtresi HARİÇ diğer tüm aktif filtreler
  * uygulanmış veriden türetilir.
  *
- * filters: { filterSearch, filterDurum, filterKategori, filterPalet?,
+ * filters: { filterSearch, filterDurum, filterKategori, filterUrunTipi, filterPalet?,
  *            filterRaf, filterSira, filterKolon, filterGoz, filterGirisGun? }
  */
 export function computeFilterOptions(sourceRows, filters) {
   const {
     filterSearch = '',
-    filterDurum = [], filterKategori = [], filterPalet,
+    filterDurum = [], filterKategori = [], filterUrunTipi = [], filterPalet,
     filterRaf = [], filterSira = [], filterKolon = [], filterGoz = [],
     filterGirisGun = [],
   } = filters
@@ -58,6 +66,7 @@ export function computeFilterOptions(sourceRows, filters) {
       if (q && !(r.kod?.toLowerCase().includes(q) || r.ad?.toLowerCase().includes(q) || r.parti?.toLowerCase().includes(q))) return false
       if (exclude !== 'durum'    && filterDurum.length > 0    && !filterDurum.includes(r.durum))       return false
       if (exclude !== 'kategori' && filterKategori.length > 0 && !filterKategori.includes(r.kategori)) return false
+      if (exclude !== 'urunTipi' && filterUrunTipi.length > 0 && !filterUrunTipi.includes(getUrunTipi(r.kod))) return false
       if (hasPalet && exclude !== 'palet' && filterPalet.length > 0 && !filterPalet.includes(r.partiEk)) return false
       if (exclude !== 'girisGun' && filterGirisGun.length > 0) {
         const g = Number(r.girisGun)
@@ -82,8 +91,12 @@ export function computeFilterOptions(sourceRows, filters) {
   const DURUM_ORDER = ['Normal', 'Bloke', 'SKTG']
   const availDurumlar = new Set(apply(sourceRows, 'durum').map(r => r.durum).filter(Boolean))
 
+  const URUN_TIPI_ORDER = ['Hammadde', 'Yardımcı Madde', 'Mamul', 'Ambalaj']
+  const availUrunTipleri = new Set(apply(sourceRows, 'urunTipi').map(r => getUrunTipi(r.kod)).filter(Boolean))
+
   const result = {
     durumlar:    DURUM_ORDER.filter(d => availDurumlar.has(d)),
+    urunTipleri: URUN_TIPI_ORDER.filter(t => availUrunTipleri.has(t)),
     kategoriler: [...new Set(apply(sourceRows, 'kategori').map(r => r.kategori).filter(Boolean))].sort(),
     raflar:      [...new Set(apply(sourceRows, 'raf').map(r => parseAdres(r.adres).raf).filter(Boolean))].sort(),
     siralar:     [...new Set(apply(sourceRows, 'sira').map(r => parseAdres(r.adres).sira).filter(Boolean))].sort(),

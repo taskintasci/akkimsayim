@@ -1,7 +1,7 @@
 import { useState, useRef, useMemo, useEffect } from 'react'
 import { useReactToPrint } from 'react-to-print'
 import useStore from '../../store/useStore'
-import { sortRows, computeFilterOptions, parseAdres } from '../../utils/adresUtils'
+import { sortRows, computeFilterOptions, parseAdres, getUrunTipi } from '../../utils/adresUtils'
 import { exportResults } from '../../utils/excelExport'
 import PrintSheet from '../print/PrintSheet'
 import MultiSelect from '../shared/MultiSelect'
@@ -32,6 +32,7 @@ export default function KorSayim({ onNavigate }) {
   const [filterKolon, setFilterKolon] = useState([])
   const [filterGoz, setFilterGoz]     = useState([])
   const [filterKategori, setFilterKategori] = useState([])
+  const [filterUrunTipi, setFilterUrunTipi] = useState([])
   const [onlyDiff, setOnlyDiff]       = useState(false)
   const [sortType, setSortType]       = useState('1')
   const [page, setPage]               = useState(1)
@@ -72,8 +73,8 @@ export default function KorSayim({ onNavigate }) {
   }, [rows])
 
   const filterOptions = useMemo(
-    () => computeFilterOptions(korMatched, { filterSearch, filterDurum, filterKategori, filterRaf, filterSira, filterKolon, filterGoz }),
-    [korMatched, filterSearch, filterDurum, filterKategori, filterRaf, filterSira, filterKolon, filterGoz]
+    () => computeFilterOptions(korMatched, { filterSearch, filterDurum, filterKategori, filterUrunTipi, filterRaf, filterSira, filterKolon, filterGoz }),
+    [korMatched, filterSearch, filterDurum, filterKategori, filterUrunTipi, filterRaf, filterSira, filterKolon, filterGoz]
   )
 
   const filteredBase = useMemo(() => {
@@ -86,6 +87,7 @@ export default function KorSayim({ onNavigate }) {
       )) return false
       if (filterDurum.length > 0    && !filterDurum.includes(r.durum))       return false
       if (filterKategori.length > 0 && !filterKategori.includes(r.kategori)) return false
+      if (filterUrunTipi.length > 0 && !filterUrunTipi.includes(getUrunTipi(r.kod))) return false
       const p = parseAdres(r.adres)
       if (filterRaf.length > 0   && !filterRaf.includes(p.raf))     return false
       if (filterSira.length > 0  && !filterSira.includes(p.sira))   return false
@@ -94,7 +96,7 @@ export default function KorSayim({ onNavigate }) {
       return true
     })
     return sortRows(result, sortType)
-  }, [korMatched, filterSearch, filterDurum, filterKategori, filterRaf, filterSira, filterKolon, filterGoz, sortType])
+  }, [korMatched, filterSearch, filterDurum, filterKategori, filterUrunTipi, filterRaf, filterSira, filterKolon, filterGoz, sortType])
 
   const filtered = useMemo(() => {
     if (!onlyDiff) return filteredBase
@@ -231,6 +233,9 @@ export default function KorSayim({ onNavigate }) {
           </div>
           <span className="text-[11.5px] text-slate-400 font-medium">Filtre:</span>
           <MultiSelect placeholder="Tüm Durumlar" options={filterOptions.durumlar} value={filterDurum} onChange={setFilterDurum} />
+          {filterOptions.urunTipleri.length > 0 && (
+            <MultiSelect placeholder="Tüm Ürün Tipleri" options={filterOptions.urunTipleri} value={filterUrunTipi} onChange={setFilterUrunTipi} style={{ borderColor: '#fbbf24' }} />
+          )}
           {filterOptions.kategoriler.length > 0 && (
             <MultiSelect placeholder="Tüm Kategoriler" options={filterOptions.kategoriler} value={filterKategori} onChange={setFilterKategori} />
           )}
@@ -242,9 +247,9 @@ export default function KorSayim({ onNavigate }) {
             <input type="checkbox" checked={onlyDiff} onChange={e => setOnlyDiff(e.target.checked)} className="rounded" />
             Sadece farklılıklar
           </label>
-          {(filterDurum.length > 0 || filterKategori.length > 0 || filterRaf.length > 0 || filterSira.length > 0 || filterKolon.length > 0 || filterGoz.length > 0 || filterSearch.trim()) && (
+          {(filterDurum.length > 0 || filterKategori.length > 0 || filterUrunTipi.length > 0 || filterRaf.length > 0 || filterSira.length > 0 || filterKolon.length > 0 || filterGoz.length > 0 || filterSearch.trim()) && (
             <button
-              onClick={() => { setFilterSearch(''); setFilterDurum([]); setFilterKategori([]); setFilterRaf([]); setFilterSira([]); setFilterKolon([]); setFilterGoz([]) }}
+              onClick={() => { setFilterSearch(''); setFilterDurum([]); setFilterKategori([]); setFilterUrunTipi([]); setFilterRaf([]); setFilterSira([]); setFilterKolon([]); setFilterGoz([]) }}
               className="flex items-center gap-1 px-2 py-1 text-[11.5px] text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
             >
               <span className="ms" style={{ fontSize: 13 }}>filter_list_off</span> Temizle
