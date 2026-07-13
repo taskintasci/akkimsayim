@@ -3,12 +3,12 @@ export function parseAdres(adres) {
   return { raf: parts[0] || '', sira: parts[1] || '', kolon: parts[2] || '', goz: parts[3] || '' }
 }
 
-const URUN_TIPI_MAP = { A: 'Ambalaj', M: 'Mamul', H: 'Hammadde', Y: 'Yardımcı Madde' }
+const URUN_TIPI_MAP = { A: 'Ambalaj', M: 'Mamul', H: 'Hammadde', Y: 'Yardımcı Madde', N: 'Numune' }
 
-/** Stok kodunun ilk harfine göre ürün tipini döndürür (A/M/H/Y). Eşleşmezse null. */
+/** Stok kodunun ilk harfine göre ürün tipini döndürür (A/M/H/Y/N). Eşleşmezse "Tanımsız". */
 export function getUrunTipi(kod) {
   const harf = String(kod || '').trim().charAt(0).toUpperCase()
-  return URUN_TIPI_MAP[harf] || null
+  return URUN_TIPI_MAP[harf] || 'Tanımsız'
 }
 
 export function sortRows(rows, sortType) {
@@ -91,7 +91,7 @@ export function computeFilterOptions(sourceRows, filters) {
   const DURUM_ORDER = ['Normal', 'Bloke', 'SKTG']
   const availDurumlar = new Set(apply(sourceRows, 'durum').map(r => r.durum).filter(Boolean))
 
-  const URUN_TIPI_ORDER = ['Hammadde', 'Yardımcı Madde', 'Mamul', 'Ambalaj']
+  const URUN_TIPI_ORDER = ['Hammadde', 'Yardımcı Madde', 'Mamul', 'Ambalaj', 'Numune', 'Tanımsız']
   const availUrunTipleri = new Set(apply(sourceRows, 'urunTipi').map(r => getUrunTipi(r.kod)).filter(Boolean))
 
   const result = {
