@@ -159,7 +159,22 @@ const useStore = create((set, get) => ({
       const snap = await getDocs(
         query(collectionGroup(db, 'sayimciGorevler'), where('sayimciUid', '==', uid))
       )
-      const list = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      const all = snap.docs.map(d => ({ id: d.id, ref: d.ref, ...d.data() }))
+
+      // Oturumu silinmiş (yönetici "Sayımı Sil" dediğinde alt koleksiyon
+      // otomatik silinmediği için öksüz kalan) görevleri ayıkla ve temizle
+      const sessionIds = [...new Set(all.map(g => g.sessionId).filter(Boolean))]
+      const existing = new Set()
+      await Promise.all(sessionIds.map(async sid => {
+        const sDoc = await getDoc(doc(db, 'sessions', sid))
+        if (sDoc.exists()) existing.add(sid)
+      }))
+
+      const valid   = all.filter(g => existing.has(g.sessionId))
+      const orphans = all.filter(g => !existing.has(g.sessionId))
+      orphans.forEach(g => deleteDoc(g.ref).catch(() => {}))
+
+      const list = valid.map(({ ref, ...g }) => g)
       list.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))
       set({ gorevler: list })
     } catch (err) {
@@ -620,6 +635,10 @@ const useStore = create((set, get) => ({
   },
 
   deleteSession: async (id) => {
+    // Alt koleksiyonlar (sayimciGorevler) Firestore'da oturumla birlikte
+    // otomatik silinmez — önce onları temizle, yoksa sayımcıda öksüz görev kalır
+    const gorevSnap = await getDocs(collection(db, 'sessions', id, 'sayimciGorevler'))
+    await Promise.all(gorevSnap.docs.map(d => deleteDoc(d.ref)))
     await deleteDoc(doc(db, 'sessions', id))
     set(state => ({
       sessions: state.sessions.filter(s => s.id !== id),

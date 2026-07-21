@@ -179,6 +179,15 @@ export default function SayimciEkran({ mode = 'self' }) {
     [atanan, results]
   )
 
+  // Görev, tablodan (kart modu dışında) doldurulduğunda da "tamamlandı" olarak işaretlensin
+  useEffect(() => {
+    if (mode !== 'self' || !gorev || gorev.durum === 'tamamlandi') return
+    if (atanan.length > 0 && sayilanAdet === atanan.length) {
+      updateGorevDurum(gorev.sessionId, gorev.id, 'tamamlandi')
+      setGorev(g => g ? { ...g, durum: 'tamamlandi' } : g)
+    }
+  }, [mode, gorev, atanan.length, sayilanAdet])
+
   const filteredAtanan = useMemo(() => {
     if (!listeSearch.trim()) return atanan
     const q = listeSearch.trim().toLowerCase()

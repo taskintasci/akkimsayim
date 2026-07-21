@@ -24,10 +24,23 @@ service cloud.firestore {
         allow write: if isYonetici();
       }
 
-      // Sayımcı görevleri: yönetici yazar, ilgili sayımcı + yetkililer okur
+      // Sayımcı görevleri: yönetici oluşturur/siler; ilgili sayımcı yalnızca
+      // kendi görevinin "durum" alanını güncelleyebilir (sayımı bitirince
+      // görev listeden düşsün diye) veya artık var olmayan bir oturuma
+      // (silinmiş sayım) ait öksüz kalan kendi görevini silebilir
       match /sayimciGorevler/{gorevId} {
-        allow read:  if request.auth != null;
-        allow write: if isYonetici();
+        allow read:   if request.auth != null;
+        allow create: if isYonetici();
+        allow update: if isYonetici() || (
+          request.auth != null &&
+          request.auth.uid == resource.data.sayimciUid &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['durum'])
+        );
+        allow delete: if isYonetici() || (
+          request.auth != null &&
+          request.auth.uid == resource.data.sayimciUid &&
+          !exists(/databases/$(database)/documents/sessions/$(sessionId))
+        );
       }
     }
 
