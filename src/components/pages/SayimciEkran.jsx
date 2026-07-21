@@ -32,12 +32,40 @@ function SwipeCard({ row, sayilanMiktar, onConfirm, onEdit, isMembran }) {
     if (startX.current == null) return
     setDx(clientX - startX.current)
   }
-  function onEnd() {
+  function onEnd(clientX) {
     if (startX.current == null) return
-    if (dx > TH)  onConfirm()
-    else if (dx < -TH) onEdit()
+    // Fare bırakma noktasından hesaplanan fark varsa onu kullan (daha güvenilir);
+    // yoksa (dokunmatikte) son bilinen state'teki dx'e düş
+    const finalDx = typeof clientX === 'number' ? clientX - startX.current : dx
+    if (finalDx > TH)  onConfirm()
+    else if (finalDx < -TH) onEdit()
     setDx(0)
     startX.current = null
+  }
+
+  // onMove/onEnd her render'da yeniden oluşturulduğu için window'a eklenen
+  // dinleyicinin her zaman güncel kapanışı çağırması için ref'te tutuluyor
+  const onMoveRef = useRef(onMove)
+  const onEndRef  = useRef(onEnd)
+  onMoveRef.current = onMove
+  onEndRef.current  = onEnd
+
+  // Fare ile sürüklerken imleç hızlı bir hareketle kartın dışına (örn.
+  // altındaki "Eksik / Fazla" butonunun üzerine) çıkarsa, kart elemanına
+  // bağlı mousemove/mouseup orada tetiklenmeyip sürüklemeyi yarım bırakıyor
+  // ve buton üzerinde istenmeyen bir hover görünümüne yol açıyordu. Bu yüzden
+  // sürükleme boyunca dinleyiciler window'a bağlanıp imleç nereye giderse
+  // gitsin doğru şekilde takip ediliyor.
+  function onMouseDown(e) {
+    onStart(e.clientX)
+    function handleMove(ev) { onMoveRef.current(ev.clientX) }
+    function handleUp(ev) {
+      onEndRef.current(ev.clientX)
+      window.removeEventListener('mousemove', handleMove)
+      window.removeEventListener('mouseup', handleUp)
+    }
+    window.addEventListener('mousemove', handleMove)
+    window.addEventListener('mouseup', handleUp)
   }
 
   const bg = dx > 40 ? 'rgba(16,185,129,0.08)' : dx < -40 ? 'rgba(245,158,11,0.08)' : '#ffffff'
@@ -52,11 +80,8 @@ function SwipeCard({ row, sayilanMiktar, onConfirm, onEdit, isMembran }) {
       <div
         onTouchStart={e => onStart(e.touches[0].clientX)}
         onTouchMove={e => onMove(e.touches[0].clientX)}
-        onTouchEnd={onEnd}
-        onMouseDown={e => onStart(e.clientX)}
-        onMouseMove={e => startX.current != null && onMove(e.clientX)}
-        onMouseUp={onEnd}
-        onMouseLeave={() => { if (startX.current != null) onEnd() }}
+        onTouchEnd={() => onEnd()}
+        onMouseDown={onMouseDown}
         className="relative rounded-3xl border border-slate-200 shadow-md cursor-grab active:cursor-grabbing flex flex-col"
         style={{
           transform: `translateX(${dx}px) rotate(${dx * 0.03}deg)`,
