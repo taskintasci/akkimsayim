@@ -6,6 +6,7 @@ import useStore from './store/useStore'
 import Sidebar from './components/layout/Sidebar'
 import TopBar from './components/layout/TopBar'
 
+const FirmaSecimi     = lazy(() => import('./components/pages/FirmaSecimi'))
 const Login           = lazy(() => import('./components/pages/Login'))
 const Giris           = lazy(() => import('./components/pages/Giris'))
 const Panel           = lazy(() => import('./components/pages/Panel'))
@@ -25,29 +26,35 @@ const EpsonSayim          = lazy(() => import('./components/pages/EpsonSayim'))
 const EpsonRapor          = lazy(() => import('./components/pages/EpsonRapor'))
 const EpsonKorSayim       = lazy(() => import('./components/pages/EpsonKorSayim'))
 const EpsonKorSayimRapor  = lazy(() => import('./components/pages/EpsonKorSayimRapor'))
+const FirmaYonetimi       = lazy(() => import('./components/pages/FirmaYonetimi'))
 
 const HEPSI = ['yonetici', 'kontrolcu', 'sayimci']
+const YON       = ['yonetici', 'superadmin']              // yönetici yetkisi (süper yönetici her firmayı yönetebilir)
+const YON_KONT  = ['yonetici', 'kontrolcu', 'superadmin']  // yönetici + kontrolcü yetkisi
+const FIRMA_KEY = 'sayimplani_secili_firma'
 
+// sablon: hangi firma şablonunda görünür (belirtilmemişse şablondan bağımsız/paylaşılan sayfa)
 const PAGES = {
-  panel:     { Component: Panel,            fullHeight: false, roles: ['yonetici', 'kontrolcu'] },
-  upload:    { Component: ExcelYukle,       fullHeight: false, roles: ['yonetici'] },
-  sayim:     { Component: StokSayim,        fullHeight: true,  roles: ['yonetici'] },
-  analiz:    { Component: SayimAnalizi,     fullHeight: false, roles: ['yonetici', 'kontrolcu'] },
-  rapor:     { Component: Rapor,            fullHeight: false, roles: ['yonetici', 'kontrolcu'] },
-  kor:       { Component: KorSayim,         fullHeight: true,  roles: ['yonetici'] },
-  koranaliz: { Component: KorSayimAnalizi,  fullHeight: false, roles: ['yonetici', 'kontrolcu'] },
-  korrapor:      { Component: KorSayimRapor,      fullHeight: false, roles: ['yonetici', 'kontrolcu'] },
-  hareketlilik:  { Component: HareketlilikSayim,  fullHeight: true,  roles: ['yonetici'] },
-  membran:       { Component: MembranSayim,       fullHeight: true,  roles: ['yonetici'] },
-  ayarlar:       { Component: Ayarlar,            fullHeight: false, roles: ['yonetici', 'kontrolcu'] },
-  sayimciekran:  { Component: SayimciEkran,       fullHeight: true,  roles: HEPSI },
-  epsonpanel:     { Component: EpsonPanel,         fullHeight: false, roles: ['yonetici', 'kontrolcu'] },
-  epsonsayim:     { Component: EpsonSayim,         fullHeight: true,  roles: ['yonetici'] },
-  epsonanaliz:    { Component: SayimAnalizi,       fullHeight: false, roles: ['yonetici', 'kontrolcu'] },
-  epsonrapor:     { Component: EpsonRapor,         fullHeight: false, roles: ['yonetici', 'kontrolcu'] },
-  epsonkor:       { Component: EpsonKorSayim,      fullHeight: true,  roles: ['yonetici'] },
-  epsonkoranaliz: { Component: KorSayimAnalizi,    fullHeight: false, roles: ['yonetici', 'kontrolcu'] },
-  epsonkorrapor:  { Component: EpsonKorSayimRapor, fullHeight: false, roles: ['yonetici', 'kontrolcu'] },
+  panel:     { Component: Panel,            fullHeight: false, roles: YON_KONT, sablon: ['standart'] },
+  upload:    { Component: ExcelYukle,       fullHeight: false, roles: YON },
+  sayim:     { Component: StokSayim,        fullHeight: true,  roles: YON, sablon: ['standart'] },
+  analiz:    { Component: SayimAnalizi,     fullHeight: false, roles: YON_KONT, sablon: ['standart'] },
+  rapor:     { Component: Rapor,            fullHeight: false, roles: YON_KONT, sablon: ['standart'] },
+  kor:       { Component: KorSayim,         fullHeight: true,  roles: YON, sablon: ['standart'] },
+  koranaliz: { Component: KorSayimAnalizi,  fullHeight: false, roles: YON_KONT, sablon: ['standart'] },
+  korrapor:      { Component: KorSayimRapor,      fullHeight: false, roles: YON_KONT, sablon: ['standart'] },
+  hareketlilik:  { Component: HareketlilikSayim,  fullHeight: true,  roles: YON, sablon: ['standart'] },
+  membran:       { Component: MembranSayim,       fullHeight: true,  roles: YON, sablon: ['standart'] },
+  ayarlar:       { Component: Ayarlar,            fullHeight: false, roles: YON_KONT },
+  sayimciekran:  { Component: SayimciEkran,       fullHeight: true,  roles: [...HEPSI, 'superadmin'] },
+  epsonpanel:     { Component: EpsonPanel,         fullHeight: false, roles: YON_KONT, sablon: ['wms31'] },
+  epsonsayim:     { Component: EpsonSayim,         fullHeight: true,  roles: YON, sablon: ['wms31'] },
+  epsonanaliz:    { Component: SayimAnalizi,       fullHeight: false, roles: YON_KONT, sablon: ['wms31'] },
+  epsonrapor:     { Component: EpsonRapor,         fullHeight: false, roles: YON_KONT, sablon: ['wms31'] },
+  epsonkor:       { Component: EpsonKorSayim,      fullHeight: true,  roles: YON, sablon: ['wms31'] },
+  epsonkoranaliz: { Component: KorSayimAnalizi,    fullHeight: false, roles: YON_KONT, sablon: ['wms31'] },
+  epsonkorrapor:  { Component: EpsonKorSayimRapor, fullHeight: false, roles: YON_KONT, sablon: ['wms31'] },
+  firmayonetimi:  { Component: FirmaYonetimi,      fullHeight: false, roles: ['superadmin'] },
 }
 
 function ErisimYok() {
@@ -71,7 +78,10 @@ function Spinner() {
 export default function App() {
   // undefined = henüz kontrol edilmedi, null = giriş yok, object = giriş yapılmış
   const [firebaseUser, setFirebaseUser] = useState(undefined)
-  const { setCurrentUser, loadUserProfile, userRole, profileLoading, activeSessionId, rows, rowsLoading } = useStore(
+  const {
+    setCurrentUser, loadUserProfile, userRole, profileLoading,
+    activeSessionId, rows, rowsLoading, firmalar, firmaProfile,
+  } = useStore(
     useShallow(s => ({
       setCurrentUser:  s.setCurrentUser,
       loadUserProfile: s.loadUserProfile,
@@ -80,18 +90,28 @@ export default function App() {
       activeSessionId: s.activeSessionId,
       rows:            s.rows,
       rowsLoading:     s.rowsLoading,
+      firmalar:        s.firmalar,
+      firmaProfile:    s.firmaProfile,
     }))
   )
   const [activePage, setActivePage] = useState('panel')
   const [menuOpen, setMenuOpen] = useState(false)
+  const [selectedFirma, setSelectedFirma] = useState(() => {
+    try { return localStorage.getItem(FIRMA_KEY) } catch { return null }
+  })
 
   function handleNavigate(page) { setActivePage(page); setMenuOpen(false) }
+
+  function handleFirmaDegistir() {
+    try { localStorage.removeItem(FIRMA_KEY) } catch { /* localStorage kapalı olabilir */ }
+    setSelectedFirma(null)
+  }
 
   useEffect(() => {
     return onAuthStateChanged(auth, user => {
       setFirebaseUser(user)
       setCurrentUser(user)
-      loadUserProfile(user)
+      loadUserProfile(user, selectedFirma)
     })
   }, [])
 
@@ -100,19 +120,37 @@ export default function App() {
     if (userRole === 'sayimci') return
     if (!activeSessionId) return
     if (rowsLoading) return
-    if (rows.length === 0 && userRole === 'yonetici') {
+    if (rows.length === 0 && (userRole === 'yonetici' || userRole === 'superadmin')) {
       setActivePage('upload')
     }
   }, [activeSessionId, rowsLoading, rows.length, userRole])
 
+  // Aktif firmanın şablonu değiştiğinde (ilk yükleme veya süper yönetici
+  // firma değiştirdiğinde), geçerli olmayan bir sayfadaysak o şablonun
+  // varsayılan paneline yönlendir.
+  useEffect(() => {
+    if (!firmaProfile) return
+    const pageDef = PAGES[activePage]
+    const uygun = pageDef && (!pageDef.sablon || pageDef.sablon.includes(firmaProfile.sablon))
+    if (!uygun) setActivePage(firmaProfile.sablon === 'wms31' ? 'epsonpanel' : 'panel')
+  }, [firmaProfile?.sablon])
+
   // Auth durumu henüz belli değil
   if (firebaseUser === undefined) return <Spinner />
 
-  // Giriş yapılmamış
+  // Giriş yapılmamış: önce Firma Seçimi, sonra Login
   if (!firebaseUser) {
+    if (!selectedFirma) {
+      return (
+        <Suspense fallback={<Spinner />}>
+          <FirmaSecimi onSelect={setSelectedFirma} />
+        </Suspense>
+      )
+    }
+    const firma = firmalar.find(f => f.id === selectedFirma)
     return (
       <Suspense fallback={<Spinner />}>
-        <Login />
+        <Login firma={firma} onFirmaDegistir={handleFirmaDegistir} />
       </Suspense>
     )
   }
@@ -129,7 +167,7 @@ export default function App() {
     )
   }
 
-  // Yönetici/Kontrolcü: oturum seçilmemiş
+  // Yönetici/Kontrolcü/Süper Yönetici: oturum seçilmemiş
   if (!activeSessionId) {
     return (
       <Suspense fallback={<Spinner />}>
@@ -139,8 +177,9 @@ export default function App() {
   }
 
   const page = PAGES[activePage] || PAGES.panel
-  const { Component: PageComponent, fullHeight, roles } = page
-  const yetkili = roles.includes(userRole)
+  const { Component: PageComponent, fullHeight, roles, sablon } = page
+  const sablonUygun = !sablon || !firmaProfile || sablon.includes(firmaProfile.sablon)
+  const yetkili = roles.includes(userRole) && sablonUygun
 
   return (
     <div className="h-screen flex overflow-hidden bg-slate-100">

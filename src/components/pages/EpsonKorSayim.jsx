@@ -16,7 +16,7 @@ function EpsonDurumBadge({ durum }) {
 }
 
 export default function EpsonKorSayim({ onNavigate }) {
-  const { rows, results, session, updateResult, fillFromSistem, clearMiktarlar, korCodes, korMatched, addKorCodes, removeKorCode, clearKor, pendingKodFilter, clearPendingKodFilter } = useStore()
+  const { rows, results, session, updateResult, fillFromSistem, clearMiktarlar, korCodes, korMatched, addKorCodes, removeKorCode, clearKor, pendingKodFilter, clearPendingKodFilter, firmaProfile } = useStore()
   const printRef = useRef()
 
   const [codeInput, setCodeInput]     = useState('')
@@ -433,7 +433,7 @@ export default function EpsonKorSayim({ onNavigate }) {
             >
               <span className="ms" style={{ fontSize: 15 }}>assignment_ind</span> Sayımcıya Gönder
             </button>
-            <button onClick={() => exportEpsonResults(korMatched, results, session)} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
+            <button onClick={() => exportEpsonResults(korMatched, results, session, firmaProfile)} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
               <span className="ms" style={{ fontSize: 15 }}>download</span> Excel'e Aktar
             </button>
             <button onClick={handlePrint} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
@@ -444,7 +444,7 @@ export default function EpsonKorSayim({ onNavigate }) {
       )}
 
       <div className="hidden">
-        <EpsonPrintSheet ref={printRef} rows={filtered} results={results} session={session} mode="kor" hideSistem={hideSistem} hideSayilan={hideSayilan} sayimTuru="Epson Kör Sayım" />
+        <EpsonPrintSheet ref={printRef} rows={filtered} results={results} session={session} mode="kor" hideSistem={hideSistem} hideSayilan={hideSayilan} sayimTuru="Kör Sayım" firmaUnvani={firmaProfile?.unvan} />
       </div>
 
       {gorevModal && <GorevAtaModal rows={filtered} onClose={() => setGorevModal(false)} sayimTipi="epsonkor" />}

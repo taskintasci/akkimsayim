@@ -6,13 +6,13 @@ import { useShallow } from 'zustand/react/shallow'
 const EMPTY_FORM = { kod: '', ad: '', adres: '', parti: '', durum: '', miktar: '', birim: '', not: '' }
 
 export default function Rapor({ onNavigate }) {
-  const { rows, results, session, setPendingKodFilter, approveSession, manualRows, addManualRow, removeManualRow, korManualRows, removeKorManualRow, resultsLoading, userRole } = useStore(
+  const { rows, results, session, setPendingKodFilter, approveSession, manualRows, addManualRow, removeManualRow, korManualRows, removeKorManualRow, resultsLoading, userRole, firmaProfile } = useStore(
     useShallow(s => ({
       rows: s.rows, results: s.results, session: s.session,
       setPendingKodFilter: s.setPendingKodFilter, approveSession: s.approveSession,
       manualRows: s.manualRows, addManualRow: s.addManualRow, removeManualRow: s.removeManualRow,
       korManualRows: s.korManualRows, removeKorManualRow: s.removeKorManualRow,
-      resultsLoading: s.resultsLoading, userRole: s.userRole,
+      resultsLoading: s.resultsLoading, userRole: s.userRole, firmaProfile: s.firmaProfile,
     }))
   )
   const allManualRows = [
@@ -109,7 +109,7 @@ export default function Rapor({ onNavigate }) {
             <span className="ms" style={{ fontSize: 16 }}>print</span> Yazdır
           </button>
           <button
-            onClick={() => exportRaporFarklar(discrepancies, session, manualRows)}
+            onClick={() => exportRaporFarklar(discrepancies, session, manualRows, firmaProfile)}
             className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-300 rounded-lg text-[13px] font-medium text-slate-700 hover:bg-slate-50"
           >
             <span className="ms" style={{ fontSize: 16 }}>download</span> Excel İndir

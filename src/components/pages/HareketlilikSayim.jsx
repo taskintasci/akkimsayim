@@ -38,7 +38,7 @@ function GirisGunBadge({ gun }) {
 }
 
 export default function HareketlilikSayim({ onNavigate }) {
-  const { rows, results, session, updateResult, fillFromSistem, clearMiktarlar, pendingKodFilter, clearPendingKodFilter } = useStore()
+  const { rows, results, session, updateResult, fillFromSistem, clearMiktarlar, pendingKodFilter, clearPendingKodFilter, firmaProfile } = useStore()
   const printRef = useRef()
 
   const [hideSistem, setHideSistem] = useState(false)
@@ -154,7 +154,7 @@ export default function HareketlilikSayim({ onNavigate }) {
             <button onClick={handlePrint} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
               <span className="ms" style={{ fontSize: 15 }}>print</span> Yazdır
             </button>
-            <button onClick={() => exportResults(rows, results, session)} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
+            <button onClick={() => exportResults(rows, results, session, firmaProfile)} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
               <span className="ms" style={{ fontSize: 15 }}>download</span> Excel'e Aktar
             </button>
             {(() => {
@@ -387,7 +387,7 @@ export default function HareketlilikSayim({ onNavigate }) {
       )}
 
       <div className="hidden">
-        <PrintSheet ref={printRef} rows={filtered} results={results} session={session} mode="sayim" hideSayilan={hideSayilan} sayimTuru="Hareketlilik Sayımı" />
+        <PrintSheet ref={printRef} rows={filtered} results={results} session={session} mode="sayim" hideSayilan={hideSayilan} sayimTuru="Hareketlilik Sayımı" firmaUnvani={firmaProfile?.unvan} />
       </div>
 
       {gorevModal && <GorevAtaModal rows={filtered} onClose={() => setGorevModal(false)} sayimTipi="hareketlilik" />}

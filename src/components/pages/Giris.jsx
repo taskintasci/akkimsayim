@@ -7,7 +7,6 @@ const SESSION_TYPES = [
   { id: 'Yıl Sonu Sayımı', icon: 'event_available', desc: 'Yıl sonu kapanış envanteri' },
   { id: 'Ara Sayım', icon: 'find_in_page', desc: 'Dönem içi kontrol sayımı' },
   { id: 'Ön Sayım', icon: 'preview', desc: 'Hazırlık ve sınırlı alan sayımı' },
-  { id: 'Epson Sayım', icon: 'qr_code_scanner', desc: 'WMS_Rapor_31 bazlı depo sayımı' },
 ]
 
 function StatusBadge({ durum }) {
@@ -27,7 +26,9 @@ function StatusBadge({ durum }) {
 }
 
 export default function Giris({ onNavigate }) {
-  const { sessions, sessionsLoading, loadSessions, setActiveSession, createSession, deleteSession, currentUser, userRole } = useStore()
+  const { sessions, sessionsLoading, loadSessions, setActiveSession, createSession, deleteSession, currentUser, userRole, firmaProfile } = useStore()
+  const isYonetici = userRole === 'yonetici' || userRole === 'superadmin'
+  const panelRoute = firmaProfile?.sablon === 'wms31' ? 'epsonpanel' : 'panel'
   const [selectedId, setSelectedId] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
   const [creating, setCreating] = useState(false)
@@ -40,7 +41,7 @@ export default function Giris({ onNavigate }) {
   function handleDevamEt() {
     if (!selectedId) return
     setActiveSession(selectedId)
-    onNavigate('panel')
+    onNavigate(panelRoute)
   }
 
   async function handleCreate() {
@@ -48,7 +49,7 @@ export default function Giris({ onNavigate }) {
     setCreating(true)
     try {
       await createSession({ type: newType, depoAdi: depoAdi.trim(), tarih })
-      onNavigate('panel')
+      onNavigate(panelRoute)
     } finally {
       setCreating(false)
     }
@@ -62,7 +63,7 @@ export default function Giris({ onNavigate }) {
           <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center">
             <span className="ms text-white" style={{ fontSize: 20 }}>warehouse</span>
           </div>
-          <span className="text-slate-900 font-bold text-sm leading-tight tracking-tight"><span className="hidden sm:inline">Akkim Depolama Merkezi </span>Sayım Sistemi</span>
+          <span className="text-slate-900 font-bold text-sm leading-tight tracking-tight">Sayım Planı</span>
         </div>
         <div className="flex items-center gap-3">
           {currentUser && <span className="text-slate-400 text-xs mono">{currentUser.email}</span>}
@@ -79,7 +80,7 @@ export default function Giris({ onNavigate }) {
       <div className="flex flex-1 overflow-hidden">
 
         {/* Sol panel: Geçmiş Sayımlar */}
-        <div className={`${userRole === 'yonetici' ? 'w-[420px] shrink-0 border-r border-slate-200' : 'flex-1 max-w-lg mx-auto'} flex flex-col px-4 sm:px-8 py-6 overflow-y-auto`}>
+        <div className={`${isYonetici ? 'w-[420px] shrink-0 border-r border-slate-200' : 'flex-1 max-w-lg mx-auto'} flex flex-col px-4 sm:px-8 py-6 overflow-y-auto`}>
           <h2 className="text-slate-700 font-semibold text-sm flex items-center gap-2 mb-4">
             <span className="ms text-blue-500" style={{ fontSize: 18 }}>history</span>
             Geçmiş Sayımlar
@@ -102,7 +103,7 @@ export default function Giris({ onNavigate }) {
               </div>
               <p className="text-slate-500 text-sm font-medium">Kayıtlı sayım yok</p>
               <p className="text-slate-400 text-xs mt-1">
-                {userRole === 'yonetici' ? 'Sağ panelden yeni sayım oluşturun' : 'Yönetici sayım oluşturduğunda buraya eklenir'}
+                {isYonetici ? 'Sağ panelden yeni sayım oluşturun' : 'Yönetici sayım oluşturduğunda buraya eklenir'}
               </p>
             </div>
           ) : null}
@@ -128,7 +129,7 @@ export default function Giris({ onNavigate }) {
                       </button>
                       <div className="flex items-center gap-2 ml-2 shrink-0">
                         <StatusBadge durum={s.durum} />
-                        {userRole === 'yonetici' && (!isDeleting ? (
+                        {isYonetici && (!isDeleting ? (
                           <button
                             onClick={e => { e.stopPropagation(); setDeletingId(s.id) }}
                             className="w-6 h-6 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
@@ -194,8 +195,8 @@ export default function Giris({ onNavigate }) {
           </div>
         </div>
 
-        {/* Sağ panel: Yeni Sayım — yalnızca yönetici */}
-        {userRole === 'yonetici' && (
+        {/* Sağ panel: Yeni Sayım — yönetici ve süper yönetici */}
+        {isYonetici && (
           <div className="flex-1 flex flex-col justify-center items-center px-12 py-8">
             <div className="w-full max-w-sm">
               <h2 className="text-slate-700 font-semibold text-sm flex items-center gap-2 mb-5">

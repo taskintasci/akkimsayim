@@ -3,7 +3,7 @@ import { forwardRef } from 'react'
 const ROWS_PER_PAGE = 25
 
 const EpsonPrintSheet = forwardRef(function EpsonPrintSheet(
-  { rows, results, session, mode = 'sayim', hideSayilan = false, sayimTuru = '' },
+  { rows, results, session, mode = 'sayim', hideSayilan = false, sayimTuru = '', firmaUnvani = '' },
   ref
 ) {
   const blindMode    = mode === 'kor'
@@ -61,7 +61,7 @@ const EpsonPrintSheet = forwardRef(function EpsonPrintSheet(
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: 4, marginBottom: 4, borderBottom: '1.5px solid #1e293b' }}>
             <div style={{ textAlign: 'center', flex: 1 }}>
               <p style={{ fontSize: '9pt', fontWeight: 700, color: '#1e293b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                AKKİM KİMYA SAN. TİC. A.Ş.
+                {firmaUnvani || 'SAYIM PLANI'}
               </p>
               <p style={{ fontSize: '11pt', fontWeight: 700, color: '#1d4ed8', textTransform: 'uppercase', letterSpacing: '0.03em', marginTop: 2 }}>
                 {session.sayimBasligi || session.type || 'YIL SONU SAYIM'}

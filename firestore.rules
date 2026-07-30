@@ -2,60 +2,176 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Kullanıcının rolünü /users/{uid}.rol alanından okur
-    function userRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.rol;
+    // ── Yardımcı fonksiyonlar ──────────────────────────────────────────────
+    function isSignedIn() { return request.auth != null; }
+
+    // Çağıranın kendi profilini okur (tekil get() — liste-sorgu ispat
+    // kısıtına takılmaz; profil yoksa fonksiyon hata verir, çağıran ifade
+    // false'a düşer).
+    function callerProfile() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
-    function isYonetici() {
-      return request.auth != null && userRole() == 'yonetici';
-    }
+    function userFirma() { return callerProfile().firma; }
+    function userRole()  { return callerProfile().rol; }
 
-    match /sessions/{sessionId} {
-      allow read:  if request.auth != null;
-      allow write: if isYonetici();
+    function isSuperAdmin() { return isSignedIn() && userRole() == 'superadmin'; }
+    function isYonetici()   { return isSignedIn() && userRole() == 'yonetici'; }
 
-      match /results/{rowId} {
-        allow read:  if request.auth != null;
-        allow write: if request.auth != null; // sayımcı kendi sonucunu yazar
-      }
-
-      match /rowChunks/{chunkId} {
-        allow read:  if request.auth != null;
-        allow write: if isYonetici();
-      }
-
-      // Sayımcı görevleri: yönetici oluşturur/siler; ilgili sayımcı yalnızca
-      // kendi görevinin "durum" alanını güncelleyebilir (sayımı bitirince
-      // görev listeden düşsün diye) veya artık var olmayan bir oturuma
-      // (silinmiş sayım) ait öksüz kalan kendi görevini silebilir
-      match /sayimciGorevler/{gorevId} {
-        allow read:   if request.auth != null;
-        allow create: if isYonetici();
-        allow update: if isYonetici() || (
-          request.auth != null &&
-          request.auth.uid == resource.data.sayimciUid &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['durum'])
-        );
-        allow delete: if isYonetici() || (
-          request.auth != null &&
-          request.auth.uid == resource.data.sayimciUid &&
-          !exists(/databases/$(database)/documents/sessions/$(sessionId))
-        );
-      }
+    // docFirma: kontrol edilen dokümanın 'firma' alanı
+    function sameFirma(docFirma) {
+      return isSignedIn() && docFirma is string && docFirma == userFirma();
     }
 
-    // collectionGroup sorgusu için wildcard path — sayımcının tüm görevleri tek sorguda çekilir
-    match /{path=**}/sayimciGorevler/{gorevId} {
-      allow read: if request.auth != null;
+    function isNonEmptyString(v) { return v is string && v.size() > 0; }
+
+    // ── firmalar/{firmaId} ──────────────────────────────────────────────────
+    // Login-öncesi "Firma Seçimi" ekranı auth olmadan okuyabilmeli.
+    // Yazma sadece süper yönetici (Firma Yönetimi paneli).
+    match /firmalar/{firmaId} {
+      allow read: if true;
+
+      allow create: if isSuperAdmin()
+        && isNonEmptyString(request.resource.data.ad)
+        && request.resource.data.sablon in ['standart', 'wms31']
+        && request.resource.data.aktif is bool;
+
+      allow update: if isSuperAdmin()
+        && isNonEmptyString(request.resource.data.ad)
+        && request.resource.data.sablon in ['standart', 'wms31']
+        && request.resource.data.aktif is bool;
+
+      allow delete: if isSuperAdmin();
     }
 
+    // ── users/{uid} ──────────────────────────────────────────────────────
     match /users/{uid} {
-      // Kendi profilini herkes okuyabilir; yönetici tüm kullanıcıları okur
-      allow read:   if request.auth != null && (request.auth.uid == uid || isYonetici());
-      // Yönetici yeni kullanıcı dokümanı yazar; kullanıcı kendi profilini (bootstrap) bir kez yaratabilir
-      allow create: if request.auth != null && (request.auth.uid == uid || isYonetici());
-      // Rol değiştirme / silme yalnızca yöneticide
-      allow update, delete: if isYonetici();
+      allow read: if isSignedIn() && (
+        request.auth.uid == uid ||
+        isSuperAdmin() ||
+        (isYonetici() && sameFirma(resource.data.firma))
+      );
+
+      // Yeni kullanıcı oluşturma:
+      //  - süper yönetici: her şeyi yazabilir
+      //  - yönetici: SADECE kendi firmasına, SADECE yonetici/kontrolcu/sayimci rolüyle
+      //  - kendi kendine bootstrap (Console'dan açılmış Auth hesabı ilk girişte):
+      //    SADECE 'sayimci' rolüyle ve VAR OLAN + AKTİF bir firmaya
+      allow create: if isSuperAdmin()
+        || (
+          isYonetici()
+          && sameFirma(request.resource.data.firma)
+          && request.resource.data.rol in ['yonetici', 'kontrolcu', 'sayimci']
+        )
+        || (
+          isSignedIn() && request.auth.uid == uid
+          && request.resource.data.rol == 'sayimci'
+          && isNonEmptyString(request.resource.data.firma)
+          && exists(/databases/$(database)/documents/firmalar/$(request.resource.data.firma))
+          && get(/databases/$(database)/documents/firmalar/$(request.resource.data.firma)).data.aktif == true
+        );
+
+      // Güncelleme: 'firma' alanı SABİT kalmalı (firma değiştirerek başka
+      // kiracıya geçmek engellenir); hiçbir yönetici kimseyi 'superadmin'
+      // yapamaz veya bir superadmin'i düzenleyemez.
+      allow update: if isSuperAdmin()
+        || (
+          isYonetici()
+          && sameFirma(resource.data.firma)
+          && request.resource.data.firma == resource.data.firma
+          && resource.data.rol != 'superadmin'
+          && request.resource.data.rol in ['yonetici', 'kontrolcu', 'sayimci']
+        );
+
+      allow delete: if isSuperAdmin()
+        || (isYonetici() && sameFirma(resource.data.firma) && resource.data.rol != 'superadmin');
+    }
+
+    // ── sessions/{sessionId} ─────────────────────────────────────────────
+    match /sessions/{sessionId} {
+      allow read: if isSuperAdmin() || sameFirma(resource.data.firma);
+
+      allow create: if isSuperAdmin()
+        || (isYonetici() && sameFirma(request.resource.data.firma));
+
+      // 'firma' alanı bir kez damgalanır, sonradan değiştirilemez.
+      allow update: if isSuperAdmin()
+        || (
+          isYonetici()
+          && sameFirma(resource.data.firma)
+          && request.resource.data.firma == resource.data.firma
+        );
+
+      allow delete: if isSuperAdmin() || (isYonetici() && sameFirma(resource.data.firma));
+
+      // ── results/{rowId} ── canlı dinleyici (onSnapshot), filtresiz sorgu.
+      // Kasıtlı olarak resource.data.firma DEĞİL, sabit ebeveyn get()'i
+      // kullanılır — mevcut filtresiz sorgu bozulmaz, geriye dönük hiçbir
+      // "results" dokümanına firma alanı eklemek GEREKMEZ.
+      match /results/{rowId} {
+        allow read: if isSuperAdmin()
+          || sameFirma(get(/databases/$(database)/documents/sessions/$(sessionId)).data.firma);
+
+        allow write: if isSuperAdmin()
+          || sameFirma(get(/databases/$(database)/documents/sessions/$(sessionId)).data.firma);
+      }
+
+      // ── rowChunks/{chunkId} ── sadece yönetici yazar, aynı get() stratejisi.
+      match /rowChunks/{chunkId} {
+        allow read: if isSuperAdmin()
+          || sameFirma(get(/databases/$(database)/documents/sessions/$(sessionId)).data.firma);
+
+        allow write: if isSuperAdmin()
+          || (isYonetici()
+              && sameFirma(get(/databases/$(database)/documents/sessions/$(sessionId)).data.firma));
+      }
+
+      // ── sayimciGorevler/{gorevId} ── nested erişim: burada da get()
+      // stratejisi kullanılır (loadSessionGorevler'ın filtresiz sorgusu
+      // değişmeden çalışsın diye). Doküman yine de kendi 'firma' alanını
+      // taşır (aşağıdaki collectionGroup kuralı için zorunlu).
+      match /sayimciGorevler/{gorevId} {
+        allow read: if isSuperAdmin()
+          || sameFirma(get(/databases/$(database)/documents/sessions/$(sessionId)).data.firma);
+
+        allow create: if isSuperAdmin()
+          || (
+            isYonetici()
+            && sameFirma(get(/databases/$(database)/documents/sessions/$(sessionId)).data.firma)
+            && request.resource.data.firma
+                 == get(/databases/$(database)/documents/sessions/$(sessionId)).data.firma
+          );
+
+        allow update: if isSuperAdmin()
+          || (
+            isYonetici()
+            && sameFirma(resource.data.firma)
+            && request.resource.data.firma == resource.data.firma
+          )
+          || (
+            // sayımcı: sadece KENDİ görevinin 'durum' alanı
+            isSignedIn()
+            && request.auth.uid == resource.data.sayimciUid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['durum'])
+          );
+
+        allow delete: if isSuperAdmin()
+          || (isYonetici() && sameFirma(resource.data.firma))
+          || (
+            isSignedIn()
+            && request.auth.uid == resource.data.sayimciUid
+            && !exists(/databases/$(database)/documents/sessions/$(sessionId))
+          );
+      }
+    }
+
+    // ── collectionGroup sorgusu: loadMyGorevler burayı kullanır ──────────
+    // Burada get() kullanılamaz: eşleşen her doküman farklı bir ebeveyn
+    // session'a ait olabilir (path sabit değil) — bu yüzden dokümanın
+    // kendi 'firma' alanı zorunlu, istemci sorgusuna da
+    // where('firma','==', kendiFirman) eklenmesi gerekir (aksi halde
+    // Firestore "ispatlanamaz" diyerek sorgunun tamamını reddeder).
+    match /{path=**}/sayimciGorevler/{gorevId} {
+      allow read: if isSuperAdmin() || sameFirma(resource.data.firma);
     }
   }
 }

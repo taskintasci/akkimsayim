@@ -24,15 +24,23 @@ const useStore = create((set, get) => ({
 
   // ── Kullanıcı profili & rol ───────────────────────────────────────────────
   userProfile: null,          // /users/{uid} dokümanı
-  userRole: null,             // 'yonetici' | 'kontrolcu' | 'sayimci'
+  userRole: null,             // 'yonetici' | 'kontrolcu' | 'sayimci' | 'superadmin'
   profileLoading: false,
 
-  // Giriş yapan kullanıcının profilini yükle (yoksa varsayılan sayımcı oluştur)
-  loadUserProfile: async (user) => {
+  // ── Firma (çok kiracılı) ───────────────────────────────────────────────────
+  firmalar: [],                // firmalar koleksiyonunun tamamı ({id,ad,unvan,sablon,aktif})
+  firmaProfile: null,          // aktif firmanın kendi dokümanı
+  activeFirma: null,           // normal kullanıcı: kendi firması; superadmin: seçtiği firma
+
+  // Giriş yapan kullanıcının profilini yükle (yoksa varsayılan sayımcı oluştur).
+  // selectedFirma: Firma Seçimi ekranında seçilen firma id'si — sadece profili
+  // olmayan (bootstrap) kullanıcılar için kullanılır.
+  loadUserProfile: async (user, selectedFirma) => {
     if (!user) {
       if (resultsUnsub) { resultsUnsub(); resultsUnsub = null }
       set({
         currentUser: null, userProfile: null, userRole: null, profileLoading: false,
+        firmaProfile: null, activeFirma: null,
         users: [], usersLoading: false,
         gorevler: [], gorevlerLoading: false,
         sessions: [], activeSessionId: null, sessionsLoading: false,
@@ -55,28 +63,71 @@ const useStore = create((set, get) => ({
     try {
       const ref  = doc(db, 'users', user.uid)
       const snap = await getDoc(ref)
+      let firma
       if (snap.exists()) {
         const data = snap.data()
+        firma = data.firma ?? null
         set({ userProfile: { uid: user.uid, ...data }, userRole: data.rol || 'sayimci' })
       } else {
-        // Bootstrap: profili olmayan kullanıcı varsayılan olarak sayımcı olur.
-        // İlk yönetici, Firebase Console'da rol alanı 'yonetici' yapılarak terfi ettirilir.
+        // Bootstrap: profili olmayan kullanıcı, Firma Seçimi ekranından
+        // gelen bağlamla varsayılan olarak o firmanın sayımcısı olur.
         const profile = {
           email:       user.email,
           displayName: user.displayName || (user.email || '').split('@')[0],
           rol:         'sayimci',
+          firma:       selectedFirma || null,
           createdAt:   serverTimestamp(),
           createdBy:   user.uid,
         }
         await setDoc(ref, profile)
+        firma = profile.firma
         set({ userProfile: { uid: user.uid, ...profile }, userRole: 'sayimci' })
       }
+
+      // Firma listesini ve aktif firma profilini yükle
+      await get().loadFirmalar()
+      const firmalar = get().firmalar
+      const effectiveFirma = firma || firmalar[0]?.id || null // superadmin: ilk firmayı varsayılan seç
+      set({ activeFirma: effectiveFirma })
+      const firmaDoc = firmalar.find(f => f.id === effectiveFirma)
+      set({ firmaProfile: firmaDoc || null })
     } catch (err) {
       devErr('Profil yüklenemedi:', err)
       set({ userProfile: null, userRole: null })
     } finally {
       set({ profileLoading: false })
     }
+  },
+
+  loadFirmalar: async () => {
+    try {
+      const snap = await getDocs(collection(db, 'firmalar'))
+      const firmalar = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.ad || '').localeCompare(b.ad || '', 'tr'))
+      set({ firmalar })
+    } catch (err) {
+      devErr('Firmalar yüklenemedi:', err)
+    }
+  },
+
+  // Süper yönetici: hangi firma olarak "davranıldığını" değiştirir —
+  // sessions/users listeleri bu firmaya göre yeniden yüklenir.
+  setActiveFirma: async (firmaId) => {
+    const firmaDoc = get().firmalar.find(f => f.id === firmaId)
+    set({ activeFirma: firmaId, firmaProfile: firmaDoc || null, activeSessionId: null })
+    await get().loadSessions()
+  },
+
+  createFirma: async ({ ad, unvan, sablon }) => {
+    const { currentUser } = get()
+    const data = { ad, unvan: unvan || '', sablon, aktif: true, createdAt: serverTimestamp(), createdBy: currentUser?.uid || null }
+    const docRef = await addDoc(collection(db, 'firmalar'), data)
+    set(state => ({ firmalar: [...state.firmalar, { id: docRef.id, ...data, createdAt: new Date() }].sort((a, b) => (a.ad || '').localeCompare(b.ad || '', 'tr')) }))
+    return docRef.id
+  },
+
+  updateFirma: async (id, patch) => {
+    await updateDoc(doc(db, 'firmalar', id), patch)
+    set(state => ({ firmalar: state.firmalar.map(f => f.id === id ? { ...f, ...patch } : f) }))
   },
 
   // ── Kullanıcı yönetimi (yalnızca yönetici) ────────────────────────────────
@@ -86,7 +137,11 @@ const useStore = create((set, get) => ({
   loadUsers: async () => {
     set({ usersLoading: true })
     try {
-      const snap = await getDocs(query(collection(db, 'users'), orderBy('createdAt', 'desc')))
+      const { activeFirma, userRole } = get()
+      const q = userRole === 'superadmin' && !activeFirma
+        ? query(collection(db, 'users'), orderBy('createdAt', 'desc'))
+        : query(collection(db, 'users'), where('firma', '==', activeFirma), orderBy('createdAt', 'desc'))
+      const snap = await getDocs(q)
       set({ users: snap.docs.map(d => ({ uid: d.id, ...d.data() })) })
     } catch (err) {
       devErr('Kullanıcılar yüklenemedi:', err)
@@ -97,7 +152,7 @@ const useStore = create((set, get) => ({
 
   // Yeni kullanıcı: secondary auth ile oluştur (yöneticinin oturumu bozulmaz)
   createUserAccount: async ({ email, password, displayName, rol }) => {
-    const { currentUser } = get()
+    const { currentUser, activeFirma } = get()
     const secAuth = getSecondaryAuth()
     const cred = await createUserWithEmailAndPassword(secAuth, email, password)
     const uid  = cred.user.uid
@@ -105,6 +160,7 @@ const useStore = create((set, get) => ({
       email,
       displayName: displayName || email.split('@')[0],
       rol:         rol || 'sayimci',
+      firma:       activeFirma,
       createdAt:   serverTimestamp(),
       createdBy:   currentUser?.uid || null,
     }
@@ -132,7 +188,7 @@ const useStore = create((set, get) => ({
 
   // Yönetici: aktif session'daki seçili satırları bir sayımcıya ata
   assignGorev: async ({ sayimci, atananRows, sayimTipi = 'stok' }) => {
-    const { activeSessionId, session, currentUser } = get()
+    const { activeSessionId, session, currentUser, activeFirma } = get()
     if (!activeSessionId) throw new Error('Aktif oturum yok')
     const data = {
       sayimciUid:   sayimci.uid,
@@ -143,6 +199,7 @@ const useStore = create((set, get) => ({
       depoAdi:      session.depoAdi || '',
       atananRows,                       // array<rowId>
       sayimTipi:    sayimTipi || 'stok', // 'stok' | 'kor' | 'hareketlilik' | 'membran' | 'epson' | 'epsonkor'
+      firma:        activeFirma,
       durum:        'bekliyor',
       createdAt:    serverTimestamp(),
       createdBy:    currentUser?.uid || null,
@@ -156,8 +213,9 @@ const useStore = create((set, get) => ({
     if (!uid) return
     set({ gorevlerLoading: true })
     try {
+      const { activeFirma } = get()
       const snap = await getDocs(
-        query(collectionGroup(db, 'sayimciGorevler'), where('sayimciUid', '==', uid))
+        query(collectionGroup(db, 'sayimciGorevler'), where('sayimciUid', '==', uid), where('firma', '==', activeFirma))
       )
       const all = snap.docs.map(d => ({ id: d.id, ref: d.ref, ...d.data() }))
 
@@ -218,9 +276,11 @@ const useStore = create((set, get) => ({
   loadSessions: async () => {
     set({ sessionsLoading: true })
     try {
-      const snap = await getDocs(
-        query(collection(db, 'sessions'), orderBy('createdAt', 'desc'), limit(30))
-      )
+      const { activeFirma, userRole } = get()
+      const q = userRole === 'superadmin' && !activeFirma
+        ? query(collection(db, 'sessions'), orderBy('createdAt', 'desc'), limit(30))
+        : query(collection(db, 'sessions'), where('firma', '==', activeFirma), orderBy('createdAt', 'desc'), limit(30))
+      const snap = await getDocs(q)
       set({ sessions: snap.docs.map(d => ({ id: d.id, ...d.data() })) })
     } catch (err) {
       devErr('Sessions yüklenemedi:', err)
@@ -356,7 +416,7 @@ const useStore = create((set, get) => ({
   },
 
   createSession: async (partial) => {
-    const { currentUser } = get()
+    const { currentUser, activeFirma } = get()
     const data = {
       type:         partial.type || 'Yıl Sonu Sayımı',
       depoAdi:      partial.depoAdi || '',
@@ -368,6 +428,7 @@ const useStore = create((set, get) => ({
       fark:         0,
       tur:          1,
       rowsUploaded: false,
+      firma:        activeFirma,
       createdBy:    currentUser?.uid || null,
       createdAt:    serverTimestamp(),
     }
@@ -669,9 +730,10 @@ const useStore = create((set, get) => ({
 }))
 
 export const ROLE_LABELS = {
-  yonetici:  'Yönetici',
-  kontrolcu: 'Kontrolcü',
-  sayimci:   'Sayımcı',
+  superadmin: 'Süper Yönetici',
+  yonetici:   'Yönetici',
+  kontrolcu:  'Kontrolcü',
+  sayimci:    'Sayımcı',
 }
 
 export default useStore

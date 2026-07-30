@@ -19,7 +19,7 @@ function DurumBadge({ durum }) {
 }
 
 export default function StokSayim({ onNavigate }) {
-  const { rows, results, session, updateResult, fillFromSistem, clearMiktarlar, pendingKodFilter, clearPendingKodFilter, rowsLoading } = useStore()
+  const { rows, results, session, updateResult, fillFromSistem, clearMiktarlar, pendingKodFilter, clearPendingKodFilter, rowsLoading, firmaProfile } = useStore()
   const printRef = useRef()
 
   const [hideSistem, setHideSistem] = useState(false)
@@ -396,7 +396,7 @@ export default function StokSayim({ onNavigate }) {
             >
               <span className="ms" style={{ fontSize: 15 }}>assignment_ind</span> Sayımcıya Gönder
             </button>
-            <button onClick={() => exportResults(rows, results, session)} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
+            <button onClick={() => exportResults(rows, results, session, firmaProfile)} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
               <span className="ms" style={{ fontSize: 15 }}>download</span> Excel'e Aktar
             </button>
             <button onClick={handlePrint} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
@@ -407,7 +407,7 @@ export default function StokSayim({ onNavigate }) {
       )}
 
       <div className="hidden">
-        <PrintSheet ref={printRef} rows={filtered} results={results} session={session} mode="sayim" hideSayilan={hideSayilan} sayimTuru="Tüm Stok Sayımı" />
+        <PrintSheet ref={printRef} rows={filtered} results={results} session={session} mode="sayim" hideSayilan={hideSayilan} sayimTuru="Tüm Stok Sayımı" firmaUnvani={firmaProfile?.unvan} />
       </div>
 
       {gorevModal && <GorevAtaModal rows={filtered} onClose={() => setGorevModal(false)} sayimTipi="stok" />}

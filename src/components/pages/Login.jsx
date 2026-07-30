@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth'
 import { auth } from '../../firebase/index'
 
-export default function Login() {
+export default function Login({ firma, onFirmaDegistir }) {
   const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
   const [error,    setError]    = useState('')
@@ -45,12 +45,23 @@ export default function Login() {
           <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
             <span className="ms text-white" style={{ fontSize: 22 }}>warehouse</span>
           </div>
-          <div className="text-slate-900 font-bold text-sm leading-tight tracking-tight"><span className="hidden sm:inline">Akkim Depolama Merkezi </span>Sayım Sistemi</div>
+          <div className="text-slate-900 font-bold text-sm leading-tight tracking-tight">Sayım Planı</div>
         </div>
 
         {/* Kart */}
         <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
-          <h1 className="text-slate-800 font-semibold text-lg mb-6 text-center">Giriş Yap</h1>
+          <h1 className="text-slate-800 font-semibold text-lg mb-1 text-center">Giriş Yap</h1>
+          {firma && (
+            <p className="text-slate-400 text-xs text-center mb-5">
+              {firma.ad}
+              {onFirmaDegistir && (
+                <button type="button" onClick={onFirmaDegistir} className="ml-2 text-blue-600 hover:underline">
+                  Firma Değiştir
+                </button>
+              )}
+            </p>
+          )}
+          {!firma && <div className="mb-6" />}
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
@@ -59,7 +70,7 @@ export default function Login() {
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                placeholder="ornek@akkim.com.tr"
+                placeholder="ornek@sirket.com"
                 required
                 className="w-full border border-slate-300 rounded-lg px-3 py-3 text-slate-900 text-base placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
               />

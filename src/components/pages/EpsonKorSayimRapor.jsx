@@ -13,7 +13,7 @@ function EpsonDurumBadge({ durum }) {
 const EMPTY_FORM = { kod: '', ad: '', adres: '', parti: '', miktar: '', birim: '', not: '' }
 
 export default function EpsonKorSayimRapor({ onNavigate }) {
-  const { korMatched, results, session, setPendingKodFilter, korManualRows, addKorManualRow, removeKorManualRow } = useStore()
+  const { korMatched, results, session, setPendingKodFilter, korManualRows, addKorManualRow, removeKorManualRow, firmaProfile } = useStore()
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
@@ -91,7 +91,7 @@ export default function EpsonKorSayimRapor({ onNavigate }) {
             <span className="ms" style={{ fontSize: 16 }}>print</span> Yazdır
           </button>
           <button
-            onClick={() => exportEpsonRaporFarklar(discrepancies, session, korManualRows)}
+            onClick={() => exportEpsonRaporFarklar(discrepancies, session, korManualRows, firmaProfile)}
             className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-300 rounded-lg text-[13px] font-medium text-slate-700 hover:bg-slate-50"
           >
             <span className="ms" style={{ fontSize: 16 }}>download</span> Excel İndir

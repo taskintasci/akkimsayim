@@ -32,5 +32,5 @@ export function downloadTemplate() {
 
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, 'Sku_Sayım_Listesi')
-  XLSX.writeFile(wb, 'Akkim_Sayim_Sablonu.xlsx')
+  XLSX.writeFile(wb, 'Sayim_Sablonu.xlsx')
 }

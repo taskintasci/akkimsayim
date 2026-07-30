@@ -6,21 +6,26 @@ import { getSecondaryAuth } from '../../firebase/index'
 import { createUserWithEmailAndPassword, signOut as secondarySignOut } from 'firebase/auth'
 
 const ROLE_OPTIONS = [
-  { id: 'yonetici',  label: 'Yönetici',  desc: 'Tam yetki — tüm sayfalar, kullanıcı yönetimi' },
+  { id: 'yonetici',  label: 'Yönetici',  desc: 'Tam yetki — firmanın tüm sayfaları, kullanıcı yönetimi' },
   { id: 'kontrolcu', label: 'Kontrolcü', desc: 'Analiz ve raporları görür, sayım/yükleme yapamaz' },
   { id: 'sayimci',   label: 'Sayımcı',   desc: 'Yalnızca kendisine atanan sayım görevlerini görür' },
 ]
+// Süper yönetici rolü yalnızca zaten süper yönetici olan kullanıcıya gösterilir
+// (yetki yükseltme riskini önlemek için normal yönetici bu seçeneği göremez).
+const SUPERADMIN_OPTION = { id: 'superadmin', label: 'Süper Yönetici', desc: 'Tüm firmaları görür/yönetir, yeni firma ekleyebilir' }
 
 const ROLE_BADGE = {
-  yonetici:  'bg-blue-50 text-blue-700',
-  kontrolcu: 'bg-amber-50 text-amber-700',
-  sayimci:   'bg-emerald-50 text-emerald-700',
+  superadmin: 'bg-violet-50 text-violet-700',
+  yonetici:   'bg-blue-50 text-blue-700',
+  kontrolcu:  'bg-amber-50 text-amber-700',
+  sayimci:    'bg-emerald-50 text-emerald-700',
 }
 
 const EMPTY_FORM = { email: '', password: '', displayName: '', rol: 'sayimci' }
 
 function KullaniciTab() {
-  const { users, usersLoading, loadUsers, createUserAccount, updateUserRole, deleteUserDoc, userProfile } = useStore()
+  const { users, usersLoading, loadUsers, createUserAccount, updateUserRole, deleteUserDoc, userProfile, userRole, firmaProfile } = useStore()
+  const roleOptions = userRole === 'superadmin' ? [...ROLE_OPTIONS, SUPERADMIN_OPTION] : ROLE_OPTIONS
   const [form, setForm]         = useState(EMPTY_FORM)
   const [saving, setSaving]     = useState(false)
   const [error, setError]       = useState('')
@@ -61,10 +66,13 @@ function KullaniciTab() {
     <div className="flex flex-col gap-6">
       {/* Yeni kullanıcı formu */}
       <div className="bg-white rounded-xl border border-slate-200 p-6">
-        <h3 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-slate-700 mb-1 flex items-center gap-2">
           <span className="ms text-blue-500" style={{ fontSize: 18 }}>person_add</span>
           Yeni Kullanıcı Ekle
         </h3>
+        {firmaProfile?.ad && (
+          <p className="text-xs text-slate-400 mb-4 ml-6">Firma: <span className="font-medium text-slate-500">{firmaProfile.ad}</span></p>
+        )}
         <form onSubmit={handleCreate} className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Ad Soyad</label>
@@ -77,7 +85,7 @@ function KullaniciTab() {
             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">E-posta</label>
             <input type="email" value={form.email}
               onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-              placeholder="ornek@akkim.com.tr" autoComplete="off"
+              placeholder="ornek@sirket.com" autoComplete="off"
               className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200" />
           </div>
           <div>
@@ -91,11 +99,11 @@ function KullaniciTab() {
             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Rol</label>
             <select value={form.rol} onChange={e => setForm(f => ({ ...f, rol: e.target.value }))}
               className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200">
-              {ROLE_OPTIONS.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
+              {roleOptions.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
             </select>
           </div>
           <div className="col-span-2 text-xs text-slate-400 -mt-1">
-            {ROLE_OPTIONS.find(r => r.id === form.rol)?.desc}
+            {roleOptions.find(r => r.id === form.rol)?.desc}
           </div>
           {error && <div className="col-span-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-red-700 text-sm">{error}</div>}
           {okMsg && <div className="col-span-2 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 text-emerald-700 text-sm">{okMsg}</div>}
@@ -152,7 +160,7 @@ function KullaniciTab() {
                           (ROLE_BADGE[u.rol] || 'bg-slate-100 text-slate-600') +
                           (isSelf ? ' opacity-60 cursor-not-allowed' : ' cursor-pointer')
                         }>
-                        {ROLE_OPTIONS.map(r => <option key={r.id} value={r.id}>{ROLE_LABELS[r.id]}</option>)}
+                        {roleOptions.map(r => <option key={r.id} value={r.id}>{ROLE_LABELS[r.id]}</option>)}
                       </select>
                     </td>
                     <td className="px-5 py-3 text-right">
@@ -197,9 +205,10 @@ export default function Ayarlar() {
     setTimeout(() => setSaved(false), 2000)
   }
 
+  const isYonetici = userRole === 'yonetici' || userRole === 'superadmin'
   const tabs = [
     { id: 'sayim',      label: 'Sayım Ayarları', icon: 'tune' },
-    ...(userRole === 'yonetici' ? [{ id: 'kullanicilar', label: 'Kullanıcılar', icon: 'group' }] : []),
+    ...(isYonetici ? [{ id: 'kullanicilar', label: 'Kullanıcılar', icon: 'group' }] : []),
   ]
 
   return (
@@ -270,7 +279,7 @@ export default function Ayarlar() {
         </div>
       )}
 
-      {tab === 'kullanicilar' && userRole === 'yonetici' && <KullaniciTab />}
+      {tab === 'kullanicilar' && isYonetici && <KullaniciTab />}
     </div>
   )
 }

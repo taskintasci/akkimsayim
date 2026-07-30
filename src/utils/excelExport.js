@@ -1,8 +1,8 @@
-export async function exportRaporFarklar(discrepancies, session, manualRows = []) {
+export async function exportRaporFarklar(discrepancies, session, manualRows = [], firma = {}) {
   const { default: ExcelJS } = await import('exceljs')
 
   const workbook = new ExcelJS.Workbook()
-  workbook.creator = 'Akkim Depolama Merkezi Sayım Sistemi'
+  workbook.creator = 'Sayım Planı'
   workbook.created = new Date()
 
   const ws = workbook.addWorksheet('Mutabakat Raporu')
@@ -80,19 +80,19 @@ export async function exportRaporFarklar(discrepancies, session, manualRows = []
   const url    = URL.createObjectURL(blob)
   const a      = document.createElement('a')
   a.href       = url
-  a.download   = `Akkim_Mutabakat_Raporu_${tarih}.xlsx`
+  a.download   = `${firma.ad ? firma.ad + '_' : ''}Mutabakat_Raporu_${tarih}.xlsx`
   a.click()
   URL.revokeObjectURL(url)
 }
 
-export async function exportEpsonRaporFarklar(discrepancies, session, manualRows = []) {
+export async function exportEpsonRaporFarklar(discrepancies, session, manualRows = [], firma = {}) {
   const { default: ExcelJS } = await import('exceljs')
 
   const workbook = new ExcelJS.Workbook()
-  workbook.creator = 'Akkim Depolama Merkezi Sayım Sistemi'
+  workbook.creator = 'Sayım Planı'
   workbook.created = new Date()
 
-  const ws = workbook.addWorksheet('Epson Mutabakat Raporu')
+  const ws = workbook.addWorksheet('Mutabakat Raporu')
 
   ws.columns = [
     { header: 'Sıra No.',        key: 'siraNo',   width: 8  },
@@ -166,12 +166,12 @@ export async function exportEpsonRaporFarklar(discrepancies, session, manualRows
   const url    = URL.createObjectURL(blob)
   const a      = document.createElement('a')
   a.href       = url
-  a.download   = `Akkim_Epson_Mutabakat_Raporu_${tarih}.xlsx`
+  a.download   = `${firma.ad ? firma.ad + '_' : ''}Mutabakat_Raporu_${tarih}.xlsx`
   a.click()
   URL.revokeObjectURL(url)
 }
 
-export async function exportAnalizi(rows, results, session) {
+export async function exportAnalizi(rows, results, session, firma = {}) {
   const { default: ExcelJS } = await import('exceljs')
 
   // --- hesaplamalar ---
@@ -208,7 +208,7 @@ export async function exportAnalizi(rows, results, session) {
 
   // --- workbook ---
   const workbook = new ExcelJS.Workbook()
-  workbook.creator = 'Akkim Depolama Merkezi Sayım Sistemi'
+  workbook.creator = 'Sayım Planı'
   workbook.created = new Date()
 
   const ws = workbook.addWorksheet('Sayım Analizi')
@@ -252,7 +252,7 @@ export async function exportAnalizi(rows, results, session) {
   // veri satırı
   const dataRow = ws.addRow({
     depo:         session.depoAdi   || '',
-    musteri:      session.musteriAdi || 'Akkim',
+    musteri:      session.musteriAdi || firma.ad || '',
     sayilan:      counted.length,
     hatali:       hataliLokasyon,
     hatasiz:      hatasizLokasyon,
@@ -316,16 +316,16 @@ export async function exportAnalizi(rows, results, session) {
   const url    = URL.createObjectURL(blob)
   const a      = document.createElement('a')
   a.href       = url
-  a.download   = `Akkim_Sayim_Analizi_${new Date().toISOString().slice(0, 10)}.xlsx`
+  a.download   = `${firma.ad ? firma.ad + '_' : ''}Sayim_Analizi_${new Date().toISOString().slice(0, 10)}.xlsx`
   a.click()
   URL.revokeObjectURL(url)
 }
 
-export async function exportResults(rows, results, session) {
+export async function exportResults(rows, results, session, firma = {}) {
   const { default: ExcelJS } = await import('exceljs')
 
   const workbook = new ExcelJS.Workbook()
-  workbook.creator = 'Akkim Depolama Merkezi Sayım Sistemi'
+  workbook.creator = 'Sayım Planı'
   workbook.created = new Date()
 
   const ws = workbook.addWorksheet('Sayım Sonuçları')
@@ -390,19 +390,19 @@ export async function exportResults(rows, results, session) {
   const url    = URL.createObjectURL(blob)
   const a      = document.createElement('a')
   a.href       = url
-  a.download   = `Akkim_Sayim_Sonuclari_${new Date().toISOString().slice(0, 10)}.xlsx`
+  a.download   = `${firma.ad ? firma.ad + '_' : ''}Sayim_Sonuclari_${new Date().toISOString().slice(0, 10)}.xlsx`
   a.click()
   URL.revokeObjectURL(url)
 }
 
-export async function exportEpsonResults(rows, results, session) {
+export async function exportEpsonResults(rows, results, session, firma = {}) {
   const { default: ExcelJS } = await import('exceljs')
 
   const workbook = new ExcelJS.Workbook()
-  workbook.creator = 'Akkim Depolama Merkezi Sayım Sistemi'
+  workbook.creator = 'Sayım Planı'
   workbook.created = new Date()
 
-  const ws = workbook.addWorksheet('Epson Sayım Sonuçları')
+  const ws = workbook.addWorksheet('Sayım Sonuçları')
 
   ws.columns = [
     { header: 'Sıra No.',        key: 'siraNo',       width: 8  },
@@ -469,7 +469,7 @@ export async function exportEpsonResults(rows, results, session) {
   const url    = URL.createObjectURL(blob)
   const a      = document.createElement('a')
   a.href       = url
-  a.download   = `Akkim_Epson_Sayim_Sonuclari_${new Date().toISOString().slice(0, 10)}.xlsx`
+  a.download   = `${firma.ad ? firma.ad + '_' : ''}Sayim_Sonuclari_${new Date().toISOString().slice(0, 10)}.xlsx`
   a.click()
   URL.revokeObjectURL(url)
 }

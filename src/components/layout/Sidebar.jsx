@@ -25,42 +25,53 @@ function Divider() {
   return <div className="my-1.5 border-t border-slate-100" />
 }
 
-// Menü öğeleri — her birinin hangi rollere görüneceği tanımlı
+const YON      = ['yonetici', 'superadmin']
+const YON_KONT = ['yonetici', 'kontrolcu', 'superadmin']
+
+// Menü öğeleri — her birinin hangi rollere ve hangi firma şablonuna
+// görüneceği tanımlı. sablon belirtilmemişse şablondan bağımsız (paylaşılan).
 const MENU = [
-  { id: 'panel',        icon: 'grid_view',      label: 'Panel',                   roles: ['yonetici', 'kontrolcu'] },
-  { divider: true,      roles: ['yonetici', 'kontrolcu'] },
-  { id: 'sayim',        icon: 'fact_check',     label: 'Tüm Stok Sayımı',         roles: ['yonetici'] },
-  { id: 'analiz',       icon: 'monitoring',     label: 'Tüm Stok Sayım Analizi',  roles: ['yonetici', 'kontrolcu'] },
-  { id: 'rapor',        icon: 'analytics',      label: 'Tüm Stok Rapor',          roles: ['yonetici', 'kontrolcu'] },
-  { divider: true,      roles: ['yonetici', 'kontrolcu'] },
-  { id: 'kor',          icon: 'visibility_off', label: 'Kör Stok Sayımı',         roles: ['yonetici'] },
-  { id: 'koranaliz',    icon: 'query_stats',    label: 'Kör Stok Sayım Analizi',  roles: ['yonetici', 'kontrolcu'] },
-  { id: 'korrapor',     icon: 'summarize',      label: 'Kör Stok Sayım Raporu',   roles: ['yonetici', 'kontrolcu'] },
-  { divider: true,      roles: ['yonetici'] },
-  { id: 'hareketlilik', icon: 'trending_up',    label: 'Hareketlilik Sayımı',     roles: ['yonetici'] },
-  { id: 'membran',      icon: 'layers',         label: 'Membran Sayımı',          roles: ['yonetici'] },
-  { divider: true,      roles: ['yonetici', 'kontrolcu'] },
-  { id: 'epsonpanel',     icon: 'inventory',       label: 'Epson Panel',              roles: ['yonetici', 'kontrolcu'] },
-  { id: 'epsonsayim',     icon: 'fact_check',      label: 'Epson Stok Sayımı',        roles: ['yonetici'] },
-  { id: 'epsonanaliz',    icon: 'monitoring',      label: 'Epson Sayım Analizi',      roles: ['yonetici', 'kontrolcu'] },
-  { id: 'epsonrapor',     icon: 'analytics',       label: 'Epson Sayım Raporu',       roles: ['yonetici', 'kontrolcu'] },
-  { id: 'epsonkor',       icon: 'visibility_off',  label: 'Epson Kör Sayımı',         roles: ['yonetici'] },
-  { id: 'epsonkoranaliz', icon: 'query_stats',     label: 'Epson Kör Sayım Analizi',  roles: ['yonetici', 'kontrolcu'] },
-  { id: 'epsonkorrapor',  icon: 'summarize',       label: 'Epson Kör Sayım Raporu',   roles: ['yonetici', 'kontrolcu'] },
-  { divider: true,      roles: ['yonetici', 'kontrolcu'] },
-  { id: 'sayimciekran', icon: 'swipe',          label: 'Sayımcı Ekranı',          roles: ['yonetici', 'kontrolcu'] },
+  { id: 'panel',        icon: 'grid_view',      label: 'Panel',                   roles: YON_KONT, sablon: ['standart'] },
+  { divider: true,      roles: YON_KONT },
+  { id: 'sayim',        icon: 'fact_check',     label: 'Tüm Stok Sayımı',         roles: YON, sablon: ['standart'] },
+  { id: 'analiz',       icon: 'monitoring',     label: 'Tüm Stok Sayım Analizi',  roles: YON_KONT, sablon: ['standart'] },
+  { id: 'rapor',        icon: 'analytics',      label: 'Tüm Stok Rapor',          roles: YON_KONT, sablon: ['standart'] },
+  { divider: true,      roles: YON_KONT },
+  { id: 'kor',          icon: 'visibility_off', label: 'Kör Stok Sayımı',         roles: YON, sablon: ['standart'] },
+  { id: 'koranaliz',    icon: 'query_stats',    label: 'Kör Stok Sayım Analizi',  roles: YON_KONT, sablon: ['standart'] },
+  { id: 'korrapor',     icon: 'summarize',      label: 'Kör Stok Sayım Raporu',   roles: YON_KONT, sablon: ['standart'] },
+  { divider: true,      roles: YON },
+  { id: 'hareketlilik', icon: 'trending_up',    label: 'Hareketlilik Sayımı',     roles: YON, sablon: ['standart'] },
+  { id: 'membran',      icon: 'layers',         label: 'Membran Sayımı',          roles: YON, sablon: ['standart'] },
+  { divider: true,      roles: YON_KONT },
+  { id: 'epsonpanel',     icon: 'grid_view',       label: 'Panel',                  roles: YON_KONT, sablon: ['wms31'] },
+  { id: 'epsonsayim',     icon: 'fact_check',      label: 'Stok Sayımı',            roles: YON, sablon: ['wms31'] },
+  { id: 'epsonanaliz',    icon: 'monitoring',      label: 'Sayım Analizi',          roles: YON_KONT, sablon: ['wms31'] },
+  { id: 'epsonrapor',     icon: 'analytics',       label: 'Sayım Raporu',           roles: YON_KONT, sablon: ['wms31'] },
+  { id: 'epsonkor',       icon: 'visibility_off',  label: 'Kör Sayımı',             roles: YON, sablon: ['wms31'] },
+  { id: 'epsonkoranaliz', icon: 'query_stats',     label: 'Kör Sayım Analizi',      roles: YON_KONT, sablon: ['wms31'] },
+  { id: 'epsonkorrapor',  icon: 'summarize',       label: 'Kör Sayım Raporu',       roles: YON_KONT, sablon: ['wms31'] },
+  { divider: true,      roles: YON_KONT },
+  { id: 'sayimciekran', icon: 'swipe',          label: 'Sayımcı Ekranı',          roles: YON_KONT },
+  { divider: true,      roles: ['superadmin'] },
+  { id: 'firmayonetimi', icon: 'domain',        label: 'Firma Yönetimi',          roles: ['superadmin'] },
 ]
 
 export default function Sidebar({ activePage, onNavigate, onSettings, className = 'flex' }) {
-  const { session, setActiveSession, userProfile, userRole } = useStore(
-    useShallow(s => ({ session: s.session, setActiveSession: s.setActiveSession, userProfile: s.userProfile, userRole: s.userRole }))
+  const { session, setActiveSession, userProfile, userRole, firmalar, firmaProfile, activeFirma, setActiveFirma } = useStore(
+    useShallow(s => ({
+      session: s.session, setActiveSession: s.setActiveSession, userProfile: s.userProfile, userRole: s.userRole,
+      firmalar: s.firmalar, firmaProfile: s.firmaProfile, activeFirma: s.activeFirma, setActiveFirma: s.setActiveFirma,
+    }))
   )
 
   const initials = (userProfile?.displayName || userProfile?.email || '??')
     .split(/[\s.@]+/).filter(Boolean).slice(0, 2).map(s => s[0]?.toUpperCase()).join('')
 
-  // Rol ardışık divider'larla biten/başlayan boşlukları temizle
-  const visible = MENU.filter(m => m.roles.includes(userRole))
+  const currentSablon = firmaProfile?.sablon
+
+  // Rol + şablon filtrelemesi, ardından ardışık/baştaki divider'ları temizle
+  const visible = MENU.filter(m => m.roles.includes(userRole) && (!m.sablon || !currentSablon || m.sablon.includes(currentSablon)))
   const cleaned = visible.filter((m, i) => {
     if (!m.divider) return true
     const prev = visible[i - 1]
@@ -75,8 +86,11 @@ export default function Sidebar({ activePage, onNavigate, onSettings, className 
           <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center">
             <span className="ms text-white" style={{ fontSize: 16 }}>warehouse</span>
           </div>
-          <span className="font-bold text-slate-900 text-[13px] leading-tight"><span className="hidden lg:inline">Akkim Depolama Merkezi </span>Sayım Sistemi</span>
+          <span className="font-bold text-slate-900 text-[13px] leading-tight">Sayım Planı</span>
         </div>
+        {firmaProfile?.ad && (
+          <p className="ml-9 text-[11px] text-slate-400 truncate">{firmaProfile.ad}</p>
+        )}
         <button
           onClick={() => setActiveSession(null)}
           className="ml-9 flex items-center gap-1 text-[11px] text-blue-600 hover:underline mono mt-0.5"
@@ -85,6 +99,20 @@ export default function Sidebar({ activePage, onNavigate, onSettings, className 
           {session.type || 'Sayım Değiştir'}
         </button>
       </div>
+
+      {/* Süper yönetici: firma switcher */}
+      {userRole === 'superadmin' && firmalar.length > 0 && (
+        <div className="px-5 pt-3 pb-1">
+          <label className="block text-[10px] text-slate-400 mono uppercase tracking-wide mb-1">Firma (görünüm)</label>
+          <select
+            value={activeFirma || ''}
+            onChange={e => setActiveFirma(e.target.value)}
+            className="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-[12px] text-slate-700 focus:outline-none focus:border-blue-400"
+          >
+            {firmalar.map(f => <option key={f.id} value={f.id}>{f.ad}</option>)}
+          </select>
+        </div>
+      )}
 
       {/* Main nav */}
       <nav className="flex-1 px-3 py-3 overflow-y-auto space-y-0.5">
@@ -119,8 +147,8 @@ export default function Sidebar({ activePage, onNavigate, onSettings, className 
           </button>
         </div>
 
-        {/* Ayarlar linki — yalnızca yönetici */}
-        {userRole === 'yonetici' && (
+        {/* Ayarlar linki — yönetici ve süper yönetici */}
+        {(userRole === 'yonetici' || userRole === 'superadmin') && (
           <button
             onClick={() => onNavigate('ayarlar')}
             className={
