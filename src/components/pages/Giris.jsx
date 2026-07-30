@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import useStore from '../../store/useStore'
+import { SABLON } from '../../constants'
 
 const SESSION_TYPES = [
   { id: 'Yıl Sonu Sayımı', icon: 'event_available', desc: 'Yıl sonu kapanış envanteri' },
@@ -26,7 +27,7 @@ function StatusBadge({ durum }) {
 export default function Giris({ onNavigate }) {
   const { sessions, sessionsLoading, loadSessions, setActiveSession, createSession, deleteSession, userRole, firmaProfile } = useStore()
   const isYonetici = userRole === 'yonetici' || userRole === 'superadmin'
-  const panelRoute = firmaProfile?.sablon === 'wms31' ? 'epsonpanel' : 'panel'
+  const panelRoute = firmaProfile?.sablon === SABLON.WMS31 ? 'epsonpanel' : 'panel'
   const [selectedId, setSelectedId] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
   const [creating, setCreating] = useState(false)

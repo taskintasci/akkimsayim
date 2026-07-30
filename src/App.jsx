@@ -1,8 +1,9 @@
 import { lazy, Suspense, useState, useEffect } from 'react'
-import { onAuthStateChanged } from 'firebase/auth'
+import { onAuthStateChanged, signOut } from 'firebase/auth'
 import { useShallow } from 'zustand/react/shallow'
 import { auth } from './firebase/index'
 import useStore from './store/useStore'
+import { SABLON } from './constants'
 import Sidebar from './components/layout/Sidebar'
 import TopBar from './components/layout/TopBar'
 import GirisHeader from './components/layout/GirisHeader'
@@ -39,25 +40,25 @@ const FIRMA_KEY = 'sayimplani_secili_firma'
 // sablon: hangi firma şablonunda görünür (belirtilmemişse şablondan bağımsız/paylaşılan sayfa)
 const PAGES = {
   giris:     { Component: Giris,            fullHeight: true,  roles: YON_KONT },
-  panel:     { Component: Panel,            fullHeight: false, roles: YON_KONT, sablon: ['standart'] },
+  panel:     { Component: Panel,            fullHeight: false, roles: YON_KONT, sablon: [SABLON.STANDART] },
   upload:    { Component: ExcelYukle,       fullHeight: false, roles: YON },
-  sayim:     { Component: StokSayim,        fullHeight: true,  roles: YON, sablon: ['standart'] },
-  analiz:    { Component: SayimAnalizi,     fullHeight: false, roles: YON_KONT, sablon: ['standart'] },
-  rapor:     { Component: Rapor,            fullHeight: false, roles: YON_KONT, sablon: ['standart'] },
-  kor:       { Component: KorSayim,         fullHeight: true,  roles: YON, sablon: ['standart'] },
-  koranaliz: { Component: KorSayimAnalizi,  fullHeight: false, roles: YON_KONT, sablon: ['standart'] },
-  korrapor:      { Component: KorSayimRapor,      fullHeight: false, roles: YON_KONT, sablon: ['standart'] },
-  hareketlilik:  { Component: HareketlilikSayim,  fullHeight: true,  roles: YON, sablon: ['standart'] },
-  membran:       { Component: MembranSayim,       fullHeight: true,  roles: YON, sablon: ['standart'] },
+  sayim:     { Component: StokSayim,        fullHeight: true,  roles: YON, sablon: [SABLON.STANDART] },
+  analiz:    { Component: SayimAnalizi,     fullHeight: false, roles: YON_KONT, sablon: [SABLON.STANDART] },
+  rapor:     { Component: Rapor,            fullHeight: false, roles: YON_KONT, sablon: [SABLON.STANDART] },
+  kor:       { Component: KorSayim,         fullHeight: true,  roles: YON, sablon: [SABLON.STANDART] },
+  koranaliz: { Component: KorSayimAnalizi,  fullHeight: false, roles: YON_KONT, sablon: [SABLON.STANDART] },
+  korrapor:      { Component: KorSayimRapor,      fullHeight: false, roles: YON_KONT, sablon: [SABLON.STANDART] },
+  hareketlilik:  { Component: HareketlilikSayim,  fullHeight: true,  roles: YON, sablon: [SABLON.STANDART] },
+  membran:       { Component: MembranSayim,       fullHeight: true,  roles: YON, sablon: [SABLON.STANDART] },
   ayarlar:       { Component: Ayarlar,            fullHeight: false, roles: YON_KONT },
   sayimciekran:  { Component: SayimciEkran,       fullHeight: true,  roles: [...HEPSI, 'superadmin'] },
-  epsonpanel:     { Component: EpsonPanel,         fullHeight: false, roles: YON_KONT, sablon: ['wms31'] },
-  epsonsayim:     { Component: EpsonSayim,         fullHeight: true,  roles: YON, sablon: ['wms31'] },
-  epsonanaliz:    { Component: SayimAnalizi,       fullHeight: false, roles: YON_KONT, sablon: ['wms31'] },
-  epsonrapor:     { Component: EpsonRapor,         fullHeight: false, roles: YON_KONT, sablon: ['wms31'] },
-  epsonkor:       { Component: EpsonKorSayim,      fullHeight: true,  roles: YON, sablon: ['wms31'] },
-  epsonkoranaliz: { Component: KorSayimAnalizi,    fullHeight: false, roles: YON_KONT, sablon: ['wms31'] },
-  epsonkorrapor:  { Component: EpsonKorSayimRapor, fullHeight: false, roles: YON_KONT, sablon: ['wms31'] },
+  epsonpanel:     { Component: EpsonPanel,         fullHeight: false, roles: YON_KONT, sablon: [SABLON.WMS31] },
+  epsonsayim:     { Component: EpsonSayim,         fullHeight: true,  roles: YON, sablon: [SABLON.WMS31] },
+  epsonanaliz:    { Component: SayimAnalizi,       fullHeight: false, roles: YON_KONT, sablon: [SABLON.WMS31] },
+  epsonrapor:     { Component: EpsonRapor,         fullHeight: false, roles: YON_KONT, sablon: [SABLON.WMS31] },
+  epsonkor:       { Component: EpsonKorSayim,      fullHeight: true,  roles: YON, sablon: [SABLON.WMS31] },
+  epsonkoranaliz: { Component: KorSayimAnalizi,    fullHeight: false, roles: YON_KONT, sablon: [SABLON.WMS31] },
+  epsonkorrapor:  { Component: EpsonKorSayimRapor, fullHeight: false, roles: YON_KONT, sablon: [SABLON.WMS31] },
 }
 
 function ErisimYok() {
@@ -78,11 +79,29 @@ function Spinner() {
   )
 }
 
+function AuthErrorScreen({ message }) {
+  return (
+    <div className="h-screen flex flex-col items-center justify-center text-center p-10 bg-slate-100 gap-4">
+      <span className="ms text-slate-300" style={{ fontSize: 56 }}>error</span>
+      <div>
+        <h2 className="text-slate-700 font-semibold text-lg">Giriş Yapılamadı</h2>
+        <p className="text-slate-400 text-sm mt-1 max-w-sm">{message}</p>
+      </div>
+      <button
+        onClick={() => signOut(auth)}
+        className="px-4 py-2 border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-medium transition-colors"
+      >
+        Çıkış Yap
+      </button>
+    </div>
+  )
+}
+
 export default function App() {
   // undefined = henüz kontrol edilmedi, null = giriş yok, object = giriş yapılmış
   const [firebaseUser, setFirebaseUser] = useState(undefined)
   const {
-    setCurrentUser, loadUserProfile, userRole, profileLoading,
+    setCurrentUser, loadUserProfile, userRole, profileLoading, authError,
     activeSessionId, rows, rowsLoading, firmalar, firmaProfile,
   } = useStore(
     useShallow(s => ({
@@ -90,6 +109,7 @@ export default function App() {
       loadUserProfile: s.loadUserProfile,
       userRole:        s.userRole,
       profileLoading:  s.profileLoading,
+      authError:       s.authError,
       activeSessionId: s.activeSessionId,
       rows:            s.rows,
       rowsLoading:     s.rowsLoading,
@@ -135,19 +155,8 @@ export default function App() {
     if (!firmaProfile) return
     const pageDef = PAGES[activePage]
     const uygun = pageDef && (!pageDef.sablon || pageDef.sablon.includes(firmaProfile.sablon))
-    if (!uygun) setActivePage(firmaProfile.sablon === 'wms31' ? 'epsonpanel' : 'panel')
+    if (!uygun) setActivePage(firmaProfile.sablon === SABLON.WMS31 ? 'epsonpanel' : 'panel')
   }, [firmaProfile?.sablon])
-
-  // Aktif oturum yoksa (henüz seçilmemiş veya "Sayım Değiştir"/firma switcher
-  // ile temizlenmiş) ve oturum gerektirmeyen bir sayfada değilsek, güvenli
-  // varsayılan olan Sayımlar listesine dön. Sidebar'daki asıl geçişler zaten
-  // kendi handler'larında onNavigate('giris')'i senkron çağırıyor — bu effect
-  // sadece ilk yükleme/güvenlik ağı içindir.
-  useEffect(() => {
-    if (userRole === 'sayimci') return
-    if (activeSessionId) return
-    if (!SESSIONLESS.includes(activePage)) setActivePage('giris')
-  }, [activeSessionId, userRole, activePage])
 
   // Auth durumu henüz belli değil
   if (firebaseUser === undefined) return <Spinner />
@@ -169,6 +178,10 @@ export default function App() {
     )
   }
 
+  // Profil yüklenemedi (ör. hesap için bir admin tarafından oluşturulmuş
+  // profil yok) — sonsuz spinner yerine net bir mesaj + çıkış imkanı göster.
+  if (!profileLoading && authError) return <AuthErrorScreen message={authError} />
+
   // Profil/rol henüz yükleniyor
   if (profileLoading || !userRole) return <Spinner />
 
@@ -181,10 +194,18 @@ export default function App() {
     )
   }
 
-  const page = PAGES[activePage] || PAGES.giris
+  // Aktif oturum yoksa (henüz seçilmemiş veya "Sayım Değiştir"/firma switcher
+  // ile temizlenmiş) ve oturum gerektirmeyen bir sayfada değilsek, render
+  // sırasında güvenli varsayılan (Sayımlar listesi) sayfaya düşülür. Bu bir
+  // effect değil türetilmiş bir değerdir — state effect'i içinde setState
+  // çağırıp ekstra bir render turu yaratmaz. Sidebar/GirisHeader'daki asıl
+  // geçişler zaten onNavigate('giris') çağırıyor; bu sadece güvenlik ağıdır.
+  const effectivePage = (!activeSessionId && !SESSIONLESS.includes(activePage)) ? 'giris' : activePage
+
+  const page = PAGES[effectivePage] || PAGES.giris
   const { Component: PageComponent, fullHeight, roles, sablon } = page
   const sablonUygun = !sablon || !firmaProfile || sablon.includes(firmaProfile.sablon)
-  const sessionUygun = SESSIONLESS.includes(activePage) || !!activeSessionId
+  const sessionUygun = SESSIONLESS.includes(effectivePage) || !!activeSessionId
   const yetkili = roles.includes(userRole) && sablonUygun && sessionUygun
 
   const icerik = (
@@ -208,7 +229,7 @@ export default function App() {
   if (!activeSessionId) {
     return (
       <div className="h-screen flex flex-col overflow-hidden bg-slate-100">
-        <GirisHeader activePage={activePage} onNavigate={handleNavigate} />
+        <GirisHeader activePage={effectivePage} onNavigate={handleNavigate} />
         <div className="flex-1 flex flex-col overflow-hidden">
           {icerik}
         </div>
@@ -222,13 +243,13 @@ export default function App() {
         <div className="fixed inset-0 z-50 md:hidden">
           <div className="absolute inset-0 bg-slate-900/50" onClick={() => setMenuOpen(false)} aria-hidden="true" />
           <div className="absolute inset-y-0 left-0 shadow-xl">
-            <Sidebar activePage={activePage} onNavigate={handleNavigate} />
+            <Sidebar activePage={effectivePage} onNavigate={handleNavigate} />
           </div>
         </div>
       )}
-      <Sidebar activePage={activePage} onNavigate={handleNavigate} className="hidden md:flex" />
+      <Sidebar activePage={effectivePage} onNavigate={handleNavigate} className="hidden md:flex" />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <TopBar activePage={activePage} onMenu={() => setMenuOpen(true)} />
+        <TopBar activePage={effectivePage} onMenu={() => setMenuOpen(true)} />
         {icerik}
       </div>
     </div>

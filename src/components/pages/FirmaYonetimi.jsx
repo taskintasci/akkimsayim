@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import useStore from '../../store/useStore'
+import { SABLON } from '../../constants'
 
 const SABLON_OPTIONS = [
-  { id: 'standart', label: 'LOS Sayım',          desc: 'Tüm Stok Sayımı, Kör Sayım, Hareketlilik, Membran sayfa ailesi (RAPOR5 / SKU)' },
-  { id: 'wms31',    label: 'WMS Antrepo Sayım',  desc: 'Palet barkodu / beyanname bazlı depo sayım sayfa ailesi (WMS_Rapor_31)' },
+  { id: SABLON.STANDART, label: 'LOS Sayım',          desc: 'Tüm Stok Sayımı, Kör Sayım, Hareketlilik, Membran sayfa ailesi (RAPOR5 / SKU)' },
+  { id: SABLON.WMS31,    label: 'WMS Antrepo Sayım',  desc: 'Palet barkodu / beyanname bazlı depo sayım sayfa ailesi (WMS_Rapor_31)' },
 ]
 
-const EMPTY_FORM = { ad: '', unvan: '', sablon: 'standart' }
+const EMPTY_FORM = { ad: '', unvan: '', sablon: SABLON.STANDART }
 
 export default function FirmaYonetimi() {
   const { firmalar, loadFirmalar, createFirma, updateFirma } = useStore()
@@ -39,7 +40,7 @@ export default function FirmaYonetimi() {
 
   function startEdit(f) {
     setEditingId(f.id)
-    setEditForm({ ad: f.ad || '', unvan: f.unvan || '', sablon: f.sablon || 'standart' })
+    setEditForm({ ad: f.ad || '', unvan: f.unvan || '', sablon: f.sablon || SABLON.STANDART })
     setEditError('')
   }
 

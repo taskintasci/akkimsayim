@@ -51,39 +51,48 @@ service cloud.firestore {
         (isYonetici() && sameFirma(resource.data.firma))
       );
 
-      // Yeni kullanıcı oluşturma:
+      // Yeni kullanıcı oluşturma: SADECE bir admin tarafından.
       //  - süper yönetici: her şeyi yazabilir
       //  - yönetici: SADECE kendi firmasına, SADECE yonetici/kontrolcu/sayimci rolüyle
-      //  - kendi kendine bootstrap (Console'dan açılmış Auth hesabı ilk girişte):
-      //    SADECE 'sayimci' rolüyle ve VAR OLAN + AKTİF bir firmaya
+      // Bilinçli olarak "kendi kendine bootstrap" (herhangi bir auth hesabının ilk
+      // girişte kendi profilini yazması) YOKTUR: Firebase Email/Şifre sağlayıcısı
+      // proje genelinde tek bir anahtar olduğundan (createUserAccount'ın kullandığı
+      // ikincil auth örneği de dahil), bu sağlayıcı açıkken herkes public client
+      // SDK ile doğrudan yeni bir hesap oluşturabilir. Self-bootstrap izni olsaydı,
+      // herkese açık 'firmalar' listesinden (aşağıda allow read: if true) bir firma
+      // id'si alıp kendini o firmanın 'sayimci'sı olarak kaydedip firmanın tüm
+      // sessions/results verisini okuyabilirdi. Bu yüzden her hesap MUTLAKA bir
+      // yönetici/süper yönetici tarafından (Ayarlar → Kullanıcılar veya migrasyon
+      // script'i ile) oluşturulmalı; Firebase Console'dan doğrudan Auth kullanıcısı
+      // açmak artık desteklenmiyor (profilsiz kalır, giriş yapamaz).
       allow create: if isSuperAdmin()
         || (
           isYonetici()
           && sameFirma(request.resource.data.firma)
           && request.resource.data.rol in ['yonetici', 'kontrolcu', 'sayimci']
-        )
-        || (
-          isSignedIn() && request.auth.uid == uid
-          && request.resource.data.rol == 'sayimci'
-          && isNonEmptyString(request.resource.data.firma)
-          && exists(/databases/$(database)/documents/firmalar/$(request.resource.data.firma))
-          && get(/databases/$(database)/documents/firmalar/$(request.resource.data.firma)).data.aktif == true
         );
 
       // Güncelleme: 'firma' alanı SABİT kalmalı (firma değiştirerek başka
       // kiracıya geçmek engellenir); hiçbir yönetici kimseyi 'superadmin'
-      // yapamaz veya bir superadmin'i düzenleyemez.
-      allow update: if isSuperAdmin()
+      // yapamaz veya bir superadmin'i düzenleyemez. Hiçbir admin KENDİ
+      // dokümanını bu yoldan değiştiremez/silemez (kazara kendi rolünü
+      // düşürüp/kendini silip erişimini kaybetmesini önler — client zaten
+      // bunu Ayarlar ekranında engelliyordu, kural seviyesinde de kapatıldı).
+      allow update: if request.auth.uid != uid && (
+        isSuperAdmin()
         || (
           isYonetici()
           && sameFirma(resource.data.firma)
           && request.resource.data.firma == resource.data.firma
           && resource.data.rol != 'superadmin'
           && request.resource.data.rol in ['yonetici', 'kontrolcu', 'sayimci']
-        );
+        )
+      );
 
-      allow delete: if isSuperAdmin()
-        || (isYonetici() && sameFirma(resource.data.firma) && resource.data.rol != 'superadmin');
+      allow delete: if request.auth.uid != uid && (
+        isSuperAdmin()
+        || (isYonetici() && sameFirma(resource.data.firma) && resource.data.rol != 'superadmin')
+      );
     }
 
     // ── sessions/{sessionId} ─────────────────────────────────────────────
@@ -111,8 +120,22 @@ service cloud.firestore {
         allow read: if isSuperAdmin()
           || sameFirma(get(/databases/$(database)/documents/sessions/$(sessionId)).data.firma);
 
+        // Yazma: yönetici (tüm oturumlar) veya sayımcı (sayım ekranından
+        // miktar girer) — kontrolcü SALT-OKUNURDUR, hiçbir sayım sonucunu
+        // değiştiremez (uygulamanın kendi rol tasarımı: kontrolcü sadece
+        // analiz/rapor görür, "Onayla" bile client'ta gizlenmiştir).
+        // Not: Bir sayımcının SADECE kendisine atanan satırlara yazabildiğini
+        // (gorev bazlı) burada tam olarak ispatlamak mümkün değil — rules
+        // dilinde rowId'den hangi sayimciGorevler dokümanına ait olduğunu
+        // sorgu yapmadan bulamıyoruz (get() sadece sabit path alır). Bu,
+        // gorev dokümanlarına deterministik bir id şeması (ör.
+        // `${sessionId}_${sayimciUid}`) eklenerek ileride sıkılaştırılabilir.
         allow write: if isSuperAdmin()
-          || sameFirma(get(/databases/$(database)/documents/sessions/$(sessionId)).data.firma);
+          || (
+            isSignedIn()
+            && sameFirma(get(/databases/$(database)/documents/sessions/$(sessionId)).data.firma)
+            && userRole() in ['yonetici', 'sayimci']
+          );
       }
 
       // ── rowChunks/{chunkId} ── sadece yönetici yazar, aynı get() stratejisi.

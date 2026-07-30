@@ -26,6 +26,7 @@ const useStore = create((set, get) => ({
   userProfile: null,          // /users/{uid} dokümanı
   userRole: null,             // 'yonetici' | 'kontrolcu' | 'sayimci' | 'superadmin'
   profileLoading: false,
+  authError: null,            // profil yüklenemediğinde kullanıcıya gösterilecek mesaj
 
   // ── Firma (çok kiracılı) ───────────────────────────────────────────────────
   firmalar: [],                // firmalar koleksiyonunun tamamı ({id,ad,unvan,sablon,aktif})
@@ -39,7 +40,7 @@ const useStore = create((set, get) => ({
     if (!user) {
       if (resultsUnsub) { resultsUnsub(); resultsUnsub = null }
       set({
-        currentUser: null, userProfile: null, userRole: null, profileLoading: false,
+        currentUser: null, userProfile: null, userRole: null, profileLoading: false, authError: null,
         firmaProfile: null, activeFirma: null,
         users: [], usersLoading: false,
         gorevler: [], gorevlerLoading: false,
@@ -59,32 +60,30 @@ const useStore = create((set, get) => ({
       })
       return
     }
-    set({ profileLoading: true })
+    set({ profileLoading: true, authError: null })
     try {
       const ref  = doc(db, 'users', user.uid)
       const snap = await getDoc(ref)
       let firma
       let rol
+
       if (snap.exists()) {
         const data = snap.data()
         firma = data.firma ?? null
         rol   = data.rol || 'sayimci'
         set({ userProfile: { uid: user.uid, ...data }, userRole: rol })
       } else {
-        // Bootstrap: profili olmayan kullanıcı, Firma Seçimi ekranından
-        // gelen bağlamla varsayılan olarak o firmanın sayımcısı olur.
-        const profile = {
-          email:       user.email,
-          displayName: user.displayName || (user.email || '').split('@')[0],
-          rol:         'sayimci',
-          firma:       selectedFirma || null,
-          createdAt:   serverTimestamp(),
-          createdBy:   user.uid,
-        }
-        await setDoc(ref, profile)
-        firma = profile.firma
-        rol   = 'sayimci'
-        set({ userProfile: { uid: user.uid, ...profile }, userRole: 'sayimci' })
+        // Bu hesap için Firestore'da bir profil yok. Kendi kendine bootstrap
+        // artık YOK (bkz. firestore.rules — herkese açık Email/Şifre kaydı +
+        // self-bootstrap kombinasyonu, herhangi birinin kendini bir firmanın
+        // sayımcısı yapıp o firmanın verisini okumasına izin veriyordu). Bu
+        // hesap bir yönetici/süper yönetici tarafından Ayarlar → Kullanıcılar
+        // (veya migrasyon script'i) ile oluşturulmamış demektir.
+        set({
+          userProfile: null, userRole: null, profileLoading: false,
+          authError: 'Bu hesap için bir kullanıcı profili bulunamadı. Lütfen yöneticinizden hesabınızı oluşturmasını isteyin.',
+        })
+        return
       }
 
       // Firma listesini ve aktif firma profilini yükle
@@ -102,7 +101,7 @@ const useStore = create((set, get) => ({
       set({ firmaProfile: firmaDoc || null })
     } catch (err) {
       devErr('Profil yüklenemedi:', err)
-      set({ userProfile: null, userRole: null })
+      set({ userProfile: null, userRole: null, authError: 'Profiliniz yüklenirken bir hata oluştu. Lütfen tekrar deneyin.' })
     } finally {
       set({ profileLoading: false })
     }
@@ -151,13 +150,15 @@ const useStore = create((set, get) => ({
   users: [],
   usersLoading: false,
 
+  // Not: activeFirma, en az bir firma dokümanı var olduğu sürece süper
+  // yönetici için de her zaman dolar (loadUserProfile bkz.) — bu yüzden tek
+  // bir sorgu yeterli; activeFirma henüz null ise (hiç firma yokken) sorgu
+  // sonucu boş döner, bu doğru/güvenli varsayılandır.
   loadUsers: async () => {
     set({ usersLoading: true })
     try {
-      const { activeFirma, userRole } = get()
-      const q = userRole === 'superadmin' && !activeFirma
-        ? query(collection(db, 'users'), orderBy('createdAt', 'desc'))
-        : query(collection(db, 'users'), where('firma', '==', activeFirma), orderBy('createdAt', 'desc'))
+      const { activeFirma } = get()
+      const q = query(collection(db, 'users'), where('firma', '==', activeFirma), orderBy('createdAt', 'desc'))
       const snap = await getDocs(q)
       set({ users: snap.docs.map(d => ({ uid: d.id, ...d.data() })) })
     } catch (err) {
@@ -293,10 +294,8 @@ const useStore = create((set, get) => ({
   loadSessions: async () => {
     set({ sessionsLoading: true })
     try {
-      const { activeFirma, userRole } = get()
-      const q = userRole === 'superadmin' && !activeFirma
-        ? query(collection(db, 'sessions'), orderBy('createdAt', 'desc'), limit(30))
-        : query(collection(db, 'sessions'), where('firma', '==', activeFirma), orderBy('createdAt', 'desc'), limit(30))
+      const { activeFirma } = get()
+      const q = query(collection(db, 'sessions'), where('firma', '==', activeFirma), orderBy('createdAt', 'desc'), limit(30))
       const snap = await getDocs(q)
       set({ sessions: snap.docs.map(d => ({ id: d.id, ...d.data() })) })
     } catch (err) {

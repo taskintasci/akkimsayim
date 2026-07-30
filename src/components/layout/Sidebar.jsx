@@ -1,7 +1,8 @@
-import { signOut } from 'firebase/auth'
 import { useShallow } from 'zustand/react/shallow'
-import { auth } from '../../firebase/index'
-import useStore, { ROLE_LABELS } from '../../store/useStore'
+import useStore from '../../store/useStore'
+import { SABLON } from '../../constants'
+import FirmaSwitcher from './FirmaSwitcher'
+import UserMenu from './UserMenu'
 
 function NavBtn({ item, activePage, onNavigate }) {
   const active = activePage === item.id
@@ -33,47 +34,39 @@ const YON_KONT = ['yonetici', 'kontrolcu', 'superadmin']
 const MENU = [
   { id: 'giris',        icon: 'history',        label: 'Sayımlar',                roles: YON_KONT, sessionless: true },
   { divider: true,      roles: YON_KONT },
-  { id: 'panel',        icon: 'grid_view',      label: 'Panel',                   roles: YON_KONT, sablon: ['standart'] },
+  { id: 'panel',        icon: 'grid_view',      label: 'Panel',                   roles: YON_KONT, sablon: [SABLON.STANDART] },
   { divider: true,      roles: YON_KONT },
-  { id: 'sayim',        icon: 'fact_check',     label: 'Tüm Stok Sayımı',         roles: YON, sablon: ['standart'] },
-  { id: 'analiz',       icon: 'monitoring',     label: 'Tüm Stok Sayım Analizi',  roles: YON_KONT, sablon: ['standart'] },
-  { id: 'rapor',        icon: 'analytics',      label: 'Tüm Stok Rapor',          roles: YON_KONT, sablon: ['standart'] },
+  { id: 'sayim',        icon: 'fact_check',     label: 'Tüm Stok Sayımı',         roles: YON, sablon: [SABLON.STANDART] },
+  { id: 'analiz',       icon: 'monitoring',     label: 'Tüm Stok Sayım Analizi',  roles: YON_KONT, sablon: [SABLON.STANDART] },
+  { id: 'rapor',        icon: 'analytics',      label: 'Tüm Stok Rapor',          roles: YON_KONT, sablon: [SABLON.STANDART] },
   { divider: true,      roles: YON_KONT },
-  { id: 'kor',          icon: 'visibility_off', label: 'Kör Stok Sayımı',         roles: YON, sablon: ['standart'] },
-  { id: 'koranaliz',    icon: 'query_stats',    label: 'Kör Stok Sayım Analizi',  roles: YON_KONT, sablon: ['standart'] },
-  { id: 'korrapor',     icon: 'summarize',      label: 'Kör Stok Sayım Raporu',   roles: YON_KONT, sablon: ['standart'] },
+  { id: 'kor',          icon: 'visibility_off', label: 'Kör Stok Sayımı',         roles: YON, sablon: [SABLON.STANDART] },
+  { id: 'koranaliz',    icon: 'query_stats',    label: 'Kör Stok Sayım Analizi',  roles: YON_KONT, sablon: [SABLON.STANDART] },
+  { id: 'korrapor',     icon: 'summarize',      label: 'Kör Stok Sayım Raporu',   roles: YON_KONT, sablon: [SABLON.STANDART] },
   { divider: true,      roles: YON },
-  { id: 'hareketlilik', icon: 'trending_up',    label: 'Hareketlilik Sayımı',     roles: YON, sablon: ['standart'] },
-  { id: 'membran',      icon: 'layers',         label: 'Membran Sayımı',          roles: YON, sablon: ['standart'] },
+  { id: 'hareketlilik', icon: 'trending_up',    label: 'Hareketlilik Sayımı',     roles: YON, sablon: [SABLON.STANDART] },
+  { id: 'membran',      icon: 'layers',         label: 'Membran Sayımı',          roles: YON, sablon: [SABLON.STANDART] },
   { divider: true,      roles: YON_KONT },
-  { id: 'epsonpanel',     icon: 'grid_view',       label: 'Panel',                  roles: YON_KONT, sablon: ['wms31'] },
-  { id: 'epsonsayim',     icon: 'fact_check',      label: 'Stok Sayımı',            roles: YON, sablon: ['wms31'] },
-  { id: 'epsonanaliz',    icon: 'monitoring',      label: 'Sayım Analizi',          roles: YON_KONT, sablon: ['wms31'] },
-  { id: 'epsonrapor',     icon: 'analytics',       label: 'Sayım Raporu',           roles: YON_KONT, sablon: ['wms31'] },
-  { id: 'epsonkor',       icon: 'visibility_off',  label: 'Kör Sayımı',             roles: YON, sablon: ['wms31'] },
-  { id: 'epsonkoranaliz', icon: 'query_stats',     label: 'Kör Sayım Analizi',      roles: YON_KONT, sablon: ['wms31'] },
-  { id: 'epsonkorrapor',  icon: 'summarize',       label: 'Kör Sayım Raporu',       roles: YON_KONT, sablon: ['wms31'] },
+  { id: 'epsonpanel',     icon: 'grid_view',       label: 'Panel',                  roles: YON_KONT, sablon: [SABLON.WMS31] },
+  { id: 'epsonsayim',     icon: 'fact_check',      label: 'Stok Sayımı',            roles: YON, sablon: [SABLON.WMS31] },
+  { id: 'epsonanaliz',    icon: 'monitoring',      label: 'Sayım Analizi',          roles: YON_KONT, sablon: [SABLON.WMS31] },
+  { id: 'epsonrapor',     icon: 'analytics',       label: 'Sayım Raporu',           roles: YON_KONT, sablon: [SABLON.WMS31] },
+  { id: 'epsonkor',       icon: 'visibility_off',  label: 'Kör Sayımı',             roles: YON, sablon: [SABLON.WMS31] },
+  { id: 'epsonkoranaliz', icon: 'query_stats',     label: 'Kör Sayım Analizi',      roles: YON_KONT, sablon: [SABLON.WMS31] },
+  { id: 'epsonkorrapor',  icon: 'summarize',       label: 'Kör Sayım Raporu',       roles: YON_KONT, sablon: [SABLON.WMS31] },
   { divider: true,      roles: YON_KONT },
   { id: 'sayimciekran', icon: 'swipe',          label: 'Sayımcı Ekranı',          roles: YON_KONT },
 ]
 
-export default function Sidebar({ activePage, onNavigate, onSettings, className = 'flex' }) {
-  const { activeSessionId, setActiveSession, userProfile, userRole, firmalar, firmaProfile, activeFirma, setActiveFirma } = useStore(
+export default function Sidebar({ activePage, onNavigate, className = 'flex' }) {
+  const { activeSessionId, setActiveSession, userRole, firmalar, firmaProfile } = useStore(
     useShallow(s => ({
-      activeSessionId: s.activeSessionId, setActiveSession: s.setActiveSession, userProfile: s.userProfile, userRole: s.userRole,
-      firmalar: s.firmalar, firmaProfile: s.firmaProfile, activeFirma: s.activeFirma, setActiveFirma: s.setActiveFirma,
+      activeSessionId: s.activeSessionId, setActiveSession: s.setActiveSession, userRole: s.userRole,
+      firmalar: s.firmalar, firmaProfile: s.firmaProfile,
     }))
   )
 
-  const initials = (userProfile?.displayName || userProfile?.email || '??')
-    .split(/[\s.@]+/).filter(Boolean).slice(0, 2).map(s => s[0]?.toUpperCase()).join('')
-
   const currentSablon = firmaProfile?.sablon
-
-  function handleFirmaSwitch(firmaId) {
-    setActiveFirma(firmaId)
-    onNavigate('giris')
-  }
 
   function handleLogoClick() {
     setActiveSession(null)
@@ -111,13 +104,10 @@ export default function Sidebar({ activePage, onNavigate, onSettings, className 
       {userRole === 'superadmin' && firmalar.length > 0 && (
         <div className="px-5 pt-3 pb-1">
           <label className="block text-[10px] text-slate-400 mono uppercase tracking-wide mb-1">Firma (görünüm)</label>
-          <select
-            value={activeFirma || ''}
-            onChange={e => handleFirmaSwitch(e.target.value)}
+          <FirmaSwitcher
+            onNavigate={onNavigate}
             className="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-[12px] text-slate-700 focus:outline-none focus:border-blue-400"
-          >
-            {firmalar.map(f => <option key={f.id} value={f.id}>{f.ad}</option>)}
-          </select>
+          />
         </div>
       )}
 
@@ -132,22 +122,7 @@ export default function Sidebar({ activePage, onNavigate, onSettings, className 
 
       {/* Kullanıcı */}
       <div className="px-5 pb-3 pt-3 border-t border-slate-100">
-        <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-[11px] font-bold text-slate-600 shrink-0">
-            {initials || '??'}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[12px] font-semibold text-slate-700 truncate">{userProfile?.displayName || userProfile?.email || 'Kullanıcı'}</p>
-            <p className="text-[11px] text-slate-400 truncate">{ROLE_LABELS[userRole] || '—'}</p>
-          </div>
-          <button
-            onClick={() => signOut(auth)}
-            title="Çıkış Yap"
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors shrink-0"
-          >
-            <span className="ms" style={{ fontSize: 16 }}>logout</span>
-          </button>
-        </div>
+        <UserMenu variant="sidebar" />
 
         {/* Ayarlar linki — yönetici ve süper yönetici */}
         {(userRole === 'yonetici' || userRole === 'superadmin') && (
