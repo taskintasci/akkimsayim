@@ -1,8 +1,9 @@
 import { useRef, useState } from 'react'
 import useStore from '../../store/useStore'
+import { SABLON } from '../../constants'
 
 export default function ExcelYukle({ onNavigate }) {
-  const { rows, importRows, importFormat } = useStore()
+  const { rows, importRows, importFormat, firmaProfile } = useStore()
   const inputRef = useRef()
   const [dragging, setDragging] = useState(false)
 
@@ -38,7 +39,11 @@ export default function ExcelYukle({ onNavigate }) {
   }
 
   const formatLabel = importFormat === 'rapor5' ? 'RAPOR5' : importFormat === 'sku' ? 'SKU Listesi' : importFormat === 'wms31' ? 'WMS_Rapor_31' : '—'
-  const isWms31 = importFormat === 'wms31'
+  // Hangi formatın beklendiği firmanın şablonundan belirlenir — importFormat
+  // sadece dosya yüklendikten SONRA dolar, yükleme öncesi ekranda (başlık,
+  // desteklenen sütunlar kartı) bu yüzden importFormat değil firmaProfile.sablon
+  // esas alınmalı, aksi halde her firma yükleme öncesi "RAPOR5 Yükle" görür.
+  const isWms31 = firmaProfile?.sablon === SABLON.WMS31
 
   return (
     <div className="max-w-2xl">

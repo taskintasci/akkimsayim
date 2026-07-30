@@ -1,7 +1,6 @@
 import { useShallow } from 'zustand/react/shallow'
 import useStore from '../../store/useStore'
 import { SABLON } from '../../constants'
-import FirmaSwitcher from './FirmaSwitcher'
 import UserMenu from './UserMenu'
 
 function NavBtn({ item, activePage, onNavigate }) {
@@ -59,10 +58,10 @@ const MENU = [
 ]
 
 export default function Sidebar({ activePage, onNavigate, className = 'flex' }) {
-  const { activeSessionId, setActiveSession, userRole, firmalar, firmaProfile } = useStore(
+  const { activeSessionId, setActiveSession, userRole, firmaProfile } = useStore(
     useShallow(s => ({
       activeSessionId: s.activeSessionId, setActiveSession: s.setActiveSession, userRole: s.userRole,
-      firmalar: s.firmalar, firmaProfile: s.firmaProfile,
+      firmaProfile: s.firmaProfile,
     }))
   )
 
@@ -99,17 +98,6 @@ export default function Sidebar({ activePage, onNavigate, className = 'flex' }) 
           <p className="ml-9 text-[11px] text-slate-400 truncate">{firmaProfile.ad}</p>
         )}
       </div>
-
-      {/* Süper yönetici: firma switcher */}
-      {userRole === 'superadmin' && firmalar.length > 0 && (
-        <div className="px-5 pt-3 pb-1">
-          <label className="block text-[10px] text-slate-400 mono uppercase tracking-wide mb-1">Firma (görünüm)</label>
-          <FirmaSwitcher
-            onNavigate={onNavigate}
-            className="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-[12px] text-slate-700 focus:outline-none focus:border-blue-400"
-          />
-        </div>
-      )}
 
       {/* Main nav */}
       <nav className="flex-1 px-3 py-3 overflow-y-auto space-y-0.5">
