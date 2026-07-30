@@ -115,7 +115,7 @@ export default function EpsonSayim({ onNavigate }) {
         {/* Satır 1: Başlık + Aksiyon Butonları */}
         <div className="flex items-center justify-between mb-3">
           <div>
-            <h1 className="text-[15px] font-bold text-slate-900">Epson Stok Sayımı</h1>
+            <h1 className="text-[15px] font-bold text-slate-900">WMS Antrepo Stok Sayımı</h1>
             <p className="text-[11.5px] text-slate-400 mono">
               {rows.length.toLocaleString('tr')} kalem
               {counted.length > 0 && ` · %${rows.length ? Math.round(counted.length / rows.length * 100) : 0} sayıldı`}

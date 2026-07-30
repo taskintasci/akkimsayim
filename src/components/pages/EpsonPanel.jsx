@@ -40,7 +40,7 @@ export default function EpsonPanel({ onNavigate }) {
     <div className="flex flex-col gap-5">
       {/* Başlık */}
       <div>
-        <h1 className="text-xl font-bold text-slate-900">Epson Sayım Paneli</h1>
+        <h1 className="text-xl font-bold text-slate-900">WMS Antrepo Sayım Paneli</h1>
         <p className="text-[13px] text-slate-500 mt-0.5">
           {session.type}{session.depoAdi ? ` · ${session.depoAdi}` : ''}{tarihStr ? ` · ${tarihStr}` : ''}
         </p>

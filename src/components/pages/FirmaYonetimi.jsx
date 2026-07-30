@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import useStore from '../../store/useStore'
 
 const SABLON_OPTIONS = [
-  { id: 'standart', label: 'Standart (RAPOR5 / SKU)', desc: 'Tüm Stok Sayımı, Kör Sayım, Hareketlilik, Membran sayfa ailesi' },
-  { id: 'wms31',    label: 'WMS_Rapor_31',            desc: 'Palet barkodu / beyanname bazlı depo sayım sayfa ailesi' },
+  { id: 'standart', label: 'LOS Sayım',          desc: 'Tüm Stok Sayımı, Kör Sayım, Hareketlilik, Membran sayfa ailesi (RAPOR5 / SKU)' },
+  { id: 'wms31',    label: 'WMS Antrepo Sayım',  desc: 'Palet barkodu / beyanname bazlı depo sayım sayfa ailesi (WMS_Rapor_31)' },
 ]
 
 const EMPTY_FORM = { ad: '', unvan: '', sablon: 'standart' }

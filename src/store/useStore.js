@@ -54,7 +54,7 @@ const useStore = create((set, get) => ({
           type: 'Yıl Sonu Sayımı', depoAdi: '',
           sayimBasligi: 'YIL SONU SAYIM',
           tarih: new Date().toISOString().slice(0, 10),
-          sorumlu: '', tur: 1,
+          sorumlu: '',
         },
       })
       return
@@ -64,10 +64,12 @@ const useStore = create((set, get) => ({
       const ref  = doc(db, 'users', user.uid)
       const snap = await getDoc(ref)
       let firma
+      let rol
       if (snap.exists()) {
         const data = snap.data()
         firma = data.firma ?? null
-        set({ userProfile: { uid: user.uid, ...data }, userRole: data.rol || 'sayimci' })
+        rol   = data.rol || 'sayimci'
+        set({ userProfile: { uid: user.uid, ...data }, userRole: rol })
       } else {
         // Bootstrap: profili olmayan kullanıcı, Firma Seçimi ekranından
         // gelen bağlamla varsayılan olarak o firmanın sayımcısı olur.
@@ -81,13 +83,20 @@ const useStore = create((set, get) => ({
         }
         await setDoc(ref, profile)
         firma = profile.firma
+        rol   = 'sayimci'
         set({ userProfile: { uid: user.uid, ...profile }, userRole: 'sayimci' })
       }
 
       // Firma listesini ve aktif firma profilini yükle
       await get().loadFirmalar()
       const firmalar = get().firmalar
-      const effectiveFirma = firma || firmalar[0]?.id || null // superadmin: ilk firmayı varsayılan seç
+      // Süper yönetici firmaya bağlı değildir (firma:null) — bu durumda Firma
+      // Seçimi ekranında az önce seçilen firma esas alınır (geçerli/aktif ise),
+      // aksi halde alfabetik ilk firmaya düşülür. Firma-bağlı kullanıcılarda
+      // (firma dolu) seçim ekranı zaten kozmetiktir, gerçek yetki profildeki
+      // sabit 'firma' alanından gelir.
+      const seciliGecerli = selectedFirma && firmalar.some(f => f.id === selectedFirma && f.aktif)
+      const effectiveFirma = firma || (rol === 'superadmin' && seciliGecerli ? selectedFirma : null) || firmalar[0]?.id || null
       set({ activeFirma: effectiveFirma })
       const firmaDoc = firmalar.find(f => f.id === effectiveFirma)
       set({ firmaProfile: firmaDoc || null })
@@ -110,10 +119,18 @@ const useStore = create((set, get) => ({
   },
 
   // Süper yönetici: hangi firma olarak "davranıldığını" değiştirir —
-  // sessions/users listeleri bu firmaya göre yeniden yüklenir.
+  // sessions/users listeleri bu firmaya göre yeniden yüklenir. Önceki
+  // firmanın aktif oturum/satır/sonuç verisi tamamen temizlenir (aksi halde
+  // "Aktif Sayım" kartında bir önceki firmanın son oturumu görünmeye devam eder).
   setActiveFirma: async (firmaId) => {
+    if (resultsUnsub) { resultsUnsub(); resultsUnsub = null }
     const firmaDoc = get().firmalar.find(f => f.id === firmaId)
-    set({ activeFirma: firmaId, firmaProfile: firmaDoc || null, activeSessionId: null })
+    set({
+      activeFirma: firmaId, firmaProfile: firmaDoc || null,
+      activeSessionId: null, session: null,
+      rows: [], results: {}, korCodes: [], korMatched: [],
+      manualRows: [], korManualRows: [], rowsLoading: false, resultsLoading: false,
+    })
     await get().loadSessions()
   },
 
@@ -305,7 +322,6 @@ const useStore = create((set, get) => ({
     sayimBasligi: 'YIL SONU SAYIM',
     tarih: new Date().toISOString().slice(0, 10),
     sorumlu: '',
-    tur: 1,
   },
 
   // ── Kör Sayım listesi ─────────────────────────────────────────────────────
@@ -359,7 +375,6 @@ const useStore = create((set, get) => ({
           sayimBasligi: sessionData.sayimBasligi || sessionData.type || 'YIL SONU SAYIM',
           tarih:        sessionData.tarih || new Date().toISOString().slice(0, 10),
           sorumlu:      '',
-          tur:          sessionData.tur || 1,
         },
       })
 
@@ -426,7 +441,6 @@ const useStore = create((set, get) => ({
       kalemSayisi:  0,
       tamamlanan:   0,
       fark:         0,
-      tur:          1,
       rowsUploaded: false,
       firma:        activeFirma,
       createdBy:    currentUser?.uid || null,
@@ -451,7 +465,6 @@ const useStore = create((set, get) => ({
         sayimBasligi: data.sayimBasligi,
         tarih:        data.tarih,
         sorumlu:      '',
-        tur:          1,
       },
     }))
 

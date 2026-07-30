@@ -28,6 +28,9 @@ const EpsonKorSayim       = lazy(() => import('./components/pages/EpsonKorSayim'
 const EpsonKorSayimRapor  = lazy(() => import('./components/pages/EpsonKorSayimRapor'))
 const FirmaYonetimi       = lazy(() => import('./components/pages/FirmaYonetimi'))
 
+// Oturum seçilmeden de erişilebilen sayfalar (Sidebar/TopBar kabuğu içinde)
+const SESSIONLESS = ['giris', 'ayarlar', 'firmayonetimi']
+
 const HEPSI = ['yonetici', 'kontrolcu', 'sayimci']
 const YON       = ['yonetici', 'superadmin']              // yönetici yetkisi (süper yönetici her firmayı yönetebilir)
 const YON_KONT  = ['yonetici', 'kontrolcu', 'superadmin']  // yönetici + kontrolcü yetkisi
@@ -35,6 +38,7 @@ const FIRMA_KEY = 'sayimplani_secili_firma'
 
 // sablon: hangi firma şablonunda görünür (belirtilmemişse şablondan bağımsız/paylaşılan sayfa)
 const PAGES = {
+  giris:     { Component: Giris,            fullHeight: true,  roles: YON_KONT },
   panel:     { Component: Panel,            fullHeight: false, roles: YON_KONT, sablon: ['standart'] },
   upload:    { Component: ExcelYukle,       fullHeight: false, roles: YON },
   sayim:     { Component: StokSayim,        fullHeight: true,  roles: YON, sablon: ['standart'] },
@@ -135,6 +139,17 @@ export default function App() {
     if (!uygun) setActivePage(firmaProfile.sablon === 'wms31' ? 'epsonpanel' : 'panel')
   }, [firmaProfile?.sablon])
 
+  // Aktif oturum yoksa (henüz seçilmemiş veya "Sayım Değiştir"/firma switcher
+  // ile temizlenmiş) ve oturum gerektirmeyen bir sayfada değilsek, güvenli
+  // varsayılan olan Sayımlar listesine dön. Sidebar'daki asıl geçişler zaten
+  // kendi handler'larında onNavigate('giris')'i senkron çağırıyor — bu effect
+  // sadece ilk yükleme/güvenlik ağı içindir.
+  useEffect(() => {
+    if (userRole === 'sayimci') return
+    if (activeSessionId) return
+    if (!SESSIONLESS.includes(activePage)) setActivePage('giris')
+  }, [activeSessionId, userRole, activePage])
+
   // Auth durumu henüz belli değil
   if (firebaseUser === undefined) return <Spinner />
 
@@ -167,19 +182,11 @@ export default function App() {
     )
   }
 
-  // Yönetici/Kontrolcü/Süper Yönetici: oturum seçilmemiş
-  if (!activeSessionId) {
-    return (
-      <Suspense fallback={<Spinner />}>
-        <Giris onNavigate={setActivePage} />
-      </Suspense>
-    )
-  }
-
-  const page = PAGES[activePage] || PAGES.panel
+  const page = PAGES[activePage] || PAGES.giris
   const { Component: PageComponent, fullHeight, roles, sablon } = page
   const sablonUygun = !sablon || !firmaProfile || sablon.includes(firmaProfile.sablon)
-  const yetkili = roles.includes(userRole) && sablonUygun
+  const sessionUygun = SESSIONLESS.includes(activePage) || !!activeSessionId
+  const yetkili = roles.includes(userRole) && sablonUygun && sessionUygun
 
   return (
     <div className="h-screen flex overflow-hidden bg-slate-100">

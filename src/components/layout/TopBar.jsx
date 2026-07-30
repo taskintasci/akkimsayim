@@ -1,6 +1,7 @@
 import useStore from '../../store/useStore'
 
 const PAGE_NAMES = {
+  giris: 'Sayımlar',
   panel: 'Panel',
   upload: 'Excel Yükle',
   sayim: 'Stok Sayımı',
@@ -13,10 +14,18 @@ const PAGE_NAMES = {
   hareketlilik: 'Hareketlilik Sayımı',
   membran: 'Membran Sayımı',
   sayimciekran: 'Sayımcı Ekranı',
+  epsonpanel: 'Panel',
+  epsonsayim: 'Stok Sayımı',
+  epsonanaliz: 'Sayım Analizi',
+  epsonrapor: 'Sayım Raporu',
+  epsonkor: 'Kör Sayım',
+  epsonkoranaliz: 'Kör Sayım Analizi',
+  epsonkorrapor: 'Kör Sayım Raporu',
+  firmayonetimi: 'Firma Yönetimi',
 }
 
 export default function TopBar({ activePage, onMenu }) {
-  const session = useStore(s => s.session)
+  const session = useStore(s => s.session) || {}
   const pageName = PAGE_NAMES[activePage] || activePage
 
   return (

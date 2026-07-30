@@ -63,15 +63,15 @@ export default function EpsonKorSayimRapor({ onNavigate }) {
     return (
       <div className="flex flex-col gap-5">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Epson Kör Stok Sayım Raporu</h1>
+          <h1 className="text-xl font-bold text-slate-900">WMS Antrepo Kör Stok Sayım Raporu</h1>
           <p className="text-[13px] text-slate-500 mt-0.5">Kör sayım listesi henüz oluşturulmadı</p>
         </div>
         <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
           <span className="ms text-slate-300 mb-3 block" style={{ fontSize: 48 }}>summarize</span>
           <div className="text-[14px] font-semibold text-slate-700 mb-1">Rapor Oluşturulamadı</div>
-          <div className="text-[13px] text-slate-400 mb-4">Önce Epson Kör Sayımı sayfasından liste oluşturun</div>
+          <div className="text-[13px] text-slate-400 mb-4">Önce WMS Antrepo Kör Sayımı sayfasından liste oluşturun</div>
           <button onClick={() => onNavigate('epsonkor')} className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-semibold hover:bg-blue-700">
-            <span className="ms" style={{ fontSize: 16 }}>visibility_off</span> Epson Kör Sayım Sayfasına Git
+            <span className="ms" style={{ fontSize: 16 }}>visibility_off</span> WMS Antrepo Kör Sayım Sayfasına Git
           </button>
         </div>
       </div>
@@ -83,7 +83,7 @@ export default function EpsonKorSayimRapor({ onNavigate }) {
       {/* Başlık */}
       <div className="flex flex-wrap items-center justify-between gap-y-2">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Epson Kör Stok Sayım Raporu</h1>
+          <h1 className="text-xl font-bold text-slate-900">WMS Antrepo Kör Stok Sayım Raporu</h1>
           <p className="text-[13px] text-slate-500 mt-0.5">Onaydan önce tüm farklılıkları inceleyin</p>
         </div>
         <div className="flex flex-wrap gap-2 no-print">
@@ -127,7 +127,7 @@ export default function EpsonKorSayimRapor({ onNavigate }) {
           <div className="text-[14px] font-semibold text-slate-700">Farklılık bulunamadı</div>
           <div className="text-[13px] text-slate-400 mt-1">
             {counted.length === 0
-              ? 'Henüz sayım yapılmamış. Epson Kör Sayım sayfasından başlayın.'
+              ? 'Henüz sayım yapılmamış. WMS Antrepo Kör Sayım sayfasından başlayın.'
               : 'Tüm sayılan kalemler sistem miktarıyla eşleşiyor.'}
           </div>
         </div>

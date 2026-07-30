@@ -196,8 +196,8 @@ function KullaniciTab() {
 
 // ── Ana Sayfa ─────────────────────────────────────────────────────────────
 export default function Ayarlar() {
-  const { session, setSession, userRole } = useStore()
-  const [tab, setTab] = useState('sayim')
+  const { session, setSession, userRole, activeSessionId } = useStore()
+  const [tab, setTab] = useState(activeSessionId ? 'sayim' : 'kullanicilar')
   const [saved, setSaved] = useState(false)
 
   function handleSave() {
@@ -207,18 +207,27 @@ export default function Ayarlar() {
 
   const isYonetici = userRole === 'yonetici' || userRole === 'superadmin'
   const tabs = [
-    { id: 'sayim',      label: 'Sayım Ayarları', icon: 'tune' },
+    ...(activeSessionId ? [{ id: 'sayim', label: 'Sayım Ayarları', icon: 'tune' }] : []),
     ...(isYonetici ? [{ id: 'kullanicilar', label: 'Kullanıcılar', icon: 'group' }] : []),
   ]
+
+  useEffect(() => {
+    if (!activeSessionId && tab === 'sayim') setTab('kullanicilar')
+  }, [activeSessionId, tab])
 
   return (
     <div className="max-w-4xl">
       <h1 className="text-2xl font-bold text-slate-800 mb-1">Ayarlar</h1>
       <p className="text-sm text-slate-500 mb-5">
-        {tab === 'sayim' ? 'Aktif sayım oturumu bilgilerini düzenleyin.' : 'Kullanıcı hesapları oluşturun ve rollerini yönetin.'}
+        {tab === 'sayim'
+          ? 'Aktif sayım oturumu bilgilerini düzenleyin.'
+          : tab === 'kullanicilar'
+          ? 'Kullanıcı hesapları oluşturun ve rollerini yönetin.'
+          : 'Bu bölüme erişmek için önce bir sayım oturumu seçin.'}
       </p>
 
       {/* Tab bar */}
+      {tabs.length > 0 && (
       <div className="flex gap-1 mb-6 bg-slate-100 p-1 rounded-xl w-fit">
         {tabs.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
@@ -231,6 +240,13 @@ export default function Ayarlar() {
           </button>
         ))}
       </div>
+      )}
+
+      {tabs.length === 0 && (
+        <div className="bg-white rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-400 max-w-lg">
+          Bu bölüme erişmek için önce bir sayım oturumu seçin.
+        </div>
+      )}
 
       {/* Tab içerikleri */}
       {tab === 'sayim' && (
@@ -248,12 +264,6 @@ export default function Ayarlar() {
               onChange={e => setSession({ sayimBasligi: e.target.value })}
               placeholder="Örn: YIL SONU SAYIM"
               className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200 transition-colors" />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Sayım Turu</label>
-            <input type="number" min={1} max={10} value={session.tur || 1}
-              onChange={e => setSession({ tur: Number(e.target.value) })}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm text-slate-800 mono focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200 transition-colors" />
           </div>
           <div>
             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Sorumlu Kişi</label>

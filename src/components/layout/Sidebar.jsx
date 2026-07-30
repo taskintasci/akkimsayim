@@ -31,6 +31,8 @@ const YON_KONT = ['yonetici', 'kontrolcu', 'superadmin']
 // Menü öğeleri — her birinin hangi rollere ve hangi firma şablonuna
 // görüneceği tanımlı. sablon belirtilmemişse şablondan bağımsız (paylaşılan).
 const MENU = [
+  { id: 'giris',        icon: 'history',        label: 'Sayımlar',                roles: YON_KONT, sessionless: true },
+  { divider: true,      roles: YON_KONT },
   { id: 'panel',        icon: 'grid_view',      label: 'Panel',                   roles: YON_KONT, sablon: ['standart'] },
   { divider: true,      roles: YON_KONT },
   { id: 'sayim',        icon: 'fact_check',     label: 'Tüm Stok Sayımı',         roles: YON, sablon: ['standart'] },
@@ -54,24 +56,39 @@ const MENU = [
   { divider: true,      roles: YON_KONT },
   { id: 'sayimciekran', icon: 'swipe',          label: 'Sayımcı Ekranı',          roles: YON_KONT },
   { divider: true,      roles: ['superadmin'] },
-  { id: 'firmayonetimi', icon: 'domain',        label: 'Firma Yönetimi',          roles: ['superadmin'] },
+  { id: 'firmayonetimi', icon: 'domain',        label: 'Firma Yönetimi',          roles: ['superadmin'], sessionless: true },
 ]
 
 export default function Sidebar({ activePage, onNavigate, onSettings, className = 'flex' }) {
-  const { session, setActiveSession, userProfile, userRole, firmalar, firmaProfile, activeFirma, setActiveFirma } = useStore(
+  const { session, activeSessionId, setActiveSession, userProfile, userRole, firmalar, firmaProfile, activeFirma, setActiveFirma } = useStore(
     useShallow(s => ({
-      session: s.session, setActiveSession: s.setActiveSession, userProfile: s.userProfile, userRole: s.userRole,
+      session: s.session, activeSessionId: s.activeSessionId, setActiveSession: s.setActiveSession, userProfile: s.userProfile, userRole: s.userRole,
       firmalar: s.firmalar, firmaProfile: s.firmaProfile, activeFirma: s.activeFirma, setActiveFirma: s.setActiveFirma,
     }))
   )
+  const aktifSayim = session || {}
 
   const initials = (userProfile?.displayName || userProfile?.email || '??')
     .split(/[\s.@]+/).filter(Boolean).slice(0, 2).map(s => s[0]?.toUpperCase()).join('')
 
   const currentSablon = firmaProfile?.sablon
 
-  // Rol + şablon filtrelemesi, ardından ardışık/baştaki divider'ları temizle
-  const visible = MENU.filter(m => m.roles.includes(userRole) && (!m.sablon || !currentSablon || m.sablon.includes(currentSablon)))
+  function handleSayimDegistir() {
+    setActiveSession(null)
+    onNavigate('giris')
+  }
+
+  function handleFirmaSwitch(firmaId) {
+    setActiveFirma(firmaId)
+    onNavigate('giris')
+  }
+
+  // Rol + şablon + oturum-bağımlılığı filtrelemesi, ardından ardışık/baştaki divider'ları temizle
+  const visible = MENU.filter(m =>
+    m.roles.includes(userRole) &&
+    (!m.sablon || !currentSablon || m.sablon.includes(currentSablon)) &&
+    (m.sessionless || activeSessionId)
+  )
   const cleaned = visible.filter((m, i) => {
     if (!m.divider) return true
     const prev = visible[i - 1]
@@ -92,11 +109,11 @@ export default function Sidebar({ activePage, onNavigate, onSettings, className 
           <p className="ml-9 text-[11px] text-slate-400 truncate">{firmaProfile.ad}</p>
         )}
         <button
-          onClick={() => setActiveSession(null)}
+          onClick={handleSayimDegistir}
           className="ml-9 flex items-center gap-1 text-[11px] text-blue-600 hover:underline mono mt-0.5"
         >
           <span className="ms" style={{ fontSize: 12 }}>swap_horiz</span>
-          {session.type || 'Sayım Değiştir'}
+          {aktifSayim.type || 'Sayım Değiştir'}
         </button>
       </div>
 
@@ -106,7 +123,7 @@ export default function Sidebar({ activePage, onNavigate, onSettings, className 
           <label className="block text-[10px] text-slate-400 mono uppercase tracking-wide mb-1">Firma (görünüm)</label>
           <select
             value={activeFirma || ''}
-            onChange={e => setActiveFirma(e.target.value)}
+            onChange={e => handleFirmaSwitch(e.target.value)}
             className="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-[12px] text-slate-700 focus:outline-none focus:border-blue-400"
           >
             {firmalar.map(f => <option key={f.id} value={f.id}>{f.ad}</option>)}
@@ -127,8 +144,8 @@ export default function Sidebar({ activePage, onNavigate, onSettings, className 
       <div className="px-5 pb-3 pt-3 border-t border-slate-100">
         <div className="bg-slate-50 rounded-lg p-2.5 mb-3">
           <p className="text-[10px] text-slate-400 mono uppercase tracking-wide">Aktif Sayım</p>
-          <p className="text-[12px] font-semibold text-slate-700 mt-0.5 truncate">{session.type || '—'}</p>
-          <p className="text-[11px] text-slate-400 mono truncate">{session.depoAdi || '—'}</p>
+          <p className="text-[12px] font-semibold text-slate-700 mt-0.5 truncate">{aktifSayim.type || '—'}</p>
+          <p className="text-[11px] text-slate-400 mono truncate">{aktifSayim.depoAdi || '—'}</p>
         </div>
         <div className="flex items-center gap-2.5">
           <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-[11px] font-bold text-slate-600 shrink-0">

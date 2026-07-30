@@ -109,7 +109,7 @@ export default function EpsonRapor({ onNavigate }) {
       {/* Başlık */}
       <div className="flex flex-wrap items-center justify-between gap-y-2">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Epson Mutabakat Raporu</h1>
+          <h1 className="text-xl font-bold text-slate-900">WMS Antrepo Mutabakat Raporu</h1>
           <p className="text-[13px] text-slate-500 mt-0.5">Onaydan önce tüm farklılıkları inceleyin</p>
         </div>
         <div className="flex flex-wrap gap-2 no-print">
@@ -167,7 +167,7 @@ export default function EpsonRapor({ onNavigate }) {
           <div className="text-[14px] font-semibold text-slate-700">Farklılık bulunamadı</div>
           <div className="text-[13px] text-slate-400 mt-1">
             {counted.length === 0
-              ? 'Henüz sayım yapılmamış. Epson Stok Sayımı sayfasından başlayın.'
+              ? 'Henüz sayım yapılmamış. WMS Antrepo Stok Sayımı sayfasından başlayın.'
               : 'Tüm sayılan kalemler sistem miktarıyla eşleşiyor.'}
           </div>
         </div>

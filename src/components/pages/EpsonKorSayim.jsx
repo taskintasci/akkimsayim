@@ -125,7 +125,7 @@ export default function EpsonKorSayim({ onNavigate }) {
         {/* Satır 1: Başlık + Aksiyon */}
         <div className="flex items-center justify-between mb-3">
           <div>
-            <h1 className="text-[15px] font-bold text-slate-900">Epson Kör Stok Sayımı</h1>
+            <h1 className="text-[15px] font-bold text-slate-900">WMS Antrepo Kör Stok Sayımı</h1>
             <p className="text-[11.5px] text-slate-400 mono">
               {korMatched.length > 0
                 ? `${korMatched.length.toLocaleString('tr')} kalem · %${Math.round(counted.length / korMatched.length * 100)} sayıldı${diffCount > 0 ? ` · ${diffCount} fark` : ''}`

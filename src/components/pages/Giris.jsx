@@ -1,6 +1,4 @@
 import { useState, useEffect } from 'react'
-import { signOut } from 'firebase/auth'
-import { auth } from '../../firebase/index'
 import useStore from '../../store/useStore'
 
 const SESSION_TYPES = [
@@ -26,7 +24,7 @@ function StatusBadge({ durum }) {
 }
 
 export default function Giris({ onNavigate }) {
-  const { sessions, sessionsLoading, loadSessions, setActiveSession, createSession, deleteSession, currentUser, userRole, firmaProfile } = useStore()
+  const { sessions, sessionsLoading, loadSessions, setActiveSession, createSession, deleteSession, userRole, firmaProfile } = useStore()
   const isYonetici = userRole === 'yonetici' || userRole === 'superadmin'
   const panelRoute = firmaProfile?.sablon === 'wms31' ? 'epsonpanel' : 'panel'
   const [selectedId, setSelectedId] = useState(null)
@@ -38,9 +36,8 @@ export default function Giris({ onNavigate }) {
   const [depoAdi, setDepoAdi] = useState('')
   const [tarih, setTarih] = useState(new Date().toISOString().slice(0, 10))
 
-  function handleDevamEt() {
-    if (!selectedId) return
-    setActiveSession(selectedId)
+  function handleGir(id) {
+    setActiveSession(id)
     onNavigate(panelRoute)
   }
 
@@ -56,26 +53,7 @@ export default function Giris({ onNavigate }) {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-slate-100">
-      {/* Logo bar */}
-      <div className="flex items-center justify-between px-4 sm:px-10 pt-7 pb-5 bg-white border-b border-slate-200">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center">
-            <span className="ms text-white" style={{ fontSize: 20 }}>warehouse</span>
-          </div>
-          <span className="text-slate-900 font-bold text-sm leading-tight tracking-tight">Sayım Planı</span>
-        </div>
-        <div className="flex items-center gap-3">
-          {currentUser && <span className="text-slate-400 text-xs mono">{currentUser.email}</span>}
-          <button
-            onClick={() => signOut(auth)}
-            className="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 rounded-lg text-slate-500 hover:text-slate-700 hover:border-slate-300 text-xs transition-colors"
-          >
-            <span className="ms" style={{ fontSize: 15 }}>logout</span> Çıkış
-          </button>
-        </div>
-      </div>
-
+    <div className="flex flex-col h-full overflow-hidden bg-slate-100">
       {/* Two-panel body */}
       <div className="flex flex-1 overflow-hidden">
 
@@ -116,8 +94,9 @@ export default function Giris({ onNavigate }) {
                 return (
                   <div
                     key={s.id}
+                    onDoubleClick={() => handleGir(s.id)}
                     className={
-                      'w-full text-left rounded-xl p-4 border transition-all ' +
+                      'w-full text-left rounded-xl p-4 border transition-all cursor-pointer ' +
                       (selectedId === s.id
                         ? 'bg-blue-50 border-blue-400 ring-1 ring-blue-400'
                         : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm')
@@ -177,22 +156,18 @@ export default function Giris({ onNavigate }) {
                         </div>
                       )}
                     </button>
+                    <button
+                      onClick={e => { e.stopPropagation(); handleGir(s.id) }}
+                      className="w-full mt-3 py-2 bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-semibold rounded-lg text-xs transition-all flex items-center justify-center gap-1.5"
+                    >
+                      <span className="ms" style={{ fontSize: 15 }}>play_arrow</span>
+                      Devam Et
+                    </button>
                   </div>
                 )
               })}
             </div>
           )}
-
-          <div className="py-5 mt-auto">
-            <button
-              onClick={handleDevamEt}
-              disabled={!selectedId}
-              className="w-full py-3 bg-blue-600 hover:bg-blue-700 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl text-sm transition-all flex items-center justify-center gap-2"
-            >
-              <span className="ms">play_arrow</span>
-              Devam Et
-            </button>
-          </div>
         </div>
 
         {/* Sağ panel: Yeni Sayım — yönetici ve süper yönetici */}
