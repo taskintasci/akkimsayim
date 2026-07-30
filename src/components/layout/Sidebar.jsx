@@ -157,7 +157,6 @@ export default function Sidebar({ activePage, onNavigate, onSettings, className 
           >
             <span className="ms" style={{ fontSize: 15 }}>settings</span>
             Ayarlar
-            <span className="ml-auto text-[10px] text-slate-400">{userRole === 'superadmin' ? '+ Kullanıcılar + Firmalar' : '+ Kullanıcılar'}</span>
           </button>
         )}
       </div>
