@@ -14,6 +14,10 @@ dist-ssr
 
 .env
 
+# Firebase CLI local deploy cache — her deploy'da yeniden üretilir,
+# takip edilirse her commit'te gereksiz/gürültülü bir diff oluşturur.
+.firebase
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
