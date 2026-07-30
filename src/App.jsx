@@ -5,6 +5,7 @@ import { auth } from './firebase/index'
 import useStore from './store/useStore'
 import Sidebar from './components/layout/Sidebar'
 import TopBar from './components/layout/TopBar'
+import GirisHeader from './components/layout/GirisHeader'
 
 const FirmaSecimi     = lazy(() => import('./components/pages/FirmaSecimi'))
 const Login           = lazy(() => import('./components/pages/Login'))
@@ -186,6 +187,35 @@ export default function App() {
   const sessionUygun = SESSIONLESS.includes(activePage) || !!activeSessionId
   const yetkili = roles.includes(userRole) && sablonUygun && sessionUygun
 
+  const icerik = (
+    <Suspense fallback={<div className="flex-1 flex items-center justify-center text-slate-400 text-[13px]">Yükleniyor…</div>}>
+      {!yetkili ? (
+        <ErisimYok />
+      ) : fullHeight ? (
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <PageComponent onNavigate={handleNavigate} mode="preview" />
+        </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto p-4 md:p-6">
+          <PageComponent onNavigate={handleNavigate} />
+        </div>
+      )}
+    </Suspense>
+  )
+
+  // Aktif sayım oturumu yok: tam Sidebar yerine sade bir üst bilgi çubuğu
+  // (Sayımlar listesi/Ayarlar'da oturuma özel menü öğelerine gerek yok).
+  if (!activeSessionId) {
+    return (
+      <div className="h-screen flex flex-col overflow-hidden bg-slate-100">
+        <GirisHeader activePage={activePage} onNavigate={handleNavigate} />
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {icerik}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="h-screen flex overflow-hidden bg-slate-100">
       {menuOpen && (
@@ -199,19 +229,7 @@ export default function App() {
       <Sidebar activePage={activePage} onNavigate={handleNavigate} className="hidden md:flex" />
       <div className="flex-1 flex flex-col overflow-hidden">
         <TopBar activePage={activePage} onMenu={() => setMenuOpen(true)} />
-        <Suspense fallback={<div className="flex-1 flex items-center justify-center text-slate-400 text-[13px]">Yükleniyor…</div>}>
-          {!yetkili ? (
-            <ErisimYok />
-          ) : fullHeight ? (
-            <div className="flex-1 overflow-hidden flex flex-col">
-              <PageComponent onNavigate={handleNavigate} mode="preview" />
-            </div>
-          ) : (
-            <div className="flex-1 overflow-y-auto p-4 md:p-6">
-              <PageComponent onNavigate={handleNavigate} />
-            </div>
-          )}
-        </Suspense>
+        {icerik}
       </div>
     </div>
   )

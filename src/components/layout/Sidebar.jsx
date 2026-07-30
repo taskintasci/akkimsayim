@@ -58,9 +58,9 @@ const MENU = [
 ]
 
 export default function Sidebar({ activePage, onNavigate, onSettings, className = 'flex' }) {
-  const { activeSessionId, userProfile, userRole, firmalar, firmaProfile, activeFirma, setActiveFirma } = useStore(
+  const { activeSessionId, setActiveSession, userProfile, userRole, firmalar, firmaProfile, activeFirma, setActiveFirma } = useStore(
     useShallow(s => ({
-      activeSessionId: s.activeSessionId, userProfile: s.userProfile, userRole: s.userRole,
+      activeSessionId: s.activeSessionId, setActiveSession: s.setActiveSession, userProfile: s.userProfile, userRole: s.userRole,
       firmalar: s.firmalar, firmaProfile: s.firmaProfile, activeFirma: s.activeFirma, setActiveFirma: s.setActiveFirma,
     }))
   )
@@ -72,6 +72,11 @@ export default function Sidebar({ activePage, onNavigate, onSettings, className 
 
   function handleFirmaSwitch(firmaId) {
     setActiveFirma(firmaId)
+    onNavigate('giris')
+  }
+
+  function handleLogoClick() {
+    setActiveSession(null)
     onNavigate('giris')
   }
 
@@ -89,14 +94,14 @@ export default function Sidebar({ activePage, onNavigate, onSettings, className 
 
   return (
     <aside className={`w-56 shrink-0 bg-white border-r border-slate-200 ${className} flex-col h-full`}>
-      {/* Logo */}
+      {/* Logo — tıklanınca aktif oturumdan çıkıp Sayımlar listesine döner */}
       <div className="px-5 pt-5 pb-4 border-b border-slate-100">
-        <div className="flex items-center gap-2 mb-1">
-          <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center">
+        <button onClick={handleLogoClick} className="flex items-center gap-2 mb-1">
+          <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center shrink-0">
             <span className="ms text-white" style={{ fontSize: 16 }}>warehouse</span>
           </div>
           <span className="font-bold text-slate-900 text-[13px] leading-tight">Sayım Planı</span>
-        </div>
+        </button>
         {firmaProfile?.ad && (
           <p className="ml-9 text-[11px] text-slate-400 truncate">{firmaProfile.ad}</p>
         )}
