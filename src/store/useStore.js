@@ -33,10 +33,10 @@ const useStore = create((set, get) => ({
   firmaProfile: null,          // aktif firmanın kendi dokümanı
   activeFirma: null,           // normal kullanıcı: kendi firması; superadmin: seçtiği firma
 
-  // Giriş yapan kullanıcının profilini yükle (yoksa varsayılan sayımcı oluştur).
-  // selectedFirma: Firma Seçimi ekranında seçilen firma id'si — sadece profili
-  // olmayan (bootstrap) kullanıcılar için kullanılır.
-  loadUserProfile: async (user, selectedFirma) => {
+  // Giriş yapan kullanıcının profilini yükle. Firma seçimi kullanıcıya
+  // bırakılmaz — hesap zaten hangi firmaya kayıtlıysa o açılır (bkz. aşağıdaki
+  // effectiveFirma hesaplaması).
+  loadUserProfile: async (user) => {
     if (!user) {
       if (resultsUnsub) { resultsUnsub(); resultsUnsub = null }
       set({
@@ -89,13 +89,11 @@ const useStore = create((set, get) => ({
       // Firma listesini ve aktif firma profilini yükle
       await get().loadFirmalar()
       const firmalar = get().firmalar
-      // Süper yönetici firmaya bağlı değildir (firma:null) — bu durumda Firma
-      // Seçimi ekranında az önce seçilen firma esas alınır (geçerli/aktif ise),
-      // aksi halde alfabetik ilk firmaya düşülür. Firma-bağlı kullanıcılarda
-      // (firma dolu) seçim ekranı zaten kozmetiktir, gerçek yetki profildeki
-      // sabit 'firma' alanından gelir.
-      const seciliGecerli = selectedFirma && firmalar.some(f => f.id === selectedFirma && f.aktif)
-      const effectiveFirma = firma || (rol === 'superadmin' && seciliGecerli ? selectedFirma : null) || firmalar[0]?.id || null
+      // Süper yönetici firmaya bağlı değildir (firma:null) — bu durumda
+      // alfabetik ilk (aktif) firmaya düşülür, Sidebar/GirisHeader'daki firma
+      // switcher ile istediği zaman değiştirebilir. Firma-bağlı kullanıcılarda
+      // (firma dolu) zaten gerçek yetki profildeki sabit 'firma' alanından gelir.
+      const effectiveFirma = firma || firmalar[0]?.id || null
       set({ activeFirma: effectiveFirma })
       const firmaDoc = firmalar.find(f => f.id === effectiveFirma)
       set({ firmaProfile: firmaDoc || null })

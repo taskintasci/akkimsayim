@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth'
 import { auth } from '../../firebase/index'
 
-export default function Login({ firma, onFirmaDegistir }) {
+export default function Login() {
   const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
   const [error,    setError]    = useState('')
@@ -50,18 +50,7 @@ export default function Login({ firma, onFirmaDegistir }) {
 
         {/* Kart */}
         <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
-          <h1 className="text-slate-800 font-semibold text-lg mb-1 text-center">Giriş Yap</h1>
-          {firma && (
-            <p className="text-slate-400 text-xs text-center mb-5">
-              {firma.ad}
-              {onFirmaDegistir && (
-                <button type="button" onClick={onFirmaDegistir} className="ml-2 text-blue-600 hover:underline">
-                  Firma Değiştir
-                </button>
-              )}
-            </p>
-          )}
-          {!firma && <div className="mb-6" />}
+          <h1 className="text-slate-800 font-semibold text-lg mb-6 text-center">Giriş Yap</h1>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>

@@ -25,10 +25,13 @@ service cloud.firestore {
     function isNonEmptyString(v) { return v is string && v.size() > 0; }
 
     // ── firmalar/{firmaId} ──────────────────────────────────────────────────
-    // Login-öncesi "Firma Seçimi" ekranı auth olmadan okuyabilmeli.
-    // Yazma sadece süper yönetici (Firma Yönetimi paneli).
+    // Artık login-öncesi bir "Firma Seçimi" ekranı yok (hesap zaten hangi
+    // firmaya kayıtlıysa giriş sonrası o açılıyor) — bu yüzden okuma da
+    // giriş yapmış kullanıcılarla sınırlı, firma listesi herkese açık
+    // listelenebilir olmasın diye. Yazma sadece süper yönetici (Firma
+    // Yönetimi paneli).
     match /firmalar/{firmaId} {
-      allow read: if true;
+      allow read: if isSignedIn();
 
       allow create: if isSuperAdmin()
         && isNonEmptyString(request.resource.data.ad)
@@ -58,8 +61,8 @@ service cloud.firestore {
       // girişte kendi profilini yazması) YOKTUR: Firebase Email/Şifre sağlayıcısı
       // proje genelinde tek bir anahtar olduğundan (createUserAccount'ın kullandığı
       // ikincil auth örneği de dahil), bu sağlayıcı açıkken herkes public client
-      // SDK ile doğrudan yeni bir hesap oluşturabilir. Self-bootstrap izni olsaydı,
-      // herkese açık 'firmalar' listesinden (aşağıda allow read: if true) bir firma
+      // SDK ile doğrudan yeni bir hesap oluşturabilir. Self-bootstrap izni olsaydı
+      // (o zamanlar 'firmalar' herkese açık okunabilirken), böyle biri bir firma
       // id'si alıp kendini o firmanın 'sayimci'sı olarak kaydedip firmanın tüm
       // sessions/results verisini okuyabilirdi. Bu yüzden her hesap MUTLAKA bir
       // yönetici/süper yönetici tarafından (Ayarlar → Kullanıcılar veya migrasyon

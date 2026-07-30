@@ -8,7 +8,6 @@ import Sidebar from './components/layout/Sidebar'
 import TopBar from './components/layout/TopBar'
 import GirisHeader from './components/layout/GirisHeader'
 
-const FirmaSecimi     = lazy(() => import('./components/pages/FirmaSecimi'))
 const Login           = lazy(() => import('./components/pages/Login'))
 const Giris           = lazy(() => import('./components/pages/Giris'))
 const Panel           = lazy(() => import('./components/pages/Panel'))
@@ -35,7 +34,6 @@ const SESSIONLESS = ['giris', 'ayarlar']
 const HEPSI = ['yonetici', 'kontrolcu', 'sayimci']
 const YON       = ['yonetici', 'superadmin']              // yönetici yetkisi (süper yönetici her firmayı yönetebilir)
 const YON_KONT  = ['yonetici', 'kontrolcu', 'superadmin']  // yönetici + kontrolcü yetkisi
-const FIRMA_KEY = 'sayimplani_secili_firma'
 
 // sablon: hangi firma şablonunda görünür (belirtilmemişse şablondan bağımsız/paylaşılan sayfa)
 const PAGES = {
@@ -102,7 +100,7 @@ export default function App() {
   const [firebaseUser, setFirebaseUser] = useState(undefined)
   const {
     setCurrentUser, loadUserProfile, userRole, profileLoading, authError,
-    activeSessionId, rows, rowsLoading, firmalar, firmaProfile,
+    activeSessionId, rows, rowsLoading, firmaProfile,
   } = useStore(
     useShallow(s => ({
       setCurrentUser:  s.setCurrentUser,
@@ -113,28 +111,19 @@ export default function App() {
       activeSessionId: s.activeSessionId,
       rows:            s.rows,
       rowsLoading:     s.rowsLoading,
-      firmalar:        s.firmalar,
       firmaProfile:    s.firmaProfile,
     }))
   )
   const [activePage, setActivePage] = useState('panel')
   const [menuOpen, setMenuOpen] = useState(false)
-  const [selectedFirma, setSelectedFirma] = useState(() => {
-    try { return localStorage.getItem(FIRMA_KEY) } catch { return null }
-  })
 
   function handleNavigate(page) { setActivePage(page); setMenuOpen(false) }
-
-  function handleFirmaDegistir() {
-    try { localStorage.removeItem(FIRMA_KEY) } catch { /* localStorage kapalı olabilir */ }
-    setSelectedFirma(null)
-  }
 
   useEffect(() => {
     return onAuthStateChanged(auth, user => {
       setFirebaseUser(user)
       setCurrentUser(user)
-      loadUserProfile(user, selectedFirma)
+      loadUserProfile(user)
     })
   }, [])
 
@@ -161,19 +150,12 @@ export default function App() {
   // Auth durumu henüz belli değil
   if (firebaseUser === undefined) return <Spinner />
 
-  // Giriş yapılmamış: önce Firma Seçimi, sonra Login
+  // Giriş yapılmamış: doğrudan giriş ekranı — firma seçimi yok, hesap
+  // hangi firmaya kayıtlıysa giriş sonrası o açılır (bkz. loadUserProfile).
   if (!firebaseUser) {
-    if (!selectedFirma) {
-      return (
-        <Suspense fallback={<Spinner />}>
-          <FirmaSecimi onSelect={setSelectedFirma} />
-        </Suspense>
-      )
-    }
-    const firma = firmalar.find(f => f.id === selectedFirma)
     return (
       <Suspense fallback={<Spinner />}>
-        <Login firma={firma} onFirmaDegistir={handleFirmaDegistir} />
+        <Login />
       </Suspense>
     )
   }
