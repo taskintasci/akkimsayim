@@ -480,16 +480,29 @@ export default function SayimciEkran({ mode = 'self' }) {
           <div className="flex-1 overflow-auto">
             <table className="w-full text-left border-collapse" style={{ minWidth: 650 }}>
               <thead className="sticky top-0 z-10">
-                <tr className="bg-slate-100 text-slate-600 text-[11px] mono uppercase tracking-wider border-b border-slate-200">
-                  <th className="px-3 py-2.5 text-center w-8">#</th>
-                  <th className="px-3 py-2.5 w-24">Adres</th>
-                  <th className="px-3 py-2.5 w-28">Kod</th>
-                  {isEpson && <th className="px-3 py-2.5 w-28">Palet Barkodu</th>}
-                  <th className="px-3 py-2.5">Ad</th>
-                  <th className="px-3 py-2.5 w-20 text-right sistem-col">Sistem</th>
-                  <th className="px-3 py-2.5 w-24 text-right text-blue-600 sayilan-col">Sayılan ▾</th>
-                  <th className="px-3 py-2.5">Not</th>
-                </tr>
+                {isMembran ? (
+                  <tr className="bg-slate-100 text-slate-600 text-[11px] mono uppercase tracking-wider border-b border-slate-200">
+                    <th className="px-3 py-2.5 text-center w-8">#</th>
+                    <th className="px-3 py-2.5 w-24">Adres</th>
+                    <th className="px-3 py-2.5 w-28">Kod</th>
+                    <th className="px-3 py-2.5">Ad</th>
+                    <th className="px-3 py-2.5 w-20 text-right sistem-col">Sistem</th>
+                    <th className="px-3 py-2.5 w-24 text-right text-blue-600 sayilan-col">Sayılan ▾</th>
+                    <th className="px-3 py-2.5">Not</th>
+                  </tr>
+                ) : (
+                  <tr className="bg-slate-100 text-slate-600 text-[11px] mono uppercase tracking-wider border-b border-slate-200">
+                    <th className="px-3 py-2.5 w-24">Adres</th>
+                    <th className="px-3 py-2.5 w-28">Kod</th>
+                    <th className="px-3 py-2.5">Ad</th>
+                    <th className="px-3 py-2.5 w-32">{isEpson ? 'Beyanname Numarası' : 'Parti'}</th>
+                    {isEpson && <th className="px-3 py-2.5 w-28">Palet Barkodu</th>}
+                    <th className="px-3 py-2.5 w-20 text-right sistem-col">Sistem</th>
+                    <th className="px-3 py-2.5 w-24 text-right text-blue-600 sayilan-col">Sayılan ▾</th>
+                    <th className="px-3 py-2.5 w-20">Birim</th>
+                    <th className="px-3 py-2.5">Not</th>
+                  </tr>
+                )}
               </thead>
               <tbody className="text-[12.5px]">
                 {isMembran ? (
@@ -560,11 +573,11 @@ export default function SayimciEkran({ mode = 'self' }) {
                         className={isDiff ? 'border-b border-slate-100 hover:bg-red-50' : 'border-b border-slate-100 hover:bg-blue-50/30'}
                         style={isDiff ? { background: 'rgba(254,242,242,0.6)' } : i % 2 === 1 ? { background: '#f8fafc' } : {}}
                       >
-                        <td className="px-3 py-2 text-center text-slate-400 mono text-[11px]">{i + 1}</td>
                         <td className="px-3 py-2 mono text-slate-600 text-[11.5px]">{row.adres}</td>
                         <td className="px-3 py-2 mono font-medium text-blue-700 text-[11.5px]">{row.kod}</td>
-                        {isEpson && <td className="px-3 py-2 mono text-slate-500 text-[11.5px]">{row.paletBarkodu}</td>}
                         <td className="px-3 py-2 font-medium text-slate-800">{row.ad}</td>
+                        <td className="px-3 py-2 mono text-slate-500 text-[11.5px]">{row.parti}</td>
+                        {isEpson && <td className="px-3 py-2 mono text-slate-500 text-[11.5px]">{row.paletBarkodu}</td>}
                         <td className="px-3 py-2 text-right mono text-slate-500 sistem-col">{row.sayim}</td>
                         <td className="px-3 py-2 text-right sayilan-col">
                           <div className="flex items-center justify-end gap-1">
@@ -572,6 +585,7 @@ export default function SayimciEkran({ mode = 'self' }) {
                             {isDiff && <span className="ms text-red-400" style={{ fontSize: 14 }}>warning</span>}
                           </div>
                         </td>
+                        <td className="px-3 py-2 mono text-slate-500 text-[11.5px]">{row.birim}</td>
                         <td className="px-3 py-2"><input type="text" value={res.notlar ?? ''} onChange={e => updateResult(row.id, { notlar: e.target.value })} placeholder="not..." className="w-full bg-transparent border-none text-[12px] text-slate-400 placeholder-slate-300 outline-none min-w-[60px]" /></td>
                       </tr>
                     )
