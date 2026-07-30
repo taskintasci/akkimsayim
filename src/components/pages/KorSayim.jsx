@@ -19,7 +19,7 @@ function DurumBadge({ durum }) {
 }
 
 export default function KorSayim({ onNavigate }) {
-  const { rows, results, session, updateResult, fillFromSistem, clearMiktarlar, korCodes, korMatched, addKorCodes, removeKorCode, clearKor, pendingKodFilter, clearPendingKodFilter, firmaProfile } = useStore()
+  const { rows, results, session, updateResult, fillFromSistem, clearMiktarlar, korCodes, korMatched, addKorCodes, removeKorCode, clearKor, pendingKodFilter, clearPendingKodFilter, firmaProfile, sortType, setSortType } = useStore()
   const printRef = useRef()
 
   const [codeInput, setCodeInput]     = useState('')
@@ -34,7 +34,6 @@ export default function KorSayim({ onNavigate }) {
   const [filterKategori, setFilterKategori] = useState([])
   const [filterUrunTipi, setFilterUrunTipi] = useState([])
   const [onlyDiff, setOnlyDiff]       = useState(false)
-  const [sortType, setSortType]       = useState('1')
   const [page, setPage]               = useState(1)
   const [pageSize, setPageSize]       = useState(100)
   const [gorevModal, setGorevModal]   = useState(false)

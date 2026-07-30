@@ -38,7 +38,7 @@ function GirisGunBadge({ gun }) {
 }
 
 export default function HareketlilikSayim({ onNavigate }) {
-  const { rows, results, session, updateResult, fillFromSistem, clearMiktarlar, pendingKodFilter, clearPendingKodFilter, firmaProfile } = useStore()
+  const { rows, results, session, updateResult, fillFromSistem, clearMiktarlar, pendingKodFilter, clearPendingKodFilter, firmaProfile, sortType, setSortType } = useStore()
   const printRef = useRef()
 
   const [hideSistem, setHideSistem] = useState(false)
@@ -52,7 +52,6 @@ export default function HareketlilikSayim({ onNavigate }) {
   const [filterGirisGun, setFilterGirisGun] = useState([])
   const [filterKategori, setFilterKategori] = useState([])
   const [filterUrunTipi, setFilterUrunTipi] = useState([])
-  const [sortType, setSortType] = useState('1')
   const [page, setPage] = useState(1)
   const [gorevModal, setGorevModal] = useState(false)
   const [pageSize, setPageSize] = useState(100)

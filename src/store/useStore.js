@@ -321,6 +321,14 @@ const useStore = create((set, get) => ({
     sorumlu: '',
   },
 
+  // ── Sıralama tercihi ────────────────────────────────────────────────────
+  // Tüm sayım sayfalarında (StokSayim, KorSayim, HareketlilikSayim,
+  // MembranSayim, Epson* karşılıkları) paylaşılan tek bir tercih — sayfa
+  // bileşeninde local state olsaydı başka bir sayfaya gidip geri gelince
+  // (unmount/remount) sıfırlanırdı.
+  sortType: '1',
+  setSortType: (v) => set({ sortType: v }),
+
   // ── Kör Sayım listesi ─────────────────────────────────────────────────────
   korCodes: [],
   korMatched: [],

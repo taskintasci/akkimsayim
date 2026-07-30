@@ -32,7 +32,7 @@ function PaletStatusBadge({ counted, total, hasDiff }) {
 }
 
 export default function MembranSayim({ onNavigate }) {
-  const { rows, results, session, updateResult, fillFromSistem, clearMiktarlar, pendingKodFilter, clearPendingKodFilter, firmaProfile } = useStore()
+  const { rows, results, session, updateResult, fillFromSistem, clearMiktarlar, pendingKodFilter, clearPendingKodFilter, firmaProfile, sortType, setSortType } = useStore()
   const printRef = useRef()
 
   const [hideSistem, setHideSistem]   = useState(false)
@@ -45,7 +45,6 @@ export default function MembranSayim({ onNavigate }) {
   const [filterSira, setFilterSira]     = useState([])
   const [filterKolon, setFilterKolon]   = useState([])
   const [filterGoz, setFilterGoz]       = useState([])
-  const [sortType, setSortType]         = useState('1')
   const [gorevModal, setGorevModal]     = useState(false)
   const [expandedPallets, setExpandedPallets] = useState(null) // null = hepsi açık
 

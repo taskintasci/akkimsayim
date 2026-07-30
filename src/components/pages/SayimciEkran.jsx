@@ -2,14 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { signOut } from 'firebase/auth'
 import { auth } from '../../firebase/index'
 import useStore from '../../store/useStore'
-
-function siralaRows(rows, sira) {
-  const arr = [...rows]
-  if (sira === 'adres') arr.sort((a, b) => (a.adres || '').localeCompare(b.adres || '', 'tr'))
-  if (sira === 'ad')    arr.sort((a, b) => (a.ad || '').localeCompare(b.ad || '', 'tr'))
-  if (sira === 'kod')   arr.sort((a, b) => (a.kod || '').localeCompare(b.kod || '', 'tr'))
-  return arr
-}
+import { sortRows } from '../../utils/adresUtils'
 
 function siralamaMembran(rows) {
   return [...rows].sort((a, b) => {
@@ -112,10 +105,11 @@ function SwipeCard({ row, sayilanMiktar, onConfirm, onEdit, isMembran, isEpson }
           {row.ad || '—'}
         </p>
 
-        {/* Kod + parti */}
+        {/* Kod + parti + palet barkodu (sadece WMS Antrepo Sayım) */}
         <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mb-3 shrink-0">
           <span className="text-slate-500 mono" style={{ fontSize: 15 }}>{row.kod}</span>
           {row.parti && <span className="text-slate-400 mono text-xs">{isEpson ? 'Beyanname' : 'Parti'}: {row.parti}</span>}
+          {isEpson && row.paletBarkodu && <span className="text-slate-400 mono text-xs">Palet: {row.paletBarkodu}</span>}
         </div>
 
         {/* Sistem miktarı + sayılan */}
@@ -163,13 +157,13 @@ export default function SayimciEkran({ mode = 'self' }) {
     gorevler, gorevlerLoading, loadMyGorevler, loadSessionGorevler, updateGorevDurum, deleteGorev,
     activeSessionId, rows, rowsLoading, results, updateResult,
     manualRows, addManualRow, korManualRows, addKorManualRow,
+    sortType, setSortType,
   } = useStore()
 
   const setActiveSession = useStore(s => s.setActiveSession)
 
   const [view, setView]       = useState('gorevler')
   const [gorev, setGorev]     = useState(null)
-  const [sira, setSira]       = useState('adres')
   const [deletingId, setDeletingId] = useState(null)
   const [idx, _setIdx]        = useState(0)
   const idxRef                = useRef(0)
@@ -197,8 +191,8 @@ export default function SayimciEkran({ mode = 'self' }) {
     const ids = gorev.atananRows || []
     const base = ids.length > 0 ? rows.filter(r => ids.includes(r.id)) : rows
     if (isMembran) return siralamaMembran(base)
-    return siralaRows(base, sira)
-  }, [gorev, rows, sira, isMembran])
+    return sortRows(base, sortType)
+  }, [gorev, rows, sortType, isMembran])
 
   const sayilanAdet = useMemo(() =>
     atanan.filter(r => { const m = results[r.id]?.miktar; return m !== undefined && m !== '' }).length,
@@ -454,6 +448,17 @@ export default function SayimciEkran({ mode = 'self' }) {
               className="w-full pl-8 pr-3 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-400"
             />
           </div>
+          {!isMembran && (
+            <select
+              value={sortType}
+              onChange={e => setSortType(e.target.value)}
+              className="bg-white border border-slate-300 rounded-lg px-2.5 py-2.5 text-xs text-slate-600 focus:outline-none focus:border-blue-400 shrink-0"
+              style={{ minHeight: 44 }}
+            >
+              <option value="1">Raf › Sıra › Kolon › Göz</option>
+              <option value="2">Raf › Sıra › Göz › Kolon</option>
+            </select>
+          )}
           {isMembran && (
             <>
               <button onClick={() => setExpandedPalets(null)} className="flex items-center gap-1 px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-600 hover:bg-slate-50 shrink-0" style={{ minHeight: 44 }}>
@@ -479,6 +484,7 @@ export default function SayimciEkran({ mode = 'self' }) {
                   <th className="px-3 py-2.5 text-center w-8">#</th>
                   <th className="px-3 py-2.5 w-24">Adres</th>
                   <th className="px-3 py-2.5 w-28">Kod</th>
+                  {isEpson && <th className="px-3 py-2.5 w-28">Palet Barkodu</th>}
                   <th className="px-3 py-2.5">Ad</th>
                   <th className="px-3 py-2.5 w-20 text-right sistem-col">Sistem</th>
                   <th className="px-3 py-2.5 w-24 text-right text-blue-600 sayilan-col">Sayılan ▾</th>
@@ -557,6 +563,7 @@ export default function SayimciEkran({ mode = 'self' }) {
                         <td className="px-3 py-2 text-center text-slate-400 mono text-[11px]">{i + 1}</td>
                         <td className="px-3 py-2 mono text-slate-600 text-[11.5px]">{row.adres}</td>
                         <td className="px-3 py-2 mono font-medium text-blue-700 text-[11.5px]">{row.kod}</td>
+                        {isEpson && <td className="px-3 py-2 mono text-slate-500 text-[11.5px]">{row.paletBarkodu}</td>}
                         <td className="px-3 py-2 font-medium text-slate-800">{row.ad}</td>
                         <td className="px-3 py-2 text-right mono text-slate-500 sistem-col">{row.sayim}</td>
                         <td className="px-3 py-2 text-right sayilan-col">
