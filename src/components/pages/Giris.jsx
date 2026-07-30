@@ -55,10 +55,11 @@ export default function Giris({ onNavigate }) {
   return (
     <div className="flex flex-col h-full overflow-hidden bg-slate-100">
       {/* Two-panel body */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden justify-center">
+        <div className={`flex w-full ${isYonetici ? 'max-w-5xl' : 'max-w-lg'}`}>
 
         {/* Sol panel: Geçmiş Sayımlar */}
-        <div className={`${isYonetici ? 'w-[420px] shrink-0 border-r border-slate-200' : 'flex-1 max-w-lg mx-auto'} flex flex-col px-4 sm:px-8 py-6 overflow-y-auto`}>
+        <div className={`${isYonetici ? 'w-[420px] shrink-0 border-r border-slate-200' : 'flex-1'} flex flex-col px-4 sm:px-8 py-6 overflow-y-auto`}>
           <h2 className="text-slate-700 font-semibold text-sm flex items-center gap-2 mb-4">
             <span className="ms text-blue-500" style={{ fontSize: 18 }}>history</span>
             Geçmiş Sayımlar
@@ -172,8 +173,8 @@ export default function Giris({ onNavigate }) {
 
         {/* Sağ panel: Yeni Sayım — yönetici ve süper yönetici */}
         {isYonetici && (
-          <div className="flex-1 flex flex-col justify-center items-center px-12 py-8">
-            <div className="w-full max-w-sm">
+          <div className="flex-1 flex flex-col items-center px-4 sm:px-8 py-6 overflow-y-auto">
+            <div className="w-full max-w-sm bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
               <h2 className="text-slate-700 font-semibold text-sm flex items-center gap-2 mb-5">
                 <span className="ms text-blue-500" style={{ fontSize: 18 }}>add_circle</span>
                 Yeni Sayım Oluştur
@@ -247,6 +248,7 @@ export default function Giris({ onNavigate }) {
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   )

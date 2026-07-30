@@ -1,3 +1,4 @@
+import { useShallow } from 'zustand/react/shallow'
 import useStore from '../../store/useStore'
 
 const PAGE_NAMES = {
@@ -24,8 +25,11 @@ const PAGE_NAMES = {
 }
 
 export default function TopBar({ activePage, onMenu }) {
-  const session = useStore(s => s.session) || {}
+  const { session, activeSessionId } = useStore(
+    useShallow(s => ({ session: s.session, activeSessionId: s.activeSessionId }))
+  )
   const pageName = PAGE_NAMES[activePage] || activePage
+  const aktifSayim = activeSessionId ? (session || {}) : {}
 
   return (
     <header className="h-10 shrink-0 bg-white border-b border-slate-200 flex items-center px-3 md:px-5 gap-2 text-sm text-slate-500 min-w-0">
@@ -37,18 +41,22 @@ export default function TopBar({ activePage, onMenu }) {
         <span className="ms" style={{ fontSize: 20 }}>menu</span>
       </button>
       <span className="text-slate-800 font-semibold whitespace-nowrap">{pageName}</span>
-      <span className="text-slate-300">·</span>
-      <span className="truncate">{session.type || 'Yıl Sonu Sayımı'}</span>
-      {session.tarih && (
+      {aktifSayim.type && (
         <>
-          <span className="text-slate-300 hidden sm:inline">·</span>
-          <span className="mono text-xs hidden sm:inline">{session.tarih}</span>
+          <span className="text-slate-300">·</span>
+          <span className="truncate">{aktifSayim.type}</span>
         </>
       )}
-      {session.depoAdi && (
+      {aktifSayim.tarih && (
         <>
           <span className="text-slate-300 hidden sm:inline">·</span>
-          <span className="hidden sm:inline truncate">{session.depoAdi}</span>
+          <span className="mono text-xs hidden sm:inline">{aktifSayim.tarih}</span>
+        </>
+      )}
+      {aktifSayim.depoAdi && (
+        <>
+          <span className="text-slate-300 hidden sm:inline">·</span>
+          <span className="hidden sm:inline truncate">{aktifSayim.depoAdi}</span>
         </>
       )}
     </header>
