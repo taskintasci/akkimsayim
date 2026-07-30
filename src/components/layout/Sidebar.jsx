@@ -31,8 +31,6 @@ const YON_KONT = ['yonetici', 'kontrolcu', 'superadmin']
 // Menü öğeleri — her birinin hangi rollere ve hangi firma şablonuna
 // görüneceği tanımlı. sablon belirtilmemişse şablondan bağımsız (paylaşılan).
 const MENU = [
-  { id: 'giris',        icon: 'history',        label: 'Sayımlar',                roles: YON_KONT, sessionless: true },
-  { divider: true,      roles: YON_KONT },
   { id: 'panel',        icon: 'grid_view',      label: 'Panel',                   roles: YON_KONT, sablon: [SABLON.STANDART] },
   { divider: true,      roles: YON_KONT },
   { id: 'sayim',        icon: 'fact_check',     label: 'Tüm Stok Sayımı',         roles: YON, sablon: [SABLON.STANDART] },
