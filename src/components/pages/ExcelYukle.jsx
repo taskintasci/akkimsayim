@@ -37,12 +37,13 @@ export default function ExcelYukle({ onNavigate }) {
     e.target.value = ''
   }
 
-  const formatLabel = importFormat === 'rapor5' ? 'RAPOR5' : importFormat === 'sku' ? 'SKU Listesi' : '—'
+  const formatLabel = importFormat === 'rapor5' ? 'RAPOR5' : importFormat === 'sku' ? 'SKU Listesi' : importFormat === 'wms31' ? 'WMS_Rapor_31' : '—'
+  const isWms31 = importFormat === 'wms31'
 
   return (
     <div className="max-w-2xl">
-      <h1 className="text-2xl font-bold text-slate-800 mb-1">RAPOR5 Yükle</h1>
-      <p className="text-sm text-slate-500 mb-6">Her sayım için bir kez RAPOR5 yükleyin. Değiştirmek için Panel sayfasını kullanın.</p>
+      <h1 className="text-2xl font-bold text-slate-800 mb-1">{isWms31 ? 'WMS_Rapor_31 Yükle' : 'RAPOR5 Yükle'}</h1>
+      <p className="text-sm text-slate-500 mb-6">Her sayım için bir kez RAPOR5 veya WMS_Rapor_31 yükleyin. Değiştirmek için Panel sayfasını kullanın.</p>
 
       {/* Drop zone */}
       <div
@@ -78,7 +79,7 @@ export default function ExcelYukle({ onNavigate }) {
             <div className="text-sm text-slate-500">
               Format: <span className="font-semibold text-slate-700">{formatLabel}</span>
             </div>
-            <div className="mt-4 text-xs text-slate-400">Değiştirmek için Panel → RAPOR5 Yönetimi bölümünü kullanın</div>
+            <div className="mt-4 text-xs text-slate-400">Değiştirmek için Panel → {isWms31 ? 'WMS_Rapor_31 Yönetimi' : 'RAPOR5 Yönetimi'} bölümünü kullanın</div>
           </>
         ) : (
           <>
@@ -93,19 +94,22 @@ export default function ExcelYukle({ onNavigate }) {
         )}
       </div>
 
-      {/* RAPOR5 info card */}
+      {/* Desteklenen sütunlar bilgi kartı */}
       <div className="bg-white border border-slate-200 rounded-xl p-4">
         <div className="flex items-center gap-2 mb-3">
           <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
             <span className="ms text-emerald-600" style={{ fontSize: 18 }}>table_view</span>
           </div>
           <div>
-            <div className="font-semibold text-slate-800 text-[13.5px]">RAPOR5 Desteklenen Sütunlar</div>
-            <div className="text-[11.5px] text-slate-400 mono">SAP dışa aktarım formatı · .xls ve .xlsx</div>
+            <div className="font-semibold text-slate-800 text-[13.5px]">{isWms31 ? 'WMS_Rapor_31 Desteklenen Sütunlar' : 'RAPOR5 Desteklenen Sütunlar'}</div>
+            <div className="text-[11.5px] text-slate-400 mono">{isWms31 ? 'WMS dışa aktarım formatı (Epson Sayım) · .xlsx' : 'SAP dışa aktarım formatı · .xls ve .xlsx'}</div>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-1">
-          {['Adres', 'Kod', 'Ad', 'Parti', 'Durum', 'Palet Adet', 'Birim 1', 'Son Kırılım Miktar', 'Son Kırılım Birim', 'Barkod'].map(col => (
+          {(isWms31
+            ? ['Adres', 'Stok Kodu', 'Stok Adı', 'Beyanname', 'Durum Adı', 'Kategori', 'Palet Barkodu', 'Palet Adeti', 'Toplam Stok', 'Rezerve Adet', 'Depo Kalan Stok', 'Birim Adı']
+            : ['Adres', 'Kod', 'Ad', 'Parti', 'Durum', 'Palet Adet', 'Birim 1', 'Son Kırılım Miktar', 'Son Kırılım Birim', 'Barkod']
+          ).map(col => (
             <div key={col} className="flex items-center gap-1.5 text-[12.5px] text-slate-600">
               <span className="ms text-emerald-500 shrink-0" style={{ fontSize: 14 }}>check</span>
               {col}
@@ -113,7 +117,7 @@ export default function ExcelYukle({ onNavigate }) {
           ))}
         </div>
         <p className="text-[11.5px] text-slate-400 mt-3 pt-3 border-t border-slate-100">
-          Kod içermeyen satırlar otomatik filtrelenir. Başlık satırı ilk 6 satırda otomatik bulunur.
+          Kod içermeyen satırlar otomatik filtrelenir. Başlık satırı ilk 6 satırda otomatik bulunur. Format (RAPOR5 / SKU Listesi / WMS_Rapor_31) sütun başlıklarına göre otomatik algılanır.
         </p>
       </div>
 
@@ -121,14 +125,14 @@ export default function ExcelYukle({ onNavigate }) {
       {locked && (
         <div className="flex gap-3 mt-6">
           <button
-            onClick={() => onNavigate('sayim')}
+            onClick={() => onNavigate(isWms31 ? 'epsonsayim' : 'sayim')}
             className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm flex items-center justify-center gap-2 transition-colors"
           >
             <span className="ms">fact_check</span>
             Stok Sayımına Geç
           </button>
           <button
-            onClick={() => onNavigate('panel')}
+            onClick={() => onNavigate(isWms31 ? 'epsonpanel' : 'panel')}
             className="px-4 py-3 border border-slate-300 text-slate-600 hover:bg-slate-50 rounded-xl text-sm font-medium transition-colors"
           >
             Panele Git

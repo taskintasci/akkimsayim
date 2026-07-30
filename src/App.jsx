@@ -20,6 +20,11 @@ const HareketlilikSayim   = lazy(() => import('./components/pages/HareketlilikSa
 const MembranSayim        = lazy(() => import('./components/pages/MembranSayim'))
 const Ayarlar             = lazy(() => import('./components/pages/Ayarlar'))
 const SayimciEkran        = lazy(() => import('./components/pages/SayimciEkran'))
+const EpsonPanel          = lazy(() => import('./components/pages/EpsonPanel'))
+const EpsonSayim          = lazy(() => import('./components/pages/EpsonSayim'))
+const EpsonRapor          = lazy(() => import('./components/pages/EpsonRapor'))
+const EpsonKorSayim       = lazy(() => import('./components/pages/EpsonKorSayim'))
+const EpsonKorSayimRapor  = lazy(() => import('./components/pages/EpsonKorSayimRapor'))
 
 const HEPSI = ['yonetici', 'kontrolcu', 'sayimci']
 
@@ -36,6 +41,13 @@ const PAGES = {
   membran:       { Component: MembranSayim,       fullHeight: true,  roles: ['yonetici'] },
   ayarlar:       { Component: Ayarlar,            fullHeight: false, roles: ['yonetici', 'kontrolcu'] },
   sayimciekran:  { Component: SayimciEkran,       fullHeight: true,  roles: HEPSI },
+  epsonpanel:     { Component: EpsonPanel,         fullHeight: false, roles: ['yonetici', 'kontrolcu'] },
+  epsonsayim:     { Component: EpsonSayim,         fullHeight: true,  roles: ['yonetici'] },
+  epsonanaliz:    { Component: SayimAnalizi,       fullHeight: false, roles: ['yonetici', 'kontrolcu'] },
+  epsonrapor:     { Component: EpsonRapor,         fullHeight: false, roles: ['yonetici', 'kontrolcu'] },
+  epsonkor:       { Component: EpsonKorSayim,      fullHeight: true,  roles: ['yonetici'] },
+  epsonkoranaliz: { Component: KorSayimAnalizi,    fullHeight: false, roles: ['yonetici', 'kontrolcu'] },
+  epsonkorrapor:  { Component: EpsonKorSayimRapor, fullHeight: false, roles: ['yonetici', 'kontrolcu'] },
 }
 
 function ErisimYok() {

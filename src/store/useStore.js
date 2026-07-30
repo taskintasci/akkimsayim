@@ -142,7 +142,7 @@ const useStore = create((set, get) => ({
       sessionType:  session.type || '',
       depoAdi:      session.depoAdi || '',
       atananRows,                       // array<rowId>
-      sayimTipi:    sayimTipi || 'stok', // 'stok' | 'kor' | 'hareketlilik' | 'membran'
+      sayimTipi:    sayimTipi || 'stok', // 'stok' | 'kor' | 'hareketlilik' | 'membran' | 'epson' | 'epsonkor'
       durum:        'bekliyor',
       createdAt:    serverTimestamp(),
       createdBy:    currentUser?.uid || null,

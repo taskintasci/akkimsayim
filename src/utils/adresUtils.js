@@ -88,7 +88,7 @@ export function computeFilterOptions(sourceRows, filters) {
     })
   }
 
-  const DURUM_ORDER = ['Normal', 'Bloke', 'SKTG']
+  const DURUM_ORDER = ['Normal', 'Bloke', 'SKTG', 'Özel', 'Kalite']
   const availDurumlar = new Set(apply(sourceRows, 'durum').map(r => r.durum).filter(Boolean))
 
   const URUN_TIPI_ORDER = ['Hammadde', 'Yardımcı Madde', 'Mamul', 'Ambalaj', 'Numune', 'Tanımsız']

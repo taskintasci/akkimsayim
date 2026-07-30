@@ -11,6 +11,17 @@ function toNum(val) {
   return String(val).replace(',', '.')
 }
 
+// WMS_Rapor_31'deki miktar sütunları muhasebe biçiminde formatlanıyor
+// (örn. " 1,000.00 " binlik ayraç virgül, sıfır için "-"). toNum()'daki tek
+// virgülü noktaya çeviren mantık burada "1.000.00" gibi bozuk bir değer üretir
+// (parseFloat sadece "1" okur) — bu yüzden ayrı bir temizleyici kullanılıyor.
+function toNumWms31(val) {
+  if (val === undefined || val === null || val === '') return ''
+  const str = String(val).trim()
+  if (str === '' || str === '-') return '0'
+  return str.replace(/,/g, '')
+}
+
 // ─── SKU_Sayım_Listesi sütun haritası ───────────────────────────────────────
 const SKU_MAP = {
   'sira no.'  : 'siraNo',
@@ -77,6 +88,35 @@ function isRapor5(headers) {
   return RAPOR5_SIGNATURES.some(sig => norms.some(h => h.includes(sig)))
 }
 
+// ─── WMS_Rapor_31 sütun haritası ──────────────────────────────────────────────
+// Epson Sayım için kullanılan WMS raporu. Parti yerine Beyanname; Ambalaj yok;
+// Palet Barkodu/Palet Adeti/Toplam Stok/Rezerve Adet gibi WMS'e özgü alanlar var.
+const WMS31_MAP = {
+  'adres'            : 'adres',
+  'beyanname'        : 'parti',
+  'stok kodu'        : 'kod',
+  'stok adı'         : 'ad',
+  'stok adi'         : 'ad',
+  'durum adı'        : 'durum',
+  'durum adi'        : 'durum',
+  'kategori'         : 'kategori',
+  'palet barkodu'    : 'paletBarkodu',
+  'palet adeti'      : 'paletAdeti',
+  'toplam stok'      : 'adet1',
+  'rezerve adet'     : 'rezerveAdet',
+  'depo kalan stok'  : 'sayim',
+  'birim adı'        : 'birim',
+  'birim adi'        : 'birim',
+}
+
+// WMS_Rapor_31 ayırt edici başlıkları
+const WMS31_SIGNATURES = ['beyanname', 'rezerve adet', 'depo kalan stok', 'palet barkodu', 'palet adeti']
+
+function isWms31(headers) {
+  const norms = headers.map(norm)
+  return WMS31_SIGNATURES.some(sig => norms.some(h => h.includes(sig)))
+}
+
 // Her iki format için: header adı → internal field
 function buildColMap(headers, fieldMap) {
   const colMap = {}
@@ -87,8 +127,9 @@ function buildColMap(headers, fieldMap) {
   return colMap
 }
 
-function mapDataRow(rowArr, colMap, siraNo) {
+function mapDataRow(rowArr, colMap, siraNo, format) {
   const mapped = { id: makeId(), siraNo }
+  const isW31 = format === 'wms31'
 
   Object.entries(colMap).forEach(([colIdxStr, field]) => {
     const val = rowArr[Number(colIdxStr)] ?? ''
@@ -97,8 +138,10 @@ function mapDataRow(rowArr, colMap, siraNo) {
       if (!mapped.sayim) mapped.sayim = toNum(val)
     } else if (field === 'birim_yedek') {
       if (!mapped.birim) mapped.birim = String(val)
+    } else if (field === 'paletAdeti' || field === 'rezerveAdet') {
+      mapped[field] = toNumWms31(val)
     } else if (field === 'sayim' || field === 'adet1') {
-      mapped[field] = toNum(val)
+      mapped[field] = isW31 ? toNumWms31(val) : toNum(val)
     } else if (field === 'siraNo') {
       mapped.siraNo = val ? Number(val) || siraNo : siraNo
     } else {
@@ -174,21 +217,23 @@ export function parseExcelFile(file) {
           const row = rawArr[i]
           const headers = row.map(v => norm(String(v ?? '')))
 
-          const isR5 = isRapor5(headers)
-          const fieldMap = isR5 ? RAPOR5_MAP : SKU_MAP
+          const isW31 = isWms31(headers)
+          const isR5  = !isW31 && isRapor5(headers)
+          const format = isW31 ? 'wms31' : isR5 ? 'rapor5' : 'sku'
+          const fieldMap = isW31 ? WMS31_MAP : isR5 ? RAPOR5_MAP : SKU_MAP
 
           const score = headers.filter(h => fieldMap[h]).length
           if (score > bestScore) {
             bestScore = score
             headerRowIdx = i
-            bestFormat = isR5 ? 'rapor5' : 'sku'
+            bestFormat = format
             bestFieldMap = fieldMap
           }
         }
 
         if (bestScore === 0) {
           reject(new Error(
-            'Tanınan sütun bulunamadı. Lütfen RAPOR5.xls veya Sku_Sayım_Listesi.xlsx yükleyin.'
+            'Tanınan sütun bulunamadı. Lütfen RAPOR5.xls, Sku_Sayım_Listesi.xlsx veya WMS_Rapor_31.xlsx yükleyin.'
           ))
           return
         }
@@ -201,7 +246,7 @@ export function parseExcelFile(file) {
           .slice(headerRowIdx + 1)        // başlık satırından sonraki satırlar
           .map(rowArr => {
             rowNum++
-            return mapDataRow(rowArr, colMap, rowNum)
+            return mapDataRow(rowArr, colMap, rowNum, bestFormat)
           })
           .filter(r => r.kod && String(r.kod).trim())
 

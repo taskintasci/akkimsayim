@@ -40,6 +40,14 @@ const MENU = [
   { id: 'hareketlilik', icon: 'trending_up',    label: 'Hareketlilik Sayımı',     roles: ['yonetici'] },
   { id: 'membran',      icon: 'layers',         label: 'Membran Sayımı',          roles: ['yonetici'] },
   { divider: true,      roles: ['yonetici', 'kontrolcu'] },
+  { id: 'epsonpanel',     icon: 'inventory',       label: 'Epson Panel',              roles: ['yonetici', 'kontrolcu'] },
+  { id: 'epsonsayim',     icon: 'fact_check',      label: 'Epson Stok Sayımı',        roles: ['yonetici'] },
+  { id: 'epsonanaliz',    icon: 'monitoring',      label: 'Epson Sayım Analizi',      roles: ['yonetici', 'kontrolcu'] },
+  { id: 'epsonrapor',     icon: 'analytics',       label: 'Epson Sayım Raporu',       roles: ['yonetici', 'kontrolcu'] },
+  { id: 'epsonkor',       icon: 'visibility_off',  label: 'Epson Kör Sayımı',         roles: ['yonetici'] },
+  { id: 'epsonkoranaliz', icon: 'query_stats',     label: 'Epson Kör Sayım Analizi',  roles: ['yonetici', 'kontrolcu'] },
+  { id: 'epsonkorrapor',  icon: 'summarize',       label: 'Epson Kör Sayım Raporu',   roles: ['yonetici', 'kontrolcu'] },
+  { divider: true,      roles: ['yonetici', 'kontrolcu'] },
   { id: 'sayimciekran', icon: 'swipe',          label: 'Sayımcı Ekranı',          roles: ['yonetici', 'kontrolcu'] },
 ]
 

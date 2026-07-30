@@ -22,7 +22,7 @@ function siralamaMembran(rows) {
 // ═══════════════════════════════════════════════════════════════════════════
 // Swipe kart — sağa kaydır = onayla, sola kaydır = eksik/fazla gir
 // ═══════════════════════════════════════════════════════════════════════════
-function SwipeCard({ row, sayilanMiktar, onConfirm, onEdit, isMembran }) {
+function SwipeCard({ row, sayilanMiktar, onConfirm, onEdit, isMembran, isEpson }) {
   const [dx, setDx] = useState(0)
   const startX = useRef(null)
   const TH = 90
@@ -115,7 +115,7 @@ function SwipeCard({ row, sayilanMiktar, onConfirm, onEdit, isMembran }) {
         {/* Kod + parti */}
         <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mb-3 shrink-0">
           <span className="text-slate-500 mono" style={{ fontSize: 15 }}>{row.kod}</span>
-          {row.parti && <span className="text-slate-400 mono text-xs">Parti: {row.parti}</span>}
+          {row.parti && <span className="text-slate-400 mono text-xs">{isEpson ? 'Beyanname' : 'Parti'}: {row.parti}</span>}
         </div>
 
         {/* Sistem miktarı + sayılan */}
@@ -189,7 +189,8 @@ export default function SayimciEkran({ mode = 'self' }) {
   }, [mode, currentUser?.uid, activeSessionId])
 
   const isMembran = gorev?.sayimTipi === 'membran'
-  const isKor     = gorev?.sayimTipi === 'kor'
+  const isKor     = gorev?.sayimTipi === 'kor' || gorev?.sayimTipi === 'epsonkor'
+  const isEpson   = gorev?.sayimTipi === 'epson' || gorev?.sayimTipi === 'epsonkor'
 
   const atanan = useMemo(() => {
     if (!gorev) return []
@@ -375,6 +376,9 @@ export default function SayimciEkran({ mode = 'self' }) {
                             )}
                             {g.sayimTipi === 'kor' && (
                               <span className="ms text-amber-500 ml-1" style={{ fontSize: 16 }}>visibility_off</span>
+                            )}
+                            {(g.sayimTipi === 'epson' || g.sayimTipi === 'epsonkor') && (
+                              <span className="ms text-blue-500 ml-1" style={{ fontSize: 16 }}>qr_code_scanner</span>
                             )}
                           </div>
                           {counted !== null && (
@@ -624,6 +628,7 @@ export default function SayimciEkran({ mode = 'self' }) {
             onConfirm={onayla}
             onEdit={editAc}
             isMembran={isMembran}
+            isEpson={isEpson}
           />
         )}
 

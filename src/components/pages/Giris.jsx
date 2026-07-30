@@ -7,6 +7,7 @@ const SESSION_TYPES = [
   { id: 'Yıl Sonu Sayımı', icon: 'event_available', desc: 'Yıl sonu kapanış envanteri' },
   { id: 'Ara Sayım', icon: 'find_in_page', desc: 'Dönem içi kontrol sayımı' },
   { id: 'Ön Sayım', icon: 'preview', desc: 'Hazırlık ve sınırlı alan sayımı' },
+  { id: 'Epson Sayım', icon: 'qr_code_scanner', desc: 'WMS_Rapor_31 bazlı depo sayımı' },
 ]
 
 function StatusBadge({ durum }) {
