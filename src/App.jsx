@@ -26,10 +26,9 @@ const EpsonSayim          = lazy(() => import('./components/pages/EpsonSayim'))
 const EpsonRapor          = lazy(() => import('./components/pages/EpsonRapor'))
 const EpsonKorSayim       = lazy(() => import('./components/pages/EpsonKorSayim'))
 const EpsonKorSayimRapor  = lazy(() => import('./components/pages/EpsonKorSayimRapor'))
-const FirmaYonetimi       = lazy(() => import('./components/pages/FirmaYonetimi'))
 
 // Oturum seçilmeden de erişilebilen sayfalar (Sidebar/TopBar kabuğu içinde)
-const SESSIONLESS = ['giris', 'ayarlar', 'firmayonetimi']
+const SESSIONLESS = ['giris', 'ayarlar']
 
 const HEPSI = ['yonetici', 'kontrolcu', 'sayimci']
 const YON       = ['yonetici', 'superadmin']              // yönetici yetkisi (süper yönetici her firmayı yönetebilir)
@@ -58,7 +57,6 @@ const PAGES = {
   epsonkor:       { Component: EpsonKorSayim,      fullHeight: true,  roles: YON, sablon: ['wms31'] },
   epsonkoranaliz: { Component: KorSayimAnalizi,    fullHeight: false, roles: YON_KONT, sablon: ['wms31'] },
   epsonkorrapor:  { Component: EpsonKorSayimRapor, fullHeight: false, roles: YON_KONT, sablon: ['wms31'] },
-  firmayonetimi:  { Component: FirmaYonetimi,      fullHeight: false, roles: ['superadmin'] },
 }
 
 function ErisimYok() {

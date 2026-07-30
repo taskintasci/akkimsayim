@@ -15,6 +15,11 @@ export default function FirmaYonetimi() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
+  const [editingId, setEditingId] = useState(null)
+  const [editForm, setEditForm] = useState(EMPTY_FORM)
+  const [editSaving, setEditSaving] = useState(false)
+  const [editError, setEditError] = useState('')
+
   useEffect(() => { loadFirmalar().finally(() => setLoading(false)) }, [])
 
   async function handleCreate(e) {
@@ -32,10 +37,33 @@ export default function FirmaYonetimi() {
     }
   }
 
+  function startEdit(f) {
+    setEditingId(f.id)
+    setEditForm({ ad: f.ad || '', unvan: f.unvan || '', sablon: f.sablon || 'standart' })
+    setEditError('')
+  }
+
+  function cancelEdit() {
+    setEditingId(null)
+    setEditError('')
+  }
+
+  async function handleEditSave(id) {
+    setEditError('')
+    if (!editForm.ad.trim()) { setEditError('Firma adı gerekli.'); return }
+    setEditSaving(true)
+    try {
+      await updateFirma(id, { ad: editForm.ad.trim(), unvan: editForm.unvan.trim(), sablon: editForm.sablon })
+      setEditingId(null)
+    } catch (err) {
+      setEditError('Kaydedilemedi: ' + (err?.message || ''))
+    } finally {
+      setEditSaving(false)
+    }
+  }
+
   return (
-    <div className="max-w-4xl">
-      <h1 className="text-2xl font-bold text-slate-800 mb-1">Firma Yönetimi</h1>
-      <p className="text-sm text-slate-500 mb-5">Sisteme yeni firma ekleyin, mevcut firmaları düzenleyin.</p>
+    <div>
 
       {/* Yeni firma formu */}
       <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
@@ -116,10 +144,42 @@ export default function FirmaYonetimi() {
                 <th className="px-5 py-2.5 text-left font-semibold">Unvan</th>
                 <th className="px-5 py-2.5 text-left font-semibold">Şablon</th>
                 <th className="px-5 py-2.5 text-right font-semibold">Durum</th>
+                <th className="px-5 py-2.5 text-right font-semibold">İşlem</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {firmalar.map(f => (
+              {firmalar.map(f => editingId === f.id ? (
+                <tr key={f.id} className="bg-blue-50/40">
+                  <td className="px-5 py-3">
+                    <input type="text" value={editForm.ad}
+                      onChange={e => setEditForm(x => ({ ...x, ad: e.target.value }))}
+                      className="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200" />
+                  </td>
+                  <td className="px-5 py-3">
+                    <input type="text" value={editForm.unvan}
+                      onChange={e => setEditForm(x => ({ ...x, unvan: e.target.value }))}
+                      className="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200" />
+                  </td>
+                  <td className="px-5 py-3">
+                    <select value={editForm.sablon}
+                      onChange={e => setEditForm(x => ({ ...x, sablon: e.target.value }))}
+                      className="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200">
+                      {SABLON_OPTIONS.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+                    </select>
+                  </td>
+                  <td className="px-5 py-3 text-right text-xs text-slate-300">—</td>
+                  <td className="px-5 py-3 text-right">
+                    <div className="flex items-center justify-end gap-1.5">
+                      <button onClick={() => handleEditSave(f.id)} disabled={editSaving}
+                        className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white text-[11px] font-semibold rounded-md">
+                        {editSaving ? 'Kaydediliyor…' : 'Kaydet'}
+                      </button>
+                      <button onClick={cancelEdit} className="px-2.5 py-1 text-slate-400 hover:text-slate-600 text-[11px] rounded-md">İptal</button>
+                    </div>
+                    {editError && <div className="mt-1 text-[11px] text-red-600 text-right">{editError}</div>}
+                  </td>
+                </tr>
+              ) : (
                 <tr key={f.id} className="hover:bg-slate-50/50">
                   <td className="px-5 py-3 font-medium text-slate-800">{f.ad}</td>
                   <td className="px-5 py-3 text-slate-500 text-xs">{f.unvan || '—'}</td>
@@ -133,6 +193,12 @@ export default function FirmaYonetimi() {
                       }
                     >
                       {f.aktif !== false ? 'Aktif' : 'Pasif'}
+                    </button>
+                  </td>
+                  <td className="px-5 py-3 text-right">
+                    <button onClick={() => startEdit(f)}
+                      className="w-7 h-7 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+                      <span className="ms" style={{ fontSize: 16 }}>edit</span>
                     </button>
                   </td>
                 </tr>

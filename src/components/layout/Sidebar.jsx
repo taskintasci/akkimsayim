@@ -55,28 +55,20 @@ const MENU = [
   { id: 'epsonkorrapor',  icon: 'summarize',       label: 'Kör Sayım Raporu',       roles: YON_KONT, sablon: ['wms31'] },
   { divider: true,      roles: YON_KONT },
   { id: 'sayimciekran', icon: 'swipe',          label: 'Sayımcı Ekranı',          roles: YON_KONT },
-  { divider: true,      roles: ['superadmin'] },
-  { id: 'firmayonetimi', icon: 'domain',        label: 'Firma Yönetimi',          roles: ['superadmin'], sessionless: true },
 ]
 
 export default function Sidebar({ activePage, onNavigate, onSettings, className = 'flex' }) {
-  const { session, activeSessionId, setActiveSession, userProfile, userRole, firmalar, firmaProfile, activeFirma, setActiveFirma } = useStore(
+  const { activeSessionId, userProfile, userRole, firmalar, firmaProfile, activeFirma, setActiveFirma } = useStore(
     useShallow(s => ({
-      session: s.session, activeSessionId: s.activeSessionId, setActiveSession: s.setActiveSession, userProfile: s.userProfile, userRole: s.userRole,
+      activeSessionId: s.activeSessionId, userProfile: s.userProfile, userRole: s.userRole,
       firmalar: s.firmalar, firmaProfile: s.firmaProfile, activeFirma: s.activeFirma, setActiveFirma: s.setActiveFirma,
     }))
   )
-  const aktifSayim = session || {}
 
   const initials = (userProfile?.displayName || userProfile?.email || '??')
     .split(/[\s.@]+/).filter(Boolean).slice(0, 2).map(s => s[0]?.toUpperCase()).join('')
 
   const currentSablon = firmaProfile?.sablon
-
-  function handleSayimDegistir() {
-    setActiveSession(null)
-    onNavigate('giris')
-  }
 
   function handleFirmaSwitch(firmaId) {
     setActiveFirma(firmaId)
@@ -108,13 +100,6 @@ export default function Sidebar({ activePage, onNavigate, onSettings, className 
         {firmaProfile?.ad && (
           <p className="ml-9 text-[11px] text-slate-400 truncate">{firmaProfile.ad}</p>
         )}
-        <button
-          onClick={handleSayimDegistir}
-          className="ml-9 flex items-center gap-1 text-[11px] text-blue-600 hover:underline mono mt-0.5"
-        >
-          <span className="ms" style={{ fontSize: 12 }}>swap_horiz</span>
-          {aktifSayim.type || 'Sayım Değiştir'}
-        </button>
       </div>
 
       {/* Süper yönetici: firma switcher */}
@@ -140,13 +125,8 @@ export default function Sidebar({ activePage, onNavigate, onSettings, className 
         )}
       </nav>
 
-      {/* Aktif sayım + kullanıcı */}
+      {/* Kullanıcı */}
       <div className="px-5 pb-3 pt-3 border-t border-slate-100">
-        <div className="bg-slate-50 rounded-lg p-2.5 mb-3">
-          <p className="text-[10px] text-slate-400 mono uppercase tracking-wide">Aktif Sayım</p>
-          <p className="text-[12px] font-semibold text-slate-700 mt-0.5 truncate">{aktifSayim.type || '—'}</p>
-          <p className="text-[11px] text-slate-400 mono truncate">{aktifSayim.depoAdi || '—'}</p>
-        </div>
         <div className="flex items-center gap-2.5">
           <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-[11px] font-bold text-slate-600 shrink-0">
             {initials || '??'}
@@ -177,7 +157,7 @@ export default function Sidebar({ activePage, onNavigate, onSettings, className 
           >
             <span className="ms" style={{ fontSize: 15 }}>settings</span>
             Ayarlar
-            <span className="ml-auto text-[10px] text-slate-400">+ Kullanıcılar</span>
+            <span className="ml-auto text-[10px] text-slate-400">{userRole === 'superadmin' ? '+ Kullanıcılar + Firmalar' : '+ Kullanıcılar'}</span>
           </button>
         )}
       </div>

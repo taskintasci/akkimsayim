@@ -21,7 +21,6 @@ const PAGE_NAMES = {
   epsonkor: 'Kör Sayım',
   epsonkoranaliz: 'Kör Sayım Analizi',
   epsonkorrapor: 'Kör Sayım Raporu',
-  firmayonetimi: 'Firma Yönetimi',
 }
 
 export default function TopBar({ activePage, onMenu }) {

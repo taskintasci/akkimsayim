@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import useStore, { ROLE_LABELS } from '../../store/useStore'
+import FirmaYonetimi from './FirmaYonetimi'
 
 // ── Kullanıcı Yönetimi ────────────────────────────────────────────────────
 import { getSecondaryAuth } from '../../firebase/index'
@@ -206,9 +207,11 @@ export default function Ayarlar() {
   }
 
   const isYonetici = userRole === 'yonetici' || userRole === 'superadmin'
+  const isSuperAdmin = userRole === 'superadmin'
   const tabs = [
     ...(activeSessionId ? [{ id: 'sayim', label: 'Sayım Ayarları', icon: 'tune' }] : []),
     ...(isYonetici ? [{ id: 'kullanicilar', label: 'Kullanıcılar', icon: 'group' }] : []),
+    ...(isSuperAdmin ? [{ id: 'firmalar', label: 'Firma Yönetimi', icon: 'domain' }] : []),
   ]
 
   useEffect(() => {
@@ -223,6 +226,8 @@ export default function Ayarlar() {
           ? 'Aktif sayım oturumu bilgilerini düzenleyin.'
           : tab === 'kullanicilar'
           ? 'Kullanıcı hesapları oluşturun ve rollerini yönetin.'
+          : tab === 'firmalar'
+          ? 'Sisteme yeni firma ekleyin, mevcut firmaları düzenleyin.'
           : 'Bu bölüme erişmek için önce bir sayım oturumu seçin.'}
       </p>
 
@@ -290,6 +295,8 @@ export default function Ayarlar() {
       )}
 
       {tab === 'kullanicilar' && isYonetici && <KullaniciTab />}
+
+      {tab === 'firmalar' && isSuperAdmin && <FirmaYonetimi />}
     </div>
   )
 }
