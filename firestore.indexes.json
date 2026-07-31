@@ -9,6 +9,14 @@
       ]
     },
     {
+      "collectionGroup": "sayimciGorevler",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "sayimciUid", "order": "ASCENDING" },
+        { "fieldPath": "firma",      "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "sessions",
       "queryScope": "COLLECTION",
       "fields": [
