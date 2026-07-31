@@ -117,19 +117,16 @@ export default function Rapor({ onNavigate }) {
               <div className="flex items-center gap-1.5 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg text-[13px] font-bold">
                 <span className="ms" style={{ fontSize: 16 }}>check_circle</span> Onaylandı
               </div>
-            ) : session.durum === 'Mutabakat Bekliyor' ? (
+            ) : (
               <button
                 onClick={handleApprove}
-                disabled={approving}
-                className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white rounded-lg text-[13px] font-bold hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                disabled={approving || session.durum !== 'Mutabakat Bekliyor'}
+                title={session.durum !== 'Mutabakat Bekliyor' ? 'Onaylamak için önce Panel\'den "Sayımı Bitir"' : undefined}
+                className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white rounded-lg text-[13px] font-bold hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-emerald-600"
               >
                 <span className="ms" style={{ fontSize: 16 }}>{approving ? 'hourglass_empty' : 'check_circle'}</span>
                 {approving ? 'Onaylanıyor…' : 'Onayla'}
               </button>
-            ) : (
-              <div className="flex items-center gap-1.5 px-4 py-2 bg-slate-100 text-slate-500 rounded-lg text-[13px] font-medium">
-                <span className="ms" style={{ fontSize: 16 }}>info</span> Onaylamak için önce Panel'den "Sayımı Bitir"
-              </div>
             )
           )}
         </div>
