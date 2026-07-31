@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import useStore, { ROLE_LABELS } from '../../store/useStore'
 import FirmaYonetimi from './FirmaYonetimi'
+import FirmaMasterdataPanel from './FirmaMasterdataPanel'
 
 // ── Kullanıcı Yönetimi ────────────────────────────────────────────────────
 import { getSecondaryAuth } from '../../firebase/index'
@@ -197,7 +198,7 @@ function KullaniciTab() {
 
 // ── Ana Sayfa ─────────────────────────────────────────────────────────────
 export default function Ayarlar() {
-  const { session, setSession, userRole, activeSessionId } = useStore()
+  const { session, setSession, userRole, activeSessionId, firmaProfile } = useStore()
   const [tab, setTab] = useState(activeSessionId ? 'sayim' : 'kullanicilar')
   const [saved, setSaved] = useState(false)
 
@@ -211,6 +212,7 @@ export default function Ayarlar() {
   const tabs = [
     ...(activeSessionId ? [{ id: 'sayim', label: 'Sayım Ayarları', icon: 'tune' }] : []),
     ...(isYonetici ? [{ id: 'kullanicilar', label: 'Kullanıcılar', icon: 'group' }] : []),
+    ...(isYonetici ? [{ id: 'masterdata', label: 'Masterdata', icon: 'inventory_2' }] : []),
     ...(isSuperAdmin ? [{ id: 'firmalar', label: 'Firma Yönetimi', icon: 'domain' }] : []),
   ]
 
@@ -226,6 +228,8 @@ export default function Ayarlar() {
           ? 'Aktif sayım oturumu bilgilerini düzenleyin.'
           : tab === 'kullanicilar'
           ? 'Kullanıcı hesapları oluşturun ve rollerini yönetin.'
+          : tab === 'masterdata'
+          ? 'Manuel giriş doğrulaması için kullanılan SKU ve lokasyon referans listeleri.'
           : tab === 'firmalar'
           ? 'Sisteme yeni firma ekleyin, mevcut firmaları düzenleyin.'
           : 'Bu bölüme erişmek için önce bir sayım oturumu seçin.'}
@@ -294,6 +298,12 @@ export default function Ayarlar() {
       )}
 
       {tab === 'kullanicilar' && isYonetici && <KullaniciTab />}
+
+      {tab === 'masterdata' && isYonetici && (
+        <div className="max-w-lg">
+          <FirmaMasterdataPanel firma={firmaProfile} />
+        </div>
+      )}
 
       {tab === 'firmalar' && isSuperAdmin && <FirmaYonetimi />}
     </div>

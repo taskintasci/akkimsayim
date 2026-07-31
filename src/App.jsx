@@ -7,6 +7,7 @@ import { SABLON } from './constants'
 import Sidebar from './components/layout/Sidebar'
 import TopBar from './components/layout/TopBar'
 import GirisHeader from './components/layout/GirisHeader'
+import FirmaMasterdataPanel from './components/pages/FirmaMasterdataPanel'
 
 const Login           = lazy(() => import('./components/pages/Login'))
 const Giris           = lazy(() => import('./components/pages/Giris'))
@@ -98,7 +99,34 @@ function AuthErrorScreen({ message }) {
   )
 }
 
-function MasterdataEksikScreen() {
+function MasterdataEksikScreen({ userRole, firmaProfile }) {
+  // Yönetici kendi firmasının masterdata'sını yükleyebildiği için burada
+  // doğrudan yükleme paneli gösterilir (dead-end mesaj yerine) — sayaçlar
+  // güncellenince firmaProfile reaktif olarak değişir ve bu ekran otomatik
+  // kapanır. Kontrolcü/sayımcının bu yetkisi yok, sade mesaj görürler.
+  if (userRole === 'yonetici' && firmaProfile) {
+    return (
+      <div className="h-screen overflow-y-auto bg-slate-100 flex flex-col items-center p-6 md:p-10">
+        <div className="w-full max-w-lg">
+          <div className="text-center mb-6">
+            <span className="ms text-amber-500" style={{ fontSize: 48 }}>inventory_2</span>
+            <h2 className="text-slate-800 font-bold text-lg mt-2">Firma Kurulumu Tamamlanmadı</h2>
+            <p className="text-slate-500 text-sm mt-1">
+              Devam etmeden önce SKU Masterdata ve Lokasyon listelerini yükleyin.
+            </p>
+          </div>
+          <FirmaMasterdataPanel firma={firmaProfile} />
+          <button
+            onClick={() => signOut(auth)}
+            className="w-full mt-4 py-2 border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-medium transition-colors"
+          >
+            Çıkış Yap
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="h-screen flex flex-col items-center justify-center text-center p-10 bg-slate-100 gap-4">
       <span className="ms text-slate-300" style={{ fontSize: 56 }}>inventory_2</span>
@@ -196,7 +224,7 @@ export default function App() {
   // Yönetimi'nden yükleyip düzeltebilir.
   if (userRole !== 'superadmin' && firmaProfile &&
       (!firmaProfile.skuMasterdataSayisi || !firmaProfile.lokasyonSayisi)) {
-    return <MasterdataEksikScreen />
+    return <MasterdataEksikScreen userRole={userRole} firmaProfile={firmaProfile} />
   }
 
   // Sayımcı: oturum seçimi ve sidebar yok — doğrudan tam ekran sayım akışı

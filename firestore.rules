@@ -38,26 +38,37 @@ service cloud.firestore {
         && request.resource.data.sablon in ['standart', 'wms31']
         && request.resource.data.aktif is bool;
 
-      allow update: if isSuperAdmin()
+      // Süper yönetici ad/unvan/sablon/aktif dahil her alanı değiştirebilir.
+      // Yönetici SADECE kendi firmasının masterdata sayaç alanlarını
+      // (skuMasterdataSayisi/lokasyonSayisi) güncelleyebilir — ad/unvan/sablon/
+      // aktif'e dokunamaz (updateFirmaSkuMasterdata/uploadFirmaLokasyonlar'ın
+      // yazdığı tek şey bu iki sayaç).
+      allow update: if (
+        isSuperAdmin()
         && isNonEmptyString(request.resource.data.ad)
         && request.resource.data.sablon in ['standart', 'wms31']
-        && request.resource.data.aktif is bool;
+        && request.resource.data.aktif is bool
+      ) || (
+        isYonetici()
+        && userFirma() == firmaId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['skuMasterdataSayisi', 'lokasyonSayisi'])
+      );
 
       allow delete: if isSuperAdmin();
     }
 
     // ── firmalar/{firmaId}/skuMasterdataChunks, lokasyonChunks ──────────────
     // Manuel giriş doğrulaması için firma bazlı referans listeleri (Kod/Ad/
-    // Birim ve lokasyon kodları). Sadece süper yönetici yazar (Firma Yönetimi);
-    // firmanın kendi kullanıcıları (yönetici/kontrolcü/sayımcı) sadece okur
-    // (ComboBox autofill/doğrulama için).
+    // Birim ve lokasyon kodları). Süper yönetici (Firma Yönetimi) veya
+    // firmanın kendi yöneticisi (Ayarlar → Masterdata) yazabilir; kontrolcü/
+    // sayımcı sadece okur (ComboBox autofill/doğrulama için).
     match /firmalar/{firmaId}/skuMasterdataChunks/{chunkId} {
       allow read:  if isSuperAdmin() || userFirma() == firmaId;
-      allow write: if isSuperAdmin();
+      allow write: if isSuperAdmin() || (isYonetici() && userFirma() == firmaId);
     }
     match /firmalar/{firmaId}/lokasyonChunks/{chunkId} {
       allow read:  if isSuperAdmin() || userFirma() == firmaId;
-      allow write: if isSuperAdmin();
+      allow write: if isSuperAdmin() || (isYonetici() && userFirma() == firmaId);
     }
 
     // ── users/{uid} ──────────────────────────────────────────────────────
