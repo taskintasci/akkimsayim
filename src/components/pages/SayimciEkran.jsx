@@ -817,6 +817,15 @@ function ManuelModal({ onClose, addManualRow, manualRows, isKor, skuMasterdata, 
   const adresGecerli = form.adres.trim() === '' ||
     lokasyonlar.some(l => l.toUpperCase() === form.adres.trim().toUpperCase())
 
+  // Form'da girilmiş veri varken kaza sonucu (arka plana dokunma vb.) kapatma
+  // olasılığına karşı onay iste — yazım sırasında yanlışlıkla dokunma kayıp
+  // vermesin diye.
+  const isDirty = form.kod.trim() !== '' || form.adres.trim() !== '' || form.miktar !== ''
+  function handleClose() {
+    if (isDirty && !window.confirm('Girdiğiniz bilgiler kaybolacak. Kapatmak istediğinize emin misiniz?')) return
+    onClose()
+  }
+
   function selectSku(opt) {
     const sku = skuMasterdata.find(s => s.kod === opt.value)
     setForm(f => ({ ...f, kod: sku.kod, ad: sku.ad, birim: sku.birim }))
@@ -841,7 +850,7 @@ function ManuelModal({ onClose, addManualRow, manualRows, isKor, skuMasterdata, 
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-4" onClick={handleClose}>
       <div className="w-full max-w-md bg-white border border-slate-200 rounded-3xl p-6 shadow-xl" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-slate-900 font-bold text-lg flex items-center gap-2">
@@ -849,7 +858,7 @@ function ManuelModal({ onClose, addManualRow, manualRows, isKor, skuMasterdata, 
             Manuel Fazla Stok
             {isKor && <span className="text-xs font-normal text-amber-700 ml-1">(Kör Sayım)</span>}
           </h3>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100">
+          <button onClick={handleClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100">
             <span className="ms" style={{ fontSize: 20 }}>close</span>
           </button>
         </div>
