@@ -48,17 +48,17 @@ export default function AntrepoPanel({ onNavigate }) {
 
       {/* 4 İstatistik Kartı */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {/* Toplam SKU */}
+        {/* Lokasyon */}
         <div className="bg-white rounded-xl border border-slate-200 p-4 relative overflow-hidden hover:border-slate-300 hover:shadow-sm transition-all">
           <div className="absolute top-0 left-0 w-1 h-full bg-slate-400 rounded-l-xl" />
           <div className="flex items-start justify-between mb-2">
-            <p className="text-[11px] text-slate-400 mono uppercase tracking-wide">Toplam SKU</p>
+            <p className="text-[11px] text-slate-400 mono uppercase tracking-wide">Lokasyon</p>
             <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center shrink-0">
               <span className="ms text-slate-500" style={{ fontSize: 17 }}>inventory_2</span>
             </div>
           </div>
           <p className="text-3xl font-bold text-slate-900">{rows.length.toLocaleString('tr')}</p>
-          <p className="text-[12px] text-slate-400 mt-1">Tüm stok kalemleri</p>
+          <p className="text-[12px] text-slate-400 mt-1">Toplam Lokasyon</p>
         </div>
         {/* Sayılan */}
         <div className="bg-white rounded-xl border border-slate-200 p-4 relative overflow-hidden hover:border-blue-200 hover:shadow-sm transition-all">
