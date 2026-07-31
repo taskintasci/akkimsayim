@@ -2,6 +2,7 @@ import { useShallow } from 'zustand/react/shallow'
 import useStore from '../../store/useStore'
 import { SABLON } from '../../constants'
 import UserMenu from './UserMenu'
+import Logo from './Logo'
 
 function NavBtn({ item, activePage, onNavigate }) {
   const active = activePage === item.id
@@ -88,15 +89,7 @@ export default function Sidebar({ activePage, onNavigate, className = 'flex' }) 
     <aside className={`w-56 shrink-0 bg-white border-r border-slate-200 ${className} flex-col h-full`}>
       {/* Logo — tıklanınca aktif oturumdan çıkıp Sayımlar listesine döner */}
       <div className="px-5 pt-5 pb-4 border-b border-slate-100">
-        <button onClick={handleLogoClick} className="flex items-center gap-2 mb-1">
-          <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center shrink-0">
-            <span className="ms text-white" style={{ fontSize: 16 }}>warehouse</span>
-          </div>
-          <span className="font-bold text-slate-900 text-[13px] leading-tight">Sayım Planı</span>
-        </button>
-        {firmaProfile?.ad && (
-          <p className="ml-9 text-[11px] text-slate-400 truncate">{firmaProfile.ad}</p>
-        )}
+        <Logo onClick={handleLogoClick} />
       </div>
 
       {/* Main nav */}
