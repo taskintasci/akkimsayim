@@ -348,7 +348,7 @@ export default function SayimciEkran({ mode = 'self' }) {
                         </button>
                         <div className="flex items-center gap-2 shrink-0">
                           <DurumRozet durum={g.durum} />
-                          {userRole === 'yonetici' && (
+                          {(userRole === 'yonetici' || userRole === 'superadmin') && (
                             <button
                               onClick={() => setDeletingId(g.id)}
                               className="w-11 h-11 -my-2 -mr-2 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"

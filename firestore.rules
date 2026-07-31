@@ -180,6 +180,9 @@ service cloud.firestore {
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['durum'])
           );
 
+        // Süper yönetici + yönetici (kendi firması) her görevi silebilir.
+        // Sayımcı manuel silemez; sadece kendi öksüz kalmış (ebeveyn oturumu
+        // silinmiş) görevini otomatik temizleyebilir (bkz. loadMyGorevler).
         allow delete: if isSuperAdmin()
           || (isYonetici() && sameFirma(resource.data.firma))
           || (
