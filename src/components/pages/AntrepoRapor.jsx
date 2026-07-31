@@ -120,7 +120,7 @@ export default function AntrepoRapor({ onNavigate }) {
           >
             <span className="ms" style={{ fontSize: 16 }}>download</span> Excel İndir
           </button>
-          {userRole === 'yonetici' && (
+          {(userRole === 'yonetici' || userRole === 'superadmin') && (
             session.durum === 'Tamamlandı' ? (
               <div className="flex items-center gap-1.5 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg text-[13px] font-bold">
                 <span className="ms" style={{ fontSize: 16 }}>check_circle</span> Onaylandı
