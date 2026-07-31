@@ -260,7 +260,9 @@ export default function App() {
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto p-4 md:p-6">
-          <PageComponent onNavigate={handleNavigate} />
+          <div className="max-w-7xl mx-auto">
+            <PageComponent onNavigate={handleNavigate} />
+          </div>
         </div>
       )}
     </Suspense>
