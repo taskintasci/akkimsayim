@@ -14,6 +14,7 @@ const Panel           = lazy(() => import('./components/pages/Panel'))
 const ExcelYukle      = lazy(() => import('./components/pages/ExcelYukle'))
 const StokSayim       = lazy(() => import('./components/pages/StokSayim'))
 const KorSayim        = lazy(() => import('./components/pages/KorSayim'))
+const SkuListesi      = lazy(() => import('./components/pages/SkuListesi'))
 const Rapor           = lazy(() => import('./components/pages/Rapor'))
 const SayimAnalizi    = lazy(() => import('./components/pages/SayimAnalizi'))
 const KorSayimAnalizi = lazy(() => import('./components/pages/KorSayimAnalizi'))
@@ -43,6 +44,7 @@ const PAGES = {
   sayim:     { Component: StokSayim,        fullHeight: true,  roles: YON, sablon: [SABLON.STANDART] },
   analiz:    { Component: SayimAnalizi,     fullHeight: false, roles: YON_KONT, sablon: [SABLON.STANDART] },
   rapor:     { Component: Rapor,            fullHeight: false, roles: YON_KONT, sablon: [SABLON.STANDART] },
+  skuliste:  { Component: SkuListesi,       fullHeight: true,  roles: YON, sablon: [SABLON.STANDART] },
   kor:       { Component: KorSayim,         fullHeight: true,  roles: YON, sablon: [SABLON.STANDART] },
   koranaliz: { Component: KorSayimAnalizi,  fullHeight: false, roles: YON_KONT, sablon: [SABLON.STANDART] },
   korrapor:      { Component: KorSayimRapor,      fullHeight: false, roles: YON_KONT, sablon: [SABLON.STANDART] },
@@ -54,6 +56,7 @@ const PAGES = {
   antreposayim:     { Component: AntrepoSayim,         fullHeight: true,  roles: YON, sablon: [SABLON.WMS31] },
   antrepoanaliz:    { Component: SayimAnalizi,         fullHeight: false, roles: YON_KONT, sablon: [SABLON.WMS31] },
   antreporapor:     { Component: AntrepoRapor,         fullHeight: false, roles: YON_KONT, sablon: [SABLON.WMS31] },
+  antreposkuliste:  { Component: SkuListesi,           fullHeight: true,  roles: YON, sablon: [SABLON.WMS31] },
   antrepokor:       { Component: AntrepoKorSayim,      fullHeight: true,  roles: YON, sablon: [SABLON.WMS31] },
   antrepokoranaliz: { Component: KorSayimAnalizi,      fullHeight: false, roles: YON_KONT, sablon: [SABLON.WMS31] },
   antrepokorrapor:  { Component: AntrepoKorSayimRapor, fullHeight: false, roles: YON_KONT, sablon: [SABLON.WMS31] },
