@@ -62,11 +62,11 @@ export default {
       fontFamily: {
         'label-md': ['"JetBrains Mono"', 'monospace'],
         'label-sm': ['"JetBrains Mono"', 'monospace'],
-        'headline-lg': ['"Plus Jakarta Sans"', 'sans-serif'],
-        'headline-md': ['"Plus Jakarta Sans"', 'sans-serif'],
-        'headline-sm': ['"Plus Jakarta Sans"', 'sans-serif'],
-        'body-lg': ['"Plus Jakarta Sans"', 'sans-serif'],
-        'body-md': ['"Plus Jakarta Sans"', 'sans-serif'],
+        'headline-lg': ['Figtree', 'sans-serif'],
+        'headline-md': ['Figtree', 'sans-serif'],
+        'headline-sm': ['Figtree', 'sans-serif'],
+        'body-lg': ['Figtree', 'sans-serif'],
+        'body-md': ['Figtree', 'sans-serif'],
       },
       fontSize: {
         'label-md': ['12px', { lineHeight: '16px', letterSpacing: '0.05em', fontWeight: '500' }],
