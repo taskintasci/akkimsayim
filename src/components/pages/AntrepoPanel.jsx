@@ -8,7 +8,7 @@ function formatTime(date) {
   return d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
 }
 
-export default function EpsonPanel({ onNavigate }) {
+export default function AntrepoPanel({ onNavigate }) {
   const { rows, results, session, events, importFormat, clearRows, userRole } = useStore(
     useShallow(s => ({
       rows:        s.rows,
@@ -160,7 +160,7 @@ export default function EpsonPanel({ onNavigate }) {
             )
           )}
           {userRole !== 'kontrolcu' && (
-            <button onClick={() => onNavigate('epsonkor')} className="bg-white rounded-xl border border-slate-200 p-4 text-left hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition-all group">
+            <button onClick={() => onNavigate('antrepokor')} className="bg-white rounded-xl border border-slate-200 p-4 text-left hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition-all group">
               <div className="w-9 h-9 rounded-lg bg-violet-50 flex items-center justify-center mb-3 group-hover:bg-violet-100 transition-colors">
                 <span className="ms text-violet-600" style={{ fontSize: 22 }}>visibility_off</span>
               </div>
@@ -168,7 +168,7 @@ export default function EpsonPanel({ onNavigate }) {
               <p className="text-[12px] text-slate-400 mt-0.5">Kod gir, liste oluştur, yazdır</p>
             </button>
           )}
-          <button onClick={() => onNavigate('epsonrapor')} className="bg-white rounded-xl border border-slate-200 p-4 text-left hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition-all group">
+          <button onClick={() => onNavigate('antreporapor')} className="bg-white rounded-xl border border-slate-200 p-4 text-left hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition-all group">
             <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center mb-3 group-hover:bg-emerald-100 transition-colors">
               <span className="ms text-emerald-600" style={{ fontSize: 22 }}>analytics</span>
             </div>
@@ -215,7 +215,7 @@ export default function EpsonPanel({ onNavigate }) {
       {/* Sayım ilerlemesi — sadece veri yüklüyse */}
       {rows.length > 0 && (
         <div className="flex justify-end">
-          <button onClick={() => onNavigate('epsonsayim')} className="flex items-center gap-1.5 text-[13px] font-semibold text-blue-600 hover:text-blue-700">
+          <button onClick={() => onNavigate('antreposayim')} className="flex items-center gap-1.5 text-[13px] font-semibold text-blue-600 hover:text-blue-700">
             Sayıma Devam Et
             <span className="ms" style={{ fontSize: 17 }}>arrow_forward</span>
           </button>

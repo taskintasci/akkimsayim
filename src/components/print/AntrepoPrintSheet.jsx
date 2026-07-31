@@ -2,7 +2,7 @@ import { forwardRef } from 'react'
 
 const ROWS_PER_PAGE = 25
 
-const EpsonPrintSheet = forwardRef(function EpsonPrintSheet(
+const AntrepoPrintSheet = forwardRef(function AntrepoPrintSheet(
   { rows, results, session, mode = 'sayim', hideSayilan = false, sayimTuru = '', firmaUnvani = '' },
   ref
 ) {
@@ -155,4 +155,4 @@ const EpsonPrintSheet = forwardRef(function EpsonPrintSheet(
   )
 })
 
-export default EpsonPrintSheet
+export default AntrepoPrintSheet

@@ -15,13 +15,13 @@ const PAGE_NAMES = {
   hareketlilik: 'Hareketlilik Sayımı',
   membran: 'Membran Sayımı',
   sayimciekran: 'Sayımcı Ekranı',
-  epsonpanel: 'Panel',
-  epsonsayim: 'Stok Sayımı',
-  epsonanaliz: 'Sayım Analizi',
-  epsonrapor: 'Sayım Raporu',
-  epsonkor: 'Kör Sayım',
-  epsonkoranaliz: 'Kör Sayım Analizi',
-  epsonkorrapor: 'Kör Sayım Raporu',
+  antrepopanel: 'Panel',
+  antreposayim: 'Stok Sayımı',
+  antrepoanaliz: 'Sayım Analizi',
+  antreporapor: 'Sayım Raporu',
+  antrepokor: 'Kör Sayım',
+  antrepokoranaliz: 'Kör Sayım Analizi',
+  antrepokorrapor: 'Kör Sayım Raporu',
 }
 
 export default function TopBar({ activePage, onMenu }) {

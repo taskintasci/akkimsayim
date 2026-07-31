@@ -2,12 +2,12 @@ import { useState, useRef, useMemo, useEffect } from 'react'
 import { useReactToPrint } from 'react-to-print'
 import useStore from '../../store/useStore'
 import { sortRows, computeFilterOptions, parseAdres, getUrunTipi } from '../../utils/adresUtils'
-import { exportEpsonResults } from '../../utils/excelExport'
-import EpsonPrintSheet from '../print/EpsonPrintSheet'
+import { exportAntrepoResults } from '../../utils/excelExport'
+import AntrepoPrintSheet from '../print/AntrepoPrintSheet'
 import MultiSelect from '../shared/MultiSelect'
 import GorevAtaModal from './GorevAtaModal'
 
-function EpsonDurumBadge({ durum }) {
+function AntrepoDurumBadge({ durum }) {
   if (durum === 'Normal') return <span className="badge badge-normal">{durum}</span>
   if (durum === 'Bloke')  return <span className="badge badge-bloke">{durum}</span>
   if (durum === 'Özel')   return <span className="badge" style={{ background: '#ede9fe', color: '#5b21b6' }}>{durum}</span>
@@ -15,7 +15,7 @@ function EpsonDurumBadge({ durum }) {
   return <span className="badge badge-normal">{durum || '—'}</span>
 }
 
-export default function EpsonKorSayim({ onNavigate }) {
+export default function AntrepoKorSayim({ onNavigate }) {
   const { rows, results, session, updateResult, fillFromSistem, clearMiktarlar, korCodes, korMatched, addKorCodes, removeKorCode, clearKor, pendingKodFilter, clearPendingKodFilter, firmaProfile, sortType, setSortType } = useStore()
   const printRef = useRef()
 
@@ -331,7 +331,7 @@ export default function EpsonKorSayim({ onNavigate }) {
                     <td className="px-3 py-2 mono font-medium text-blue-700 text-[11.5px]">{row.kod}</td>
                     <td className="px-3 py-2 font-medium text-slate-800">{row.ad}</td>
                     <td className="px-3 py-2 mono text-slate-500 text-[11px]">{row.parti}</td>
-                    <td className="px-3 py-2 text-center"><EpsonDurumBadge durum={row.durum} /></td>
+                    <td className="px-3 py-2 text-center"><AntrepoDurumBadge durum={row.durum} /></td>
                     <td className="px-3 py-2 text-slate-500 text-[12px]">{row.kategori}</td>
                     <td className="px-3 py-2 mono text-slate-500 text-[11px]">{row.paletBarkodu}</td>
                     <td className="px-3 py-2 text-right mono">{row.paletAdeti}</td>
@@ -432,7 +432,7 @@ export default function EpsonKorSayim({ onNavigate }) {
             >
               <span className="ms" style={{ fontSize: 15 }}>assignment_ind</span> Sayımcıya Gönder
             </button>
-            <button onClick={() => exportEpsonResults(korMatched, results, session, firmaProfile)} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
+            <button onClick={() => exportAntrepoResults(korMatched, results, session, firmaProfile)} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
               <span className="ms" style={{ fontSize: 15 }}>download</span> Excel'e Aktar
             </button>
             <button onClick={handlePrint} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
@@ -443,10 +443,10 @@ export default function EpsonKorSayim({ onNavigate }) {
       )}
 
       <div className="hidden">
-        <EpsonPrintSheet ref={printRef} rows={filtered} results={results} session={session} mode="kor" hideSistem={hideSistem} hideSayilan={hideSayilan} sayimTuru="Kör Sayım" firmaUnvani={firmaProfile?.unvan} />
+        <AntrepoPrintSheet ref={printRef} rows={filtered} results={results} session={session} mode="kor" hideSistem={hideSistem} hideSayilan={hideSayilan} sayimTuru="Kör Sayım" firmaUnvani={firmaProfile?.unvan} />
       </div>
 
-      {gorevModal && <GorevAtaModal rows={filtered} onClose={() => setGorevModal(false)} sayimTipi="epsonkor" />}
+      {gorevModal && <GorevAtaModal rows={filtered} onClose={() => setGorevModal(false)} sayimTipi="antrepokor" />}
     </div>
   )
 }

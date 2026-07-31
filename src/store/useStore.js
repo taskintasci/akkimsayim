@@ -214,7 +214,7 @@ const useStore = create((set, get) => ({
       sessionType:  session.type || '',
       depoAdi:      session.depoAdi || '',
       atananRows,                       // array<rowId>
-      sayimTipi:    sayimTipi || 'stok', // 'stok' | 'kor' | 'hareketlilik' | 'membran' | 'epson' | 'epsonkor'
+      sayimTipi:    sayimTipi || 'stok', // 'stok' | 'kor' | 'hareketlilik' | 'membran' | 'antrepo' | 'antrepokor'
       firma:        activeFirma,
       durum:        'bekliyor',
       createdAt:    serverTimestamp(),
@@ -323,7 +323,7 @@ const useStore = create((set, get) => ({
 
   // ── Sıralama tercihi ────────────────────────────────────────────────────
   // Tüm sayım sayfalarında (StokSayim, KorSayim, HareketlilikSayim,
-  // MembranSayim, Epson* karşılıkları) paylaşılan tek bir tercih — sayfa
+  // MembranSayim, Antrepo* karşılıkları) paylaşılan tek bir tercih — sayfa
   // bileşeninde local state olsaydı başka bir sayfaya gidip geri gelince
   // (unmount/remount) sıfırlanırdı.
   sortType: '1',

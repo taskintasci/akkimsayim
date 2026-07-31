@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import useStore from '../../store/useStore'
-import { exportEpsonRaporFarklar } from '../../utils/excelExport'
-import { useShallow } from 'zustand/react/shallow'
+import { exportAntrepoRaporFarklar } from '../../utils/excelExport'
 
-function EpsonDurumBadge({ durum }) {
+function AntrepoDurumBadge({ durum }) {
   if (durum === 'Normal') return <span className="badge badge-normal">{durum}</span>
   if (durum === 'Bloke')  return <span className="badge badge-bloke">{durum}</span>
   if (durum === 'Özel')   return <span className="badge" style={{ background: '#ede9fe', color: '#5b21b6' }}>{durum}</span>
@@ -13,61 +12,20 @@ function EpsonDurumBadge({ durum }) {
 
 const EMPTY_FORM = { kod: '', ad: '', adres: '', parti: '', miktar: '', birim: '', not: '' }
 
-export default function EpsonRapor({ onNavigate }) {
-  const { rows, results, session, setPendingKodFilter, approveSession, manualRows, addManualRow, removeManualRow, korManualRows, removeKorManualRow, resultsLoading, userRole, firmaProfile } = useStore(
-    useShallow(s => ({
-      rows: s.rows, results: s.results, session: s.session,
-      setPendingKodFilter: s.setPendingKodFilter, approveSession: s.approveSession,
-      manualRows: s.manualRows, addManualRow: s.addManualRow, removeManualRow: s.removeManualRow,
-      korManualRows: s.korManualRows, removeKorManualRow: s.removeKorManualRow,
-      resultsLoading: s.resultsLoading, userRole: s.userRole, firmaProfile: s.firmaProfile,
-    }))
-  )
-  const allManualRows = [
-    ...manualRows.map(r => ({ ...r, _kaya: 'stok' })),
-    ...korManualRows.map(r => ({ ...r, _kaya: 'kor' })),
-  ]
-
-  const [approving, setApproving] = useState(false)
-  const [approved, setApproved] = useState(false)
+export default function AntrepoKorSayimRapor({ onNavigate }) {
+  const { korMatched, results, session, setPendingKodFilter, korManualRows, addKorManualRow, removeKorManualRow, firmaProfile } = useStore()
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [onlyBigDiff, setOnlyBigDiff] = useState(false)
 
-  if (resultsLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-3 py-24 text-slate-400">
-        <span className="ms animate-spin" style={{ fontSize: 36 }}>progress_activity</span>
-        <p className="text-[13px]">Sayım verileri yükleniyor…</p>
-      </div>
-    )
-  }
-
-  async function handleApprove() {
-    const counted = rows.filter(r => results[r.id]?.miktar !== undefined && results[r.id]?.miktar !== '')
-    if (counted.length === 0 && allManualRows.length === 0) {
-      alert('Henüz sayım yapılmamış. Onaylamak için en az bir kalem sayılmış olmalı.')
-      return
-    }
-    const ok = window.confirm(
-      `${counted.length} sayılan kalem "Onaylandı" olarak işaretlenecek ve sayım tamamlanacak.\n\nDevam edilsin mi?`
-    )
-    if (!ok) return
-    setApproving(true)
-    try {
-      await approveSession()
-      setApproved(true)
-    } finally {
-      setApproving(false)
-    }
-  }
+  const rows = korMatched
 
   async function handleAddManual(e) {
     e.preventDefault()
     if (!form.kod.trim() || !form.miktar) return
     setSaving(true)
-    await addManualRow({
+    await addKorManualRow({
       kod:    form.kod.trim().toUpperCase(),
       ad:     form.ad.trim(),
       adres:  form.adres.trim(),
@@ -92,7 +50,6 @@ export default function EpsonRapor({ onNavigate }) {
       ...r,
       sayilan: results[r.id]?.miktar,
       fark: Number(results[r.id]?.miktar) - Number(String(r.sayim).replace(',', '.')),
-      not: results[r.id]?.notlar || '',
     }))
 
   const visibleDiscrepancies = onlyBigDiff
@@ -102,14 +59,31 @@ export default function EpsonRapor({ onNavigate }) {
       })
     : discrepancies
 
-  const pct = rows.length ? Math.round((counted.length / rows.length) * 100) : 0
+  if (rows.length === 0) {
+    return (
+      <div className="flex flex-col gap-5">
+        <div>
+          <h1 className="text-xl font-bold text-slate-900">WMS Antrepo Kör Stok Sayım Raporu</h1>
+          <p className="text-[13px] text-slate-500 mt-0.5">Kör sayım listesi henüz oluşturulmadı</p>
+        </div>
+        <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
+          <span className="ms text-slate-300 mb-3 block" style={{ fontSize: 48 }}>summarize</span>
+          <div className="text-[14px] font-semibold text-slate-700 mb-1">Rapor Oluşturulamadı</div>
+          <div className="text-[13px] text-slate-400 mb-4">Önce WMS Antrepo Kör Sayımı sayfasından liste oluşturun</div>
+          <button onClick={() => onNavigate('antrepokor')} className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-semibold hover:bg-blue-700">
+            <span className="ms" style={{ fontSize: 16 }}>visibility_off</span> WMS Antrepo Kör Sayım Sayfasına Git
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-5 print-content">
       {/* Başlık */}
       <div className="flex flex-wrap items-center justify-between gap-y-2">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">WMS Antrepo Mutabakat Raporu</h1>
+          <h1 className="text-xl font-bold text-slate-900">WMS Antrepo Kör Stok Sayım Raporu</h1>
           <p className="text-[13px] text-slate-500 mt-0.5">Onaydan önce tüm farklılıkları inceleyin</p>
         </div>
         <div className="flex flex-wrap gap-2 no-print">
@@ -117,25 +91,11 @@ export default function EpsonRapor({ onNavigate }) {
             <span className="ms" style={{ fontSize: 16 }}>print</span> Yazdır
           </button>
           <button
-            onClick={() => exportEpsonRaporFarklar(discrepancies, session, manualRows, firmaProfile)}
+            onClick={() => exportAntrepoRaporFarklar(discrepancies, session, korManualRows, firmaProfile)}
             className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-300 rounded-lg text-[13px] font-medium text-slate-700 hover:bg-slate-50"
           >
             <span className="ms" style={{ fontSize: 16 }}>download</span> Excel İndir
           </button>
-          {userRole === 'yonetici' && (approved ? (
-            <div className="flex items-center gap-1.5 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg text-[13px] font-bold">
-              <span className="ms" style={{ fontSize: 16 }}>check_circle</span> Onaylandı
-            </div>
-          ) : (
-            <button
-              onClick={handleApprove}
-              disabled={approving}
-              className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white rounded-lg text-[13px] font-bold hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              <span className="ms" style={{ fontSize: 16 }}>{approving ? 'hourglass_empty' : 'check_circle'}</span>
-              {approving ? 'Onaylanıyor…' : 'Onayla'}
-            </button>
-          ))}
         </div>
       </div>
 
@@ -167,7 +127,7 @@ export default function EpsonRapor({ onNavigate }) {
           <div className="text-[14px] font-semibold text-slate-700">Farklılık bulunamadı</div>
           <div className="text-[13px] text-slate-400 mt-1">
             {counted.length === 0
-              ? 'Henüz sayım yapılmamış. WMS Antrepo Stok Sayımı sayfasından başlayın.'
+              ? 'Henüz sayım yapılmamış. WMS Antrepo Kör Sayım sayfasından başlayın.'
               : 'Tüm sayılan kalemler sistem miktarıyla eşleşiyor.'}
           </div>
         </div>
@@ -190,15 +150,12 @@ export default function EpsonRapor({ onNavigate }) {
                 <tr className="bg-slate-50 text-[11px] mono text-slate-500 uppercase tracking-wider border-b border-slate-200">
                   <th className="px-3 py-1.5">Stok Kodu / Adı</th>
                   <th className="px-3 py-1.5">Beyanname</th>
-                  <th className="px-3 py-1.5">Kategori</th>
                   <th className="px-3 py-1.5">Durum</th>
                   <th className="px-3 py-1.5">Adres</th>
-                  <th className="px-3 py-1.5">Palet Barkodu</th>
                   <th className="px-3 py-1.5 text-right">Depo Kalan Stok</th>
                   <th className="px-3 py-1.5 text-right">Sayılan</th>
                   <th className="px-3 py-1.5 text-right">Fark</th>
-                  <th className="px-3 py-1.5">Not</th>
-                  <th className="px-3 py-1.5 text-center no-print">İşlem</th>
+                  <th className="px-3 py-1.5 text-center">İşlem</th>
                 </tr>
               </thead>
               <tbody className="text-[12.5px] divide-y divide-slate-50">
@@ -209,10 +166,8 @@ export default function EpsonRapor({ onNavigate }) {
                       <p className="text-slate-700">{row.ad}</p>
                     </td>
                     <td className="px-3 py-1.5 mono text-slate-500 text-[12px]">{row.parti || '—'}</td>
-                    <td className="px-3 py-1.5 text-[12px] text-slate-500">{row.kategori || '—'}</td>
-                    <td className="px-3 py-1.5"><EpsonDurumBadge durum={row.durum} /></td>
+                    <td className="px-3 py-1.5"><AntrepoDurumBadge durum={row.durum} /></td>
                     <td className="px-3 py-1.5 mono text-slate-500 text-[12px]">{row.adres}</td>
-                    <td className="px-3 py-1.5 mono text-slate-500 text-[11px]">{row.paletBarkodu || '—'}</td>
                     <td className="px-3 py-1.5 text-right mono font-medium">
                       {row.sayim} <span className="text-slate-400 text-[11px]">{row.birim}</span>
                     </td>
@@ -222,10 +177,9 @@ export default function EpsonRapor({ onNavigate }) {
                     <td className={`px-3 py-1.5 text-right mono font-bold ${row.fark > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                       {row.fark > 0 ? '+' : ''}{row.fark.toLocaleString('tr', { maximumFractionDigits: 2 })} <span className="opacity-60 text-[11px]">{row.birim}</span>
                     </td>
-                    <td className="px-3 py-1.5 text-[12px] text-slate-500">{row.not || '—'}</td>
-                    <td className="px-3 py-1.5 text-center no-print">
+                    <td className="px-3 py-1.5 text-center">
                       <button
-                        onClick={() => { setPendingKodFilter(row.kod); onNavigate('epsonsayim') }}
+                        onClick={() => { setPendingKodFilter(row.kod); onNavigate('antrepokor') }}
                         className="text-[12px] text-blue-600 hover:underline font-medium"
                       >İncele</button>
                     </td>
@@ -244,7 +198,7 @@ export default function EpsonRapor({ onNavigate }) {
             <span className="ms text-amber-600" style={{ fontSize: 18 }}>add_box</span>
             <p className="text-[13px] font-semibold text-amber-900">
               Sistemde Bulunmayan Kalemler
-              {allManualRows.length > 0 && <span className="badge bg-amber-100 text-amber-700 ml-2">{allManualRows.length}</span>}
+              {korManualRows.length > 0 && <span className="badge bg-amber-100 text-amber-700 ml-2">{korManualRows.length}</span>}
             </p>
           </div>
           <button
@@ -347,8 +301,8 @@ export default function EpsonRapor({ onNavigate }) {
           </form>
         )}
 
-        {/* Manuel kayıt listesi — stok + kör sayım manuel kalemleri */}
-        {allManualRows.length === 0 ? (
+        {/* Manuel kayıt listesi */}
+        {korManualRows.length === 0 ? (
           <div className="px-4 py-6 text-center text-[12.5px] text-slate-400">
             Sistemde bulunmayan ürün eklemek için "Manuel Ekle" butonunu kullanın.
           </div>
@@ -358,7 +312,6 @@ export default function EpsonRapor({ onNavigate }) {
               <thead>
                 <tr className="bg-slate-50 text-[11px] mono text-slate-500 uppercase tracking-wider border-b border-slate-200">
                   <th className="px-3 py-1.5">Stok Kodu / Adı</th>
-                  <th className="px-3 py-1.5">Kaynak</th>
                   <th className="px-3 py-1.5">Beyanname</th>
                   <th className="px-3 py-1.5">Adres</th>
                   <th className="px-3 py-1.5 text-right">Depo Kalan Stok</th>
@@ -369,16 +322,11 @@ export default function EpsonRapor({ onNavigate }) {
                 </tr>
               </thead>
               <tbody className="text-[12.5px] divide-y divide-slate-50">
-                {allManualRows.map((row, i) => (
+                {korManualRows.map((row, i) => (
                   <tr key={row.id} className={i % 2 === 1 ? 'bg-amber-50/30' : ''}>
                     <td className="px-3 py-1.5">
                       <p className="mono font-semibold text-amber-700 text-[11px]">{row.kod}</p>
                       <p className="text-slate-700">{row.ad || <span className="text-slate-400 italic">—</span>}</p>
-                    </td>
-                    <td className="px-3 py-1.5">
-                      {row._kaya === 'kor'
-                        ? <span className="badge bg-violet-100 text-violet-700 text-[10px]">Kör</span>
-                        : <span className="badge bg-slate-100 text-slate-600 text-[10px]">Stok</span>}
                     </td>
                     <td className="px-3 py-1.5 mono text-slate-500 text-[12px]">{row.parti || '—'}</td>
                     <td className="px-3 py-1.5 mono text-slate-500 text-[12px]">{row.adres || '—'}</td>
@@ -392,7 +340,7 @@ export default function EpsonRapor({ onNavigate }) {
                     <td className="px-3 py-1.5 text-slate-500 text-[12px]">{row.not || '—'}</td>
                     <td className="px-3 py-1.5 text-center no-print">
                       <button
-                        onClick={() => row._kaya === 'kor' ? removeKorManualRow(row.id) : removeManualRow(row.id)}
+                        onClick={() => removeKorManualRow(row.id)}
                         className="text-slate-400 hover:text-red-500 transition-colors"
                         title="Sil"
                       >

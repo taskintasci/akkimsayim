@@ -85,7 +85,7 @@ export async function exportRaporFarklar(discrepancies, session, manualRows = []
   URL.revokeObjectURL(url)
 }
 
-export async function exportEpsonRaporFarklar(discrepancies, session, manualRows = [], firma = {}) {
+export async function exportAntrepoRaporFarklar(discrepancies, session, manualRows = [], firma = {}) {
   const { default: ExcelJS } = await import('exceljs')
 
   const workbook = new ExcelJS.Workbook()
@@ -395,7 +395,7 @@ export async function exportResults(rows, results, session, firma = {}) {
   URL.revokeObjectURL(url)
 }
 
-export async function exportEpsonResults(rows, results, session, firma = {}) {
+export async function exportAntrepoResults(rows, results, session, firma = {}) {
   const { default: ExcelJS } = await import('exceljs')
 
   const workbook = new ExcelJS.Workbook()

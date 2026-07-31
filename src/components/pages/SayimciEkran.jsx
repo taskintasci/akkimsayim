@@ -15,7 +15,7 @@ function siralamaMembran(rows) {
 // ═══════════════════════════════════════════════════════════════════════════
 // Swipe kart — sağa kaydır = onayla, sola kaydır = eksik/fazla gir
 // ═══════════════════════════════════════════════════════════════════════════
-function SwipeCard({ row, sayilanMiktar, onConfirm, onEdit, isMembran, isEpson }) {
+function SwipeCard({ row, sayilanMiktar, onConfirm, onEdit, isMembran, isAntrepo }) {
   const [dx, setDx] = useState(0)
   const startX = useRef(null)
   const TH = 90
@@ -108,8 +108,8 @@ function SwipeCard({ row, sayilanMiktar, onConfirm, onEdit, isMembran, isEpson }
         {/* Kod + parti + palet barkodu (sadece WMS Antrepo Sayım) */}
         <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mb-3 shrink-0">
           <span className="text-slate-500 mono" style={{ fontSize: 15 }}>{row.kod}</span>
-          {row.parti && <span className="text-slate-400 mono text-xs">{isEpson ? 'Beyanname' : 'Parti'}: {row.parti}</span>}
-          {isEpson && row.paletBarkodu && <span className="text-slate-400 mono text-xs">Palet: {row.paletBarkodu}</span>}
+          {row.parti && <span className="text-slate-400 mono text-xs">{isAntrepo ? 'Beyanname' : 'Parti'}: {row.parti}</span>}
+          {isAntrepo && row.paletBarkodu && <span className="text-slate-400 mono text-xs">Palet: {row.paletBarkodu}</span>}
         </div>
 
         {/* Sistem miktarı + sayılan */}
@@ -183,8 +183,8 @@ export default function SayimciEkran({ mode = 'self' }) {
   }, [mode, currentUser?.uid, activeSessionId])
 
   const isMembran = gorev?.sayimTipi === 'membran'
-  const isKor     = gorev?.sayimTipi === 'kor' || gorev?.sayimTipi === 'epsonkor'
-  const isEpson   = gorev?.sayimTipi === 'epson' || gorev?.sayimTipi === 'epsonkor'
+  const isKor     = gorev?.sayimTipi === 'kor' || gorev?.sayimTipi === 'antrepokor'
+  const isAntrepo = gorev?.sayimTipi === 'antrepo' || gorev?.sayimTipi === 'antrepokor'
 
   const atanan = useMemo(() => {
     if (!gorev) return []
@@ -371,7 +371,7 @@ export default function SayimciEkran({ mode = 'self' }) {
                             {g.sayimTipi === 'kor' && (
                               <span className="ms text-amber-500 ml-1" style={{ fontSize: 16 }}>visibility_off</span>
                             )}
-                            {(g.sayimTipi === 'epson' || g.sayimTipi === 'epsonkor') && (
+                            {(g.sayimTipi === 'antrepo' || g.sayimTipi === 'antrepokor') && (
                               <span className="ms text-blue-500 ml-1" style={{ fontSize: 16 }}>qr_code_scanner</span>
                             )}
                           </div>
@@ -495,8 +495,8 @@ export default function SayimciEkran({ mode = 'self' }) {
                     <th className="px-3 py-2.5 w-24">Adres</th>
                     <th className="px-3 py-2.5 w-28">Kod</th>
                     <th className="px-3 py-2.5">Ad</th>
-                    <th className="px-3 py-2.5 w-32">{isEpson ? 'Beyanname Numarası' : 'Parti'}</th>
-                    {isEpson && <th className="px-3 py-2.5 w-28">Palet Barkodu</th>}
+                    <th className="px-3 py-2.5 w-32">{isAntrepo ? 'Beyanname Numarası' : 'Parti'}</th>
+                    {isAntrepo && <th className="px-3 py-2.5 w-28">Palet Barkodu</th>}
                     <th className="px-3 py-2.5 w-20 text-right sistem-col">Sistem</th>
                     <th className="px-3 py-2.5 w-24 text-right text-blue-600 sayilan-col">Sayılan ▾</th>
                     <th className="px-3 py-2.5 w-20">Birim</th>
@@ -577,7 +577,7 @@ export default function SayimciEkran({ mode = 'self' }) {
                         <td className="px-3 py-2 mono font-medium text-blue-700 text-[11.5px]">{row.kod}</td>
                         <td className="px-3 py-2 font-medium text-slate-800">{row.ad}</td>
                         <td className="px-3 py-2 mono text-slate-500 text-[11.5px]">{row.parti}</td>
-                        {isEpson && <td className="px-3 py-2 mono text-slate-500 text-[11.5px]">{row.paletBarkodu}</td>}
+                        {isAntrepo && <td className="px-3 py-2 mono text-slate-500 text-[11.5px]">{row.paletBarkodu}</td>}
                         <td className="px-3 py-2 text-right mono text-slate-500 sistem-col">{row.sayim}</td>
                         <td className="px-3 py-2 text-right sayilan-col">
                           <div className="flex items-center justify-end gap-1">
@@ -649,7 +649,7 @@ export default function SayimciEkran({ mode = 'self' }) {
             onConfirm={onayla}
             onEdit={editAc}
             isMembran={isMembran}
-            isEpson={isEpson}
+            isAntrepo={isAntrepo}
           />
         )}
 

@@ -27,7 +27,7 @@ function StatusBadge({ durum }) {
 export default function Giris({ onNavigate }) {
   const { sessions, sessionsLoading, loadSessions, setActiveSession, createSession, deleteSession, userRole, firmaProfile } = useStore()
   const isYonetici = userRole === 'yonetici' || userRole === 'superadmin'
-  const panelRoute = firmaProfile?.sablon === SABLON.WMS31 ? 'epsonpanel' : 'panel'
+  const panelRoute = firmaProfile?.sablon === SABLON.WMS31 ? 'antrepopanel' : 'panel'
   const [selectedId, setSelectedId] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
   const [creating, setCreating] = useState(false)

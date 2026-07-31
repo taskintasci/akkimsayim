@@ -89,7 +89,7 @@ function isRapor5(headers) {
 }
 
 // ─── WMS_Rapor_31 sütun haritası ──────────────────────────────────────────────
-// Epson Sayım için kullanılan WMS raporu. Parti yerine Beyanname; Ambalaj yok;
+// WMS Antrepo Sayım için kullanılan WMS raporu. Parti yerine Beyanname; Ambalaj yok;
 // Palet Barkodu/Palet Adeti/Toplam Stok/Rezerve Adet gibi WMS'e özgü alanlar var.
 const WMS31_MAP = {
   'adres'            : 'adres',

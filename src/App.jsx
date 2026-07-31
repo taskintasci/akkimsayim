@@ -22,11 +22,11 @@ const HareketlilikSayim   = lazy(() => import('./components/pages/HareketlilikSa
 const MembranSayim        = lazy(() => import('./components/pages/MembranSayim'))
 const Ayarlar             = lazy(() => import('./components/pages/Ayarlar'))
 const SayimciEkran        = lazy(() => import('./components/pages/SayimciEkran'))
-const EpsonPanel          = lazy(() => import('./components/pages/EpsonPanel'))
-const EpsonSayim          = lazy(() => import('./components/pages/EpsonSayim'))
-const EpsonRapor          = lazy(() => import('./components/pages/EpsonRapor'))
-const EpsonKorSayim       = lazy(() => import('./components/pages/EpsonKorSayim'))
-const EpsonKorSayimRapor  = lazy(() => import('./components/pages/EpsonKorSayimRapor'))
+const AntrepoPanel        = lazy(() => import('./components/pages/AntrepoPanel'))
+const AntrepoSayim        = lazy(() => import('./components/pages/AntrepoSayim'))
+const AntrepoRapor        = lazy(() => import('./components/pages/AntrepoRapor'))
+const AntrepoKorSayim     = lazy(() => import('./components/pages/AntrepoKorSayim'))
+const AntrepoKorSayimRapor = lazy(() => import('./components/pages/AntrepoKorSayimRapor'))
 
 // Oturum seçilmeden de erişilebilen sayfalar (Sidebar/TopBar kabuğu içinde)
 const SESSIONLESS = ['giris', 'ayarlar']
@@ -50,13 +50,13 @@ const PAGES = {
   membran:       { Component: MembranSayim,       fullHeight: true,  roles: YON, sablon: [SABLON.STANDART] },
   ayarlar:       { Component: Ayarlar,            fullHeight: false, roles: YON_KONT },
   sayimciekran:  { Component: SayimciEkran,       fullHeight: true,  roles: [...HEPSI, 'superadmin'] },
-  epsonpanel:     { Component: EpsonPanel,         fullHeight: false, roles: YON_KONT, sablon: [SABLON.WMS31] },
-  epsonsayim:     { Component: EpsonSayim,         fullHeight: true,  roles: YON, sablon: [SABLON.WMS31] },
-  epsonanaliz:    { Component: SayimAnalizi,       fullHeight: false, roles: YON_KONT, sablon: [SABLON.WMS31] },
-  epsonrapor:     { Component: EpsonRapor,         fullHeight: false, roles: YON_KONT, sablon: [SABLON.WMS31] },
-  epsonkor:       { Component: EpsonKorSayim,      fullHeight: true,  roles: YON, sablon: [SABLON.WMS31] },
-  epsonkoranaliz: { Component: KorSayimAnalizi,    fullHeight: false, roles: YON_KONT, sablon: [SABLON.WMS31] },
-  epsonkorrapor:  { Component: EpsonKorSayimRapor, fullHeight: false, roles: YON_KONT, sablon: [SABLON.WMS31] },
+  antrepopanel:     { Component: AntrepoPanel,         fullHeight: false, roles: YON_KONT, sablon: [SABLON.WMS31] },
+  antreposayim:     { Component: AntrepoSayim,         fullHeight: true,  roles: YON, sablon: [SABLON.WMS31] },
+  antrepoanaliz:    { Component: SayimAnalizi,         fullHeight: false, roles: YON_KONT, sablon: [SABLON.WMS31] },
+  antreporapor:     { Component: AntrepoRapor,         fullHeight: false, roles: YON_KONT, sablon: [SABLON.WMS31] },
+  antrepokor:       { Component: AntrepoKorSayim,      fullHeight: true,  roles: YON, sablon: [SABLON.WMS31] },
+  antrepokoranaliz: { Component: KorSayimAnalizi,      fullHeight: false, roles: YON_KONT, sablon: [SABLON.WMS31] },
+  antrepokorrapor:  { Component: AntrepoKorSayimRapor, fullHeight: false, roles: YON_KONT, sablon: [SABLON.WMS31] },
 }
 
 function ErisimYok() {
@@ -144,7 +144,7 @@ export default function App() {
     if (!firmaProfile) return
     const pageDef = PAGES[activePage]
     const uygun = pageDef && (!pageDef.sablon || pageDef.sablon.includes(firmaProfile.sablon))
-    if (!uygun) setActivePage(firmaProfile.sablon === SABLON.WMS31 ? 'epsonpanel' : 'panel')
+    if (!uygun) setActivePage(firmaProfile.sablon === SABLON.WMS31 ? 'antrepopanel' : 'panel')
   }, [firmaProfile?.sablon])
 
   // Auth durumu henüz belli değil

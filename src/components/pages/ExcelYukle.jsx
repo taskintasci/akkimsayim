@@ -107,7 +107,7 @@ export default function ExcelYukle({ onNavigate }) {
           </div>
           <div>
             <div className="font-semibold text-slate-800 text-[13.5px]">{isWms31 ? 'WMS_Rapor_31 Desteklenen Sütunlar' : 'RAPOR5 Desteklenen Sütunlar'}</div>
-            <div className="text-[11.5px] text-slate-400 mono">{isWms31 ? 'WMS dışa aktarım formatı (Epson Sayım) · .xlsx' : 'SAP dışa aktarım formatı · .xls ve .xlsx'}</div>
+            <div className="text-[11.5px] text-slate-400 mono">{isWms31 ? 'WMS dışa aktarım formatı (WMS Antrepo Sayım) · .xlsx' : 'SAP dışa aktarım formatı · .xls ve .xlsx'}</div>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-1">
@@ -130,14 +130,14 @@ export default function ExcelYukle({ onNavigate }) {
       {locked && (
         <div className="flex gap-3 mt-6">
           <button
-            onClick={() => onNavigate(isWms31 ? 'epsonsayim' : 'sayim')}
+            onClick={() => onNavigate(isWms31 ? 'antreposayim' : 'sayim')}
             className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm flex items-center justify-center gap-2 transition-colors"
           >
             <span className="ms">fact_check</span>
             Stok Sayımına Geç
           </button>
           <button
-            onClick={() => onNavigate(isWms31 ? 'epsonpanel' : 'panel')}
+            onClick={() => onNavigate(isWms31 ? 'antrepopanel' : 'panel')}
             className="px-4 py-3 border border-slate-300 text-slate-600 hover:bg-slate-50 rounded-xl text-sm font-medium transition-colors"
           >
             Panele Git
