@@ -260,7 +260,7 @@ export default function Ayarlar() {
             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Depo Adı</label>
             <input type="text" value={session.depoAdi || ''}
               onChange={e => setSession({ depoAdi: e.target.value })}
-              placeholder="Örn: 901 ALİŞAN DEPO"
+              placeholder="Depo Kodu / Depo Adı / Blok Numarası"
               className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200 transition-colors" />
           </div>
           <div>
