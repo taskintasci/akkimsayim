@@ -114,7 +114,7 @@ export default function Login() {
         <div className="flex items-start gap-2.5 mt-6 px-1">
           <span className="ms text-slate-400 shrink-0" style={{ fontSize: 18 }}>shield_lock</span>
           <p className="text-slate-400 text-xs leading-relaxed">
-            <span className="font-semibold text-slate-500">Güvenlik Protokolü:</span> Bu sisteme erişim yalnızca yetkili personelle sınırlıdır. Tüm işlemler küresel uyumluluk standartları çerçevesinde izlenmektedir.
+            <span className="font-semibold text-slate-500">Güvenlik Protokolü:</span> Bu sistem Google Firebase Authentication altyapısı ile korunmaktadır. Erişim yalnızca yetkili personelle sınırlıdır, tüm oturumlar endüstri standardı güvenlik protokolleriyle şifrelenir.
           </p>
         </div>
       </div>

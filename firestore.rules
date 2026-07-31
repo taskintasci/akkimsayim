@@ -117,6 +117,16 @@ service cloud.firestore {
         )
       );
 
+      // Kullanıcı kendi profilini düzenleyebilir (Ayarlar → Profil /
+      // Sayımcı Ekranı → Profil) — SADECE displayName alanı. rol/firma gibi
+      // hassas alanlara kendi kendine dokunamaz; yukarıdaki "kendi dokümanını
+      // değiştiremez" kısıtlaması bilinçli olarak burada ayrı/dar bir izinle
+      // gevşetiliyor (self-lockout'un koruduğu asıl risk rol/firma yükseltmesi).
+      allow update: if isSignedIn()
+        && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName'])
+        && isNonEmptyString(request.resource.data.displayName);
+
       allow delete: if request.auth.uid != uid && (
         isSuperAdmin()
         || (isYonetici() && sameFirma(resource.data.firma) && resource.data.rol != 'superadmin')

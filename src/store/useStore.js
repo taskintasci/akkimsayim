@@ -3,8 +3,11 @@ import {
   collection, collectionGroup, doc, addDoc, getDoc, getDocs, updateDoc, setDoc, deleteDoc,
   onSnapshot, orderBy, query, where, serverTimestamp, writeBatch, limit,
 } from 'firebase/firestore'
-import { createUserWithEmailAndPassword, signOut as secondarySignOut } from 'firebase/auth'
-import { db, getSecondaryAuth } from '../firebase/index'
+import {
+  createUserWithEmailAndPassword, signOut as secondarySignOut,
+  updateProfile, reauthenticateWithCredential, EmailAuthProvider, updatePassword,
+} from 'firebase/auth'
+import { auth, db, getSecondaryAuth } from '../firebase/index'
 import { parseExcelFile } from '../utils/excelImport'
 import {
   uploadRows, downloadRows,
@@ -237,6 +240,32 @@ const useStore = create((set, get) => ({
   deleteUserDoc: async (uid) => {
     await deleteDoc(doc(db, 'users', uid))
     set(state => ({ users: state.users.filter(u => u.uid !== uid) }))
+  },
+
+  // ── Kendi profilini düzenleme (Ayarlar → Profil / SayimciEkran → Profil) ──
+  // Sadece displayName'e dokunur — firestore.rules'ta da kullanıcının kendi
+  // dokümanında SADECE bu alanı değiştirebildiği ayrı/dar bir izin var (rol/
+  // firma gibi hassas alanlara kendi kendine dokunamaz, self-lockout korumasıyla
+  // çelişmez).
+  updateOwnProfile: async ({ displayName }) => {
+    const { currentUser } = get()
+    if (!currentUser) return
+    const trimmed = displayName.trim()
+    if (!trimmed) throw new Error('Ad soyad boş olamaz.')
+    await updateDoc(doc(db, 'users', currentUser.uid), { displayName: trimmed })
+    await updateProfile(auth.currentUser, { displayName: trimmed }).catch(() => {})
+    set(state => ({ userProfile: state.userProfile ? { ...state.userProfile, displayName: trimmed } : state.userProfile }))
+  },
+
+  // Firebase, uzun süredir giriş yapılmışsa şifre değişimini "recent login"
+  // gerektirerek reddedebiliyor — bu yüzden mevcut şifreyle önce yeniden
+  // doğrulama yapılıyor, sonra updatePassword çağrılıyor.
+  changeOwnPassword: async ({ currentPassword, newPassword }) => {
+    const user = auth.currentUser
+    if (!user?.email) throw new Error('Oturum bilgisi bulunamadı.')
+    const cred = EmailAuthProvider.credential(user.email, currentPassword)
+    await reauthenticateWithCredential(user, cred)
+    await updatePassword(user, newPassword)
   },
 
   // ── Sayımcı görevleri ─────────────────────────────────────────────────────

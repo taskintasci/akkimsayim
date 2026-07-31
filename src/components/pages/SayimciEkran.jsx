@@ -4,6 +4,7 @@ import { auth } from '../../firebase/index'
 import useStore from '../../store/useStore'
 import { sortRows } from '../../utils/adresUtils'
 import ComboBox from '../shared/ComboBox'
+import ProfilPanel from '../shared/ProfilPanel'
 
 function siralamaMembran(rows) {
   return [...rows].sort((a, b) => {
@@ -740,6 +741,7 @@ function PaletSayimBadge({ counted, total, hasDiff }) {
 
 // ── Yardımcı bileşenler ────────────────────────────────────────────────────
 function Shell({ children, title, subtitle, onBack, mode }) {
+  const [profilOpen, setProfilOpen] = useState(false)
   return (
     <div className={`${mode === 'preview' ? 'flex-1' : 'h-screen'} flex flex-col overflow-hidden bg-slate-100`}>
       <header className="flex items-center justify-between px-5 py-4 bg-white border-b border-slate-200 shrink-0">
@@ -755,9 +757,14 @@ function Shell({ children, title, subtitle, onBack, mode }) {
           </div>
         </div>
         {mode === 'self' && (
-          <button onClick={() => signOut(auth)} className="w-11 h-11 flex items-center justify-center rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 shrink-0" title="Çıkış Yap">
-            <span className="ms" style={{ fontSize: 20 }}>logout</span>
-          </button>
+          <div className="flex items-center gap-1 shrink-0">
+            <button onClick={() => setProfilOpen(true)} className="w-11 h-11 flex items-center justify-center rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100" title="Profil">
+              <span className="ms" style={{ fontSize: 20 }}>account_circle</span>
+            </button>
+            <button onClick={() => signOut(auth)} className="w-11 h-11 flex items-center justify-center rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100" title="Çıkış Yap">
+              <span className="ms" style={{ fontSize: 20 }}>logout</span>
+            </button>
+          </div>
         )}
         {mode === 'preview' && (
           <span className="px-2 py-1 rounded-md bg-slate-100 text-slate-500 text-xs shrink-0">Önizleme</span>
@@ -766,6 +773,22 @@ function Shell({ children, title, subtitle, onBack, mode }) {
       <div className="flex-1 overflow-y-auto flex flex-col items-center px-5 py-6">
         {children}
       </div>
+      {profilOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-4" onClick={() => setProfilOpen(false)}>
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-3xl p-6 shadow-xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-slate-900 font-bold text-lg flex items-center gap-2">
+                <span className="ms text-blue-500" style={{ fontSize: 22 }}>account_circle</span>
+                Profil
+              </h3>
+              <button onClick={() => setProfilOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100">
+                <span className="ms" style={{ fontSize: 20 }}>close</span>
+              </button>
+            </div>
+            <ProfilPanel />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

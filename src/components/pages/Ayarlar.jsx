@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import useStore, { ROLE_LABELS } from '../../store/useStore'
 import FirmaYonetimi from './FirmaYonetimi'
 import FirmaMasterdataPanel from './FirmaMasterdataPanel'
+import ProfilPanel from '../shared/ProfilPanel'
 
 // ── Kullanıcı Yönetimi ────────────────────────────────────────────────────
 import { getSecondaryAuth } from '../../firebase/index'
@@ -210,6 +211,7 @@ export default function Ayarlar() {
   const isYonetici = userRole === 'yonetici' || userRole === 'superadmin'
   const isSuperAdmin = userRole === 'superadmin'
   const tabs = [
+    { id: 'profil', label: 'Profil', icon: 'person' },
     ...(activeSessionId ? [{ id: 'sayim', label: 'Sayım Ayarları', icon: 'tune' }] : []),
     ...(isYonetici ? [{ id: 'kullanicilar', label: 'Kullanıcılar', icon: 'group' }] : []),
     ...(isYonetici ? [{ id: 'masterdata', label: 'Masterdata', icon: 'inventory_2' }] : []),
@@ -224,7 +226,9 @@ export default function Ayarlar() {
     <div className="max-w-4xl">
       <h1 className="text-2xl font-bold text-slate-800 mb-1">Ayarlar</h1>
       <p className="text-sm text-slate-500 mb-5">
-        {tab === 'sayim'
+        {tab === 'profil'
+          ? 'Ad soyadınızı ve şifrenizi güncelleyin.'
+          : tab === 'sayim'
           ? 'Aktif sayım oturumu bilgilerini düzenleyin.'
           : tab === 'kullanicilar'
           ? 'Kullanıcı hesapları oluşturun ve rollerini yönetin.'
@@ -258,6 +262,8 @@ export default function Ayarlar() {
       )}
 
       {/* Tab içerikleri */}
+      {tab === 'profil' && <ProfilPanel />}
+
       {tab === 'sayim' && (
         <div className="bg-white rounded-xl border border-slate-200 p-6 flex flex-col gap-4 max-w-lg">
           <div>
