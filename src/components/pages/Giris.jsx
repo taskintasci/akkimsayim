@@ -17,6 +17,14 @@ function StatusBadge({ durum }) {
       </span>
     )
   }
+  if (durum === 'Mutabakat Bekliyor') {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
+        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />
+        Mutabakat Bekliyor
+      </span>
+    )
+  }
   return (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500">
       Tamamlandı
@@ -153,15 +161,16 @@ export default function Giris({ onNavigate }) {
     }
   }
 
-  const devamEdenler  = sessions.filter(s => s.durum === 'Devam')
-  const tamamlananlar = sessions.filter(s => s.durum !== 'Devam')
+  const devamEdenler       = sessions.filter(s => s.durum === 'Devam' || !s.durum)
+  const mutabakatBekleyenler = sessions.filter(s => s.durum === 'Mutabakat Bekliyor')
+  const tamamlananlar      = sessions.filter(s => s.durum === 'Tamamlandı')
 
   const cardProps = { selectedId, setSelectedId, deletingId, setDeletingId, isYonetici, deleteSession, handleGir }
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-slate-100">
       <div className="flex-1 overflow-y-auto flex justify-center px-4 sm:px-8 py-6">
-        <div className="w-full max-w-5xl">
+        <div className="w-full max-w-6xl">
 
           {/* Üst bar: başlık + Yeni Sayım Oluştur */}
           <div className="flex items-center justify-between mb-5">
@@ -181,8 +190,8 @@ export default function Giris({ onNavigate }) {
           </div>
 
           {sessionsLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {[0, 1].map(col => (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[0, 1, 2].map(col => (
                 <div key={col} className="flex flex-col gap-2">
                   {[1, 2].map(i => (
                     <div key={i} className="rounded-xl p-4 border border-slate-200 bg-white">
@@ -205,7 +214,7 @@ export default function Giris({ onNavigate }) {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Devam Edenler */}
               <div>
                 <h3 className="text-slate-500 text-xs font-semibold uppercase tracking-wide mb-3 flex items-center gap-2">
@@ -217,6 +226,21 @@ export default function Giris({ onNavigate }) {
                   {devamEdenler.length === 0
                     ? <EmptyMini icon="hourglass_empty" text="Devam eden sayım yok" />
                     : devamEdenler.map(s => <SessionCard key={s.id} s={s} {...cardProps} />)
+                  }
+                </div>
+              </div>
+
+              {/* Mutabakat Onayında Bekliyor */}
+              <div>
+                <h3 className="text-slate-500 text-xs font-semibold uppercase tracking-wide mb-3 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />
+                  Mutabakat Onayında Bekliyor
+                  <span className="badge bg-slate-100 text-slate-500">{mutabakatBekleyenler.length}</span>
+                </h3>
+                <div className="flex flex-col gap-2">
+                  {mutabakatBekleyenler.length === 0
+                    ? <EmptyMini icon="fact_check" text="Mutabakat bekleyen sayım yok" />
+                    : mutabakatBekleyenler.map(s => <SessionCard key={s.id} s={s} {...cardProps} />)
                   }
                 </div>
               </div>

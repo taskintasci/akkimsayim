@@ -200,7 +200,12 @@ function KullaniciTab() {
 // ── Ana Sayfa ─────────────────────────────────────────────────────────────
 export default function Ayarlar() {
   const { session, setSession, userRole, activeSessionId, firmaProfile } = useStore()
-  const [tab, setTab] = useState(activeSessionId ? 'sayim' : 'kullanicilar')
+  const isYonetici = userRole === 'yonetici' || userRole === 'superadmin'
+  const isSuperAdmin = userRole === 'superadmin'
+  // Kontrolcü'nün "kullanicilar" sekmesine erişimi yok (isYonetici gerekiyor)
+  // — session yokken varsayılanı 'kullanicilar' yapmak kontrolcü için hiçbir
+  // sekmenin seçili olmadığı boş bir ekrana yol açardı, bu yüzden rol bazlı.
+  const [tab, setTab] = useState(() => activeSessionId ? 'sayim' : (isYonetici ? 'kullanicilar' : 'profil'))
   const [saved, setSaved] = useState(false)
 
   function handleSave() {
@@ -208,8 +213,6 @@ export default function Ayarlar() {
     setTimeout(() => setSaved(false), 2000)
   }
 
-  const isYonetici = userRole === 'yonetici' || userRole === 'superadmin'
-  const isSuperAdmin = userRole === 'superadmin'
   const tabs = [
     { id: 'profil', label: 'Profil', icon: 'person' },
     ...(activeSessionId ? [{ id: 'sayim', label: 'Sayım Ayarları', icon: 'tune' }] : []),
@@ -219,8 +222,8 @@ export default function Ayarlar() {
   ]
 
   useEffect(() => {
-    if (!activeSessionId && tab === 'sayim') setTab('kullanicilar')
-  }, [activeSessionId, tab])
+    if (!activeSessionId && tab === 'sayim') setTab(isYonetici ? 'kullanicilar' : 'profil')
+  }, [activeSessionId, tab, isYonetici])
 
   return (
     <div className="max-w-4xl mx-auto">

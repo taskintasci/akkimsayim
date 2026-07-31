@@ -12,7 +12,10 @@ export default function GirisHeader({ activePage, onNavigate }) {
     useShallow(s => ({ userRole: s.userRole }))
   )
 
-  const isYonetici = userRole === 'yonetici' || userRole === 'superadmin'
+  // Ayarlar'a erişim: yönetici/kontrolcü/süper yönetici (kontrolcü sadece
+  // kendi Profil sekmesini görür, Kullanıcılar/Masterdata/Firma Yönetimi
+  // Ayarlar içinde zaten ayrıca role-gated).
+  const ayarlarErisebilir = userRole === 'yonetici' || userRole === 'kontrolcu' || userRole === 'superadmin'
 
   return (
     <header className="h-14 shrink-0 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 gap-3">
@@ -24,7 +27,7 @@ export default function GirisHeader({ activePage, onNavigate }) {
           className="border border-slate-300 rounded-lg px-2 py-1.5 text-[12px] text-slate-700 bg-white focus:outline-none focus:border-blue-400"
         />
 
-        {isYonetici && (
+        {ayarlarErisebilir && (
           <button
             onClick={() => onNavigate('ayarlar')}
             className={

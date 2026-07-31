@@ -105,8 +105,10 @@ export default function Sidebar({ activePage, onNavigate, className = 'flex' }) 
       <div className="px-5 pb-3 pt-3 border-t border-slate-100">
         <UserMenu variant="sidebar" />
 
-        {/* Ayarlar linki — yönetici ve süper yönetici */}
-        {(userRole === 'yonetici' || userRole === 'superadmin') && (
+        {/* Ayarlar linki — yönetici/kontrolcü/süper yönetici (kontrolcü sadece
+            kendi Profil sekmesini görür, Kullanıcılar/Masterdata/Firma
+            Yönetimi Ayarlar içinde zaten ayrıca role-gated) */}
+        {(userRole === 'yonetici' || userRole === 'kontrolcu' || userRole === 'superadmin') && (
           <button
             onClick={() => onNavigate('ayarlar')}
             className={

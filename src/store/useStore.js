@@ -98,7 +98,7 @@ const useStore = create((set, get) => ({
           type: 'Yıl Sonu Sayımı', depoAdi: '',
           sayimBasligi: 'YIL SONU SAYIM',
           tarih: new Date().toISOString().slice(0, 10),
-          sorumlu: '',
+          sorumlu: '', durum: 'Devam',
         },
       })
       return
@@ -389,6 +389,7 @@ const useStore = create((set, get) => ({
     sayimBasligi: 'YIL SONU SAYIM',
     tarih: new Date().toISOString().slice(0, 10),
     sorumlu: '',
+    durum: 'Devam',
   },
 
   // ── Sıralama tercihi ────────────────────────────────────────────────────
@@ -450,6 +451,7 @@ const useStore = create((set, get) => ({
           sayimBasligi: sessionData.sayimBasligi || sessionData.type || 'YIL SONU SAYIM',
           tarih:        sessionData.tarih || new Date().toISOString().slice(0, 10),
           sorumlu:      '',
+          durum:        sessionData.durum || 'Devam',
         },
       })
 
@@ -688,6 +690,23 @@ const useStore = create((set, get) => ({
       updateDoc(doc(db, 'sessions', activeSessionId), { korCodes: [] }).catch(e => devErr('korCodes temizleme hatası:', e))
   },
 
+  // Sayım bitince yönetici/süper yönetici Panel'den bu aksiyonu tetikler —
+  // 'Devam' → 'Mutabakat Bekliyor'. Sayımcılar teknik olarak bu durumdan
+  // sonra da satır girebiliyor (kasıtlı: sert bir kilit istenmedi), ama
+  // Rapor sayfasındaki "Onayla" butonu artık sadece bu durumdan çalışıyor.
+  finishCounting: async () => {
+    const { activeSessionId } = get()
+    if (!activeSessionId) return
+    await updateDoc(doc(db, 'sessions', activeSessionId), {
+      durum: 'Mutabakat Bekliyor',
+      updatedAt: serverTimestamp(),
+    })
+    set(state => ({
+      session: state.session ? { ...state.session, durum: 'Mutabakat Bekliyor' } : state.session,
+      sessions: state.sessions.map(s => s.id === activeSessionId ? { ...s, durum: 'Mutabakat Bekliyor' } : s),
+    }))
+  },
+
   approveSession: async () => {
     const { activeSessionId, rows, results, currentUser } = get()
     if (!activeSessionId) return
@@ -716,6 +735,7 @@ const useStore = create((set, get) => ({
       countedRows.forEach(r => { next[r.id] = { ...next[r.id], status: 'Onaylandı' } })
       return {
         results: next,
+        session: state.session ? { ...state.session, durum: 'Tamamlandı' } : state.session,
         sessions: state.sessions.map(s =>
           s.id === activeSessionId ? { ...s, durum: 'Tamamlandı', tamamlanan: countedRows.length } : s
         ),

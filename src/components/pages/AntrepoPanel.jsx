@@ -9,7 +9,7 @@ function formatTime(date) {
 }
 
 export default function AntrepoPanel({ onNavigate }) {
-  const { rows, results, session, events, importFormat, clearRows, userRole } = useStore(
+  const { rows, results, session, events, importFormat, clearRows, userRole, finishCounting } = useStore(
     useShallow(s => ({
       rows:        s.rows,
       results:     s.results,
@@ -18,13 +18,27 @@ export default function AntrepoPanel({ onNavigate }) {
       importFormat: s.importFormat,
       clearRows:   s.clearRows,
       userRole:    s.userRole,
+      finishCounting: s.finishCounting,
     }))
   )
   const [confirmClear, setConfirmClear] = useState(false)
+  const [finishing, setFinishing] = useState(false)
+  const isYonetici = userRole === 'yonetici' || userRole === 'superadmin'
 
   async function handleClearRows() {
     await clearRows()
     setConfirmClear(false)
+  }
+
+  async function handleFinish() {
+    const ok = window.confirm('Sayım bitirilecek ve "Mutabakat Onayında Bekliyor" durumuna alınacak.\n\nDevam edilsin mi?')
+    if (!ok) return
+    setFinishing(true)
+    try {
+      await finishCounting()
+    } finally {
+      setFinishing(false)
+    }
   }
 
   const counted  = useMemo(() => rows.filter(r => results[r.id]?.miktar !== undefined && results[r.id]?.miktar !== ''), [rows, results])
@@ -39,11 +53,35 @@ export default function AntrepoPanel({ onNavigate }) {
   return (
     <div className="flex flex-col gap-5">
       {/* Başlık */}
-      <div>
-        <h1 className="text-xl font-bold text-slate-900">WMS Antrepo Sayım Paneli</h1>
-        <p className="text-[13px] text-slate-500 mt-0.5">
-          {session.type}{session.depoAdi ? ` · ${session.depoAdi}` : ''}{tarihStr ? ` · ${tarihStr}` : ''}
-        </p>
+      <div className="flex flex-wrap items-center justify-between gap-y-2">
+        <div>
+          <h1 className="text-xl font-bold text-slate-900">WMS Antrepo Sayım Paneli</h1>
+          <p className="text-[13px] text-slate-500 mt-0.5">
+            {session.type}{session.depoAdi ? ` · ${session.depoAdi}` : ''}{tarihStr ? ` · ${tarihStr}` : ''}
+          </p>
+        </div>
+        {isYonetici && (
+          session.durum === 'Mutabakat Bekliyor' ? (
+            <span className="flex items-center gap-1.5 px-4 py-2 bg-amber-50 text-amber-700 rounded-lg text-[13px] font-bold">
+              <span className="ms" style={{ fontSize: 16 }}>hourglass_top</span>
+              Mutabakat Onayında Bekliyor
+            </span>
+          ) : session.durum === 'Tamamlandı' ? (
+            <span className="flex items-center gap-1.5 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg text-[13px] font-bold">
+              <span className="ms" style={{ fontSize: 16 }}>check_circle</span>
+              Tamamlandı
+            </span>
+          ) : (
+            <button
+              onClick={handleFinish}
+              disabled={finishing || rows.length === 0}
+              className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-bold hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <span className="ms" style={{ fontSize: 16 }}>{finishing ? 'hourglass_empty' : 'task_alt'}</span>
+              {finishing ? 'İşleniyor…' : 'Sayımı Bitir'}
+            </button>
+          )
+        )}
       </div>
 
       {/* 4 İstatistik Kartı */}

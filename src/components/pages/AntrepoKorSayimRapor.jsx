@@ -13,7 +13,7 @@ function AntrepoDurumBadge({ durum }) {
 const EMPTY_FORM = { kod: '', ad: '', adres: '', parti: '', miktar: '', birim: '', not: '' }
 
 export default function AntrepoKorSayimRapor({ onNavigate }) {
-  const { korMatched, results, session, setPendingKodFilter, korManualRows, addKorManualRow, removeKorManualRow, firmaProfile } = useStore()
+  const { korMatched, results, session, setPendingKodFilter, korManualRows, addKorManualRow, removeKorManualRow, firmaProfile, userRole } = useStore()
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
@@ -63,7 +63,7 @@ export default function AntrepoKorSayimRapor({ onNavigate }) {
     return (
       <div className="flex flex-col gap-5">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">WMS Antrepo Kör Stok Sayım Raporu</h1>
+          <h1 className="text-xl font-bold text-slate-900">{firmaProfile?.unvan || firmaProfile?.ad || 'WMS Antrepo'} Kör Stok Sayım Raporu</h1>
           <p className="text-[13px] text-slate-500 mt-0.5">Kör sayım listesi henüz oluşturulmadı</p>
         </div>
         <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
@@ -83,7 +83,7 @@ export default function AntrepoKorSayimRapor({ onNavigate }) {
       {/* Başlık */}
       <div className="flex flex-wrap items-center justify-between gap-y-2">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">WMS Antrepo Kör Stok Sayım Raporu</h1>
+          <h1 className="text-xl font-bold text-slate-900">{firmaProfile?.unvan || firmaProfile?.ad || 'WMS Antrepo'} Kör Stok Sayım Raporu</h1>
           <p className="text-[13px] text-slate-500 mt-0.5">Onaydan önce tüm farklılıkları inceleyin</p>
         </div>
         <div className="flex flex-wrap gap-2 no-print">
@@ -201,13 +201,15 @@ export default function AntrepoKorSayimRapor({ onNavigate }) {
               {korManualRows.length > 0 && <span className="badge bg-amber-100 text-amber-700 ml-2">{korManualRows.length}</span>}
             </p>
           </div>
-          <button
-            onClick={() => { setShowForm(f => !f); setForm(EMPTY_FORM) }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[12.5px] font-semibold no-print"
-          >
-            <span className="ms" style={{ fontSize: 15 }}>{showForm ? 'close' : 'add'}</span>
-            {showForm ? 'İptal' : 'Manuel Ekle'}
-          </button>
+          {userRole !== 'kontrolcu' && (
+            <button
+              onClick={() => { setShowForm(f => !f); setForm(EMPTY_FORM) }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[12.5px] font-semibold no-print"
+            >
+              <span className="ms" style={{ fontSize: 15 }}>{showForm ? 'close' : 'add'}</span>
+              {showForm ? 'İptal' : 'Manuel Ekle'}
+            </button>
+          )}
         </div>
 
         {/* Ekleme Formu */}
@@ -339,13 +341,15 @@ export default function AntrepoKorSayimRapor({ onNavigate }) {
                     </td>
                     <td className="px-3 py-1.5 text-slate-500 text-[12px]">{row.not || '—'}</td>
                     <td className="px-3 py-1.5 text-center no-print">
-                      <button
-                        onClick={() => removeKorManualRow(row.id)}
-                        className="text-slate-400 hover:text-red-500 transition-colors"
-                        title="Sil"
-                      >
-                        <span className="ms" style={{ fontSize: 16 }}>delete</span>
-                      </button>
+                      {userRole !== 'kontrolcu' && (
+                        <button
+                          onClick={() => removeKorManualRow(row.id)}
+                          className="text-slate-400 hover:text-red-500 transition-colors"
+                          title="Sil"
+                        >
+                          <span className="ms" style={{ fontSize: 16 }}>delete</span>
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}

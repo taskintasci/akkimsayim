@@ -29,7 +29,6 @@ export default function AntrepoRapor({ onNavigate }) {
   ]
 
   const [approving, setApproving] = useState(false)
-  const [approved, setApproved] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
@@ -57,7 +56,6 @@ export default function AntrepoRapor({ onNavigate }) {
     setApproving(true)
     try {
       await approveSession()
-      setApproved(true)
     } finally {
       setApproving(false)
     }
@@ -109,7 +107,7 @@ export default function AntrepoRapor({ onNavigate }) {
       {/* Başlık */}
       <div className="flex flex-wrap items-center justify-between gap-y-2">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">WMS Antrepo Mutabakat Raporu</h1>
+          <h1 className="text-xl font-bold text-slate-900">{firmaProfile?.unvan || firmaProfile?.ad || 'WMS Antrepo'} Mutabakat Raporu</h1>
           <p className="text-[13px] text-slate-500 mt-0.5">Onaydan önce tüm farklılıkları inceleyin</p>
         </div>
         <div className="flex flex-wrap gap-2 no-print">
@@ -122,20 +120,26 @@ export default function AntrepoRapor({ onNavigate }) {
           >
             <span className="ms" style={{ fontSize: 16 }}>download</span> Excel İndir
           </button>
-          {userRole === 'yonetici' && (approved ? (
-            <div className="flex items-center gap-1.5 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg text-[13px] font-bold">
-              <span className="ms" style={{ fontSize: 16 }}>check_circle</span> Onaylandı
-            </div>
-          ) : (
-            <button
-              onClick={handleApprove}
-              disabled={approving}
-              className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white rounded-lg text-[13px] font-bold hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              <span className="ms" style={{ fontSize: 16 }}>{approving ? 'hourglass_empty' : 'check_circle'}</span>
-              {approving ? 'Onaylanıyor…' : 'Onayla'}
-            </button>
-          ))}
+          {userRole === 'yonetici' && (
+            session.durum === 'Tamamlandı' ? (
+              <div className="flex items-center gap-1.5 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg text-[13px] font-bold">
+                <span className="ms" style={{ fontSize: 16 }}>check_circle</span> Onaylandı
+              </div>
+            ) : session.durum === 'Mutabakat Bekliyor' ? (
+              <button
+                onClick={handleApprove}
+                disabled={approving}
+                className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white rounded-lg text-[13px] font-bold hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <span className="ms" style={{ fontSize: 16 }}>{approving ? 'hourglass_empty' : 'check_circle'}</span>
+                {approving ? 'Onaylanıyor…' : 'Onayla'}
+              </button>
+            ) : (
+              <div className="flex items-center gap-1.5 px-4 py-2 bg-slate-100 text-slate-500 rounded-lg text-[13px] font-medium">
+                <span className="ms" style={{ fontSize: 16 }}>info</span> Onaylamak için önce Panel'den "Sayımı Bitir"
+              </div>
+            )
+          )}
         </div>
       </div>
 
@@ -247,13 +251,15 @@ export default function AntrepoRapor({ onNavigate }) {
               {allManualRows.length > 0 && <span className="badge bg-amber-100 text-amber-700 ml-2">{allManualRows.length}</span>}
             </p>
           </div>
-          <button
-            onClick={() => { setShowForm(f => !f); setForm(EMPTY_FORM) }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[12.5px] font-semibold no-print"
-          >
-            <span className="ms" style={{ fontSize: 15 }}>{showForm ? 'close' : 'add'}</span>
-            {showForm ? 'İptal' : 'Manuel Ekle'}
-          </button>
+          {userRole !== 'kontrolcu' && (
+            <button
+              onClick={() => { setShowForm(f => !f); setForm(EMPTY_FORM) }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[12.5px] font-semibold no-print"
+            >
+              <span className="ms" style={{ fontSize: 15 }}>{showForm ? 'close' : 'add'}</span>
+              {showForm ? 'İptal' : 'Manuel Ekle'}
+            </button>
+          )}
         </div>
 
         {/* Ekleme Formu */}
@@ -391,13 +397,15 @@ export default function AntrepoRapor({ onNavigate }) {
                     </td>
                     <td className="px-3 py-1.5 text-slate-500 text-[12px]">{row.not || '—'}</td>
                     <td className="px-3 py-1.5 text-center no-print">
-                      <button
-                        onClick={() => row._kaya === 'kor' ? removeKorManualRow(row.id) : removeManualRow(row.id)}
-                        className="text-slate-400 hover:text-red-500 transition-colors"
-                        title="Sil"
-                      >
-                        <span className="ms" style={{ fontSize: 16 }}>delete</span>
-                      </button>
+                      {userRole !== 'kontrolcu' && (
+                        <button
+                          onClick={() => row._kaya === 'kor' ? removeKorManualRow(row.id) : removeManualRow(row.id)}
+                          className="text-slate-400 hover:text-red-500 transition-colors"
+                          title="Sil"
+                        >
+                          <span className="ms" style={{ fontSize: 16 }}>delete</span>
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
