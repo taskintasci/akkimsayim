@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import useStore from '../../store/useStore'
 import { SABLON } from '../../constants'
+import FirmaMasterdataModal from './FirmaMasterdataModal'
 
 const SABLON_OPTIONS = [
   { id: SABLON.STANDART, label: 'LOS Sayım',          desc: 'Tüm Stok Sayımı, Kör Sayım, Hareketlilik, Membran sayfa ailesi (RAPOR5 / SKU)' },
@@ -21,6 +22,8 @@ export default function FirmaYonetimi() {
   const [editSaving, setEditSaving] = useState(false)
   const [editError, setEditError] = useState('')
 
+  const [masterdataFirmaId, setMasterdataFirmaId] = useState(null)
+
   useEffect(() => { loadFirmalar().finally(() => setLoading(false)) }, [])
 
   async function handleCreate(e) {
@@ -29,8 +32,11 @@ export default function FirmaYonetimi() {
     if (!form.ad.trim()) { setError('Firma adı gerekli.'); return }
     setSaving(true)
     try {
-      await createFirma({ ad: form.ad.trim(), unvan: form.unvan.trim(), sablon: form.sablon })
+      const id = await createFirma({ ad: form.ad.trim(), unvan: form.unvan.trim(), sablon: form.sablon })
       setForm(EMPTY_FORM)
+      // Yeni firma için SKU Masterdata + Lokasyon yüklemesi zorunlu — süper
+      // yönetici oluşturduktan hemen sonra bu adıma yönlendirilir.
+      setMasterdataFirmaId(id)
     } catch (err) {
       setError('Firma oluşturulamadı: ' + (err?.message || ''))
     } finally {
@@ -197,10 +203,24 @@ export default function FirmaYonetimi() {
                     </button>
                   </td>
                   <td className="px-5 py-3 text-right">
-                    <button onClick={() => startEdit(f)}
-                      className="w-7 h-7 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">
-                      <span className="ms" style={{ fontSize: 16 }}>edit</span>
-                    </button>
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        onClick={() => setMasterdataFirmaId(f.id)}
+                        title="SKU Masterdata / Lokasyonlar"
+                        className={
+                          'w-7 h-7 inline-flex items-center justify-center rounded-lg transition-colors ' +
+                          (!f.skuMasterdataSayisi || !f.lokasyonSayisi
+                            ? 'text-red-500 hover:bg-red-50'
+                            : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50')
+                        }
+                      >
+                        <span className="ms" style={{ fontSize: 16 }}>inventory_2</span>
+                      </button>
+                      <button onClick={() => startEdit(f)}
+                        className="w-7 h-7 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+                        <span className="ms" style={{ fontSize: 16 }}>edit</span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -211,6 +231,10 @@ export default function FirmaYonetimi() {
           Not: Pasif firmalar Firma Seçimi ekranında görünmez ama mevcut verileri korunur. Kalıcı silme desteklenmiyor.
         </p>
       </div>
+
+      {masterdataFirmaId && (
+        <FirmaMasterdataModal firmaId={masterdataFirmaId} onClose={() => setMasterdataFirmaId(null)} />
+      )}
     </div>
   )
 }

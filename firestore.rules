@@ -46,6 +46,20 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
     }
 
+    // ── firmalar/{firmaId}/skuMasterdataChunks, lokasyonChunks ──────────────
+    // Manuel giriş doğrulaması için firma bazlı referans listeleri (Kod/Ad/
+    // Birim ve lokasyon kodları). Sadece süper yönetici yazar (Firma Yönetimi);
+    // firmanın kendi kullanıcıları (yönetici/kontrolcü/sayımcı) sadece okur
+    // (ComboBox autofill/doğrulama için).
+    match /firmalar/{firmaId}/skuMasterdataChunks/{chunkId} {
+      allow read:  if isSuperAdmin() || userFirma() == firmaId;
+      allow write: if isSuperAdmin();
+    }
+    match /firmalar/{firmaId}/lokasyonChunks/{chunkId} {
+      allow read:  if isSuperAdmin() || userFirma() == firmaId;
+      allow write: if isSuperAdmin();
+    }
+
     // ── users/{uid} ──────────────────────────────────────────────────────
     match /users/{uid} {
       allow read: if isSignedIn() && (

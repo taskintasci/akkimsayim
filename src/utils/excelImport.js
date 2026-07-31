@@ -152,12 +152,12 @@ function mapDataRow(rowArr, colMap, siraNo, format) {
   return mapped
 }
 
-const VALID_MIMES = [
+export const VALID_MIMES = [
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   'application/vnd.ms-excel',
   'application/octet-stream',
 ]
-const MAX_FILE_SIZE = 30 * 1024 * 1024 // 30MB
+export const MAX_FILE_SIZE = 30 * 1024 * 1024 // 30MB
 
 // xlsx + codepage tablosunu birlikte yükle.
 // SheetJS ESM build'i ($cptable) bundler ortamında codepage modülünü
@@ -165,7 +165,7 @@ const MAX_FILE_SIZE = 30 * 1024 * 1024 // 30MB
 // $cptable.utils üzerinden patlayip parse'i erken kesiyordu (2168 satir).
 // Resmi cozum: cpexcel.full tablosunu set_cptable ile acikca ver.
 let _xlsxPromise = null
-function loadXLSX() {
+export function loadXLSX() {
   if (_xlsxPromise) return _xlsxPromise
   _xlsxPromise = (async () => {
     const [XLSX, cptable] = await Promise.all([

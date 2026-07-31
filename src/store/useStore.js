@@ -6,7 +6,11 @@ import {
 import { createUserWithEmailAndPassword, signOut as secondarySignOut } from 'firebase/auth'
 import { db, getSecondaryAuth } from '../firebase/index'
 import { parseExcelFile } from '../utils/excelImport'
-import { uploadRows, downloadRows } from '../firebase/rowStorage'
+import {
+  uploadRows, downloadRows,
+  uploadSkuMasterdata, downloadSkuMasterdata,
+  uploadLokasyonlar, downloadLokasyonlar,
+} from '../firebase/rowStorage'
 
 // ─── Dev-only error logger — prod'da hassas hata detayı loglanmaz ─────────
 const devErr = (msg, err) => { if (import.meta.env.DEV) console.error(msg, err) }
@@ -32,6 +36,42 @@ const useStore = create((set, get) => ({
   firmalar: [],                // firmalar koleksiyonunun tamamı ({id,ad,unvan,sablon,aktif})
   firmaProfile: null,          // aktif firmanın kendi dokümanı
   activeFirma: null,           // normal kullanıcı: kendi firması; superadmin: seçtiği firma
+
+  // Firma bazlı referans listeleri — manuel giriş doğrulaması için
+  // (bkz. ManuelModal). Sadece süper yönetici (Firma Yönetimi) yükler/değiştirir.
+  skuMasterdata: [],           // [{kod, ad, birim}]
+  lokasyonlar: [],             // [adres, ...]
+
+  loadFirmaMasterdata: async (firmaId) => {
+    if (!firmaId) { set({ skuMasterdata: [], lokasyonlar: [] }); return }
+    const [skuMasterdata, lokasyonlar] = await Promise.all([
+      downloadSkuMasterdata(firmaId),
+      downloadLokasyonlar(firmaId),
+    ])
+    set({ skuMasterdata, lokasyonlar })
+  },
+
+  // firmaId parametre alır (süper yönetici kendi activeFirma'sı dışındaki bir
+  // firmayı da Firma Yönetimi'nden düzenleyebilsin diye).
+  uploadFirmaSkuMasterdata: async (firmaId, items) => {
+    await uploadSkuMasterdata(firmaId, items)
+    await updateDoc(doc(db, 'firmalar', firmaId), { skuMasterdataSayisi: items.length })
+    set(state => ({
+      firmalar: state.firmalar.map(f => f.id === firmaId ? { ...f, skuMasterdataSayisi: items.length } : f),
+      firmaProfile: state.firmaProfile?.id === firmaId ? { ...state.firmaProfile, skuMasterdataSayisi: items.length } : state.firmaProfile,
+      skuMasterdata: state.activeFirma === firmaId ? items : state.skuMasterdata,
+    }))
+  },
+
+  uploadFirmaLokasyonlar: async (firmaId, items) => {
+    await uploadLokasyonlar(firmaId, items)
+    await updateDoc(doc(db, 'firmalar', firmaId), { lokasyonSayisi: items.length })
+    set(state => ({
+      firmalar: state.firmalar.map(f => f.id === firmaId ? { ...f, lokasyonSayisi: items.length } : f),
+      firmaProfile: state.firmaProfile?.id === firmaId ? { ...state.firmaProfile, lokasyonSayisi: items.length } : state.firmaProfile,
+      lokasyonlar: state.activeFirma === firmaId ? items : state.lokasyonlar,
+    }))
+  },
 
   // Giriş yapan kullanıcının profilini yükle. Firma seçimi kullanıcıya
   // bırakılmaz — hesap zaten hangi firmaya kayıtlıysa o açılır (bkz. aşağıdaki
@@ -97,6 +137,7 @@ const useStore = create((set, get) => ({
       set({ activeFirma: effectiveFirma })
       const firmaDoc = firmalar.find(f => f.id === effectiveFirma)
       set({ firmaProfile: firmaDoc || null })
+      await get().loadFirmaMasterdata(effectiveFirma)
     } catch (err) {
       devErr('Profil yüklenemedi:', err)
       set({ userProfile: null, userRole: null, authError: 'Profiliniz yüklenirken bir hata oluştu. Lütfen tekrar deneyin.' })
@@ -128,7 +169,7 @@ const useStore = create((set, get) => ({
       rows: [], results: {}, korCodes: [], korMatched: [],
       manualRows: [], korManualRows: [], rowsLoading: false, resultsLoading: false,
     })
-    await get().loadSessions()
+    await Promise.all([get().loadSessions(), get().loadFirmaMasterdata(firmaId)])
   },
 
   createFirma: async ({ ad, unvan, sablon }) => {

@@ -3,6 +3,7 @@ import { signOut } from 'firebase/auth'
 import { auth } from '../../firebase/index'
 import useStore from '../../store/useStore'
 import { sortRows } from '../../utils/adresUtils'
+import ComboBox from '../shared/ComboBox'
 
 function siralamaMembran(rows) {
   return [...rows].sort((a, b) => {
@@ -157,7 +158,7 @@ export default function SayimciEkran({ mode = 'self' }) {
     gorevler, gorevlerLoading, loadMyGorevler, loadSessionGorevler, updateGorevDurum, deleteGorev,
     activeSessionId, rows, rowsLoading, results, updateResult,
     manualRows, addManualRow, korManualRows, addKorManualRow,
-    sortType, setSortType,
+    sortType, setSortType, skuMasterdata, lokasyonlar,
   } = useStore()
 
   const setActiveSession = useStore(s => s.setActiveSession)
@@ -617,7 +618,7 @@ export default function SayimciEkran({ mode = 'self' }) {
         </div>
 
         {manuelOpen && (
-          <ManuelModal onClose={() => setManuelOpen(false)} addManualRow={manuelAddFn} manualRows={manuelRows} isKor={isKor} />
+          <ManuelModal onClose={() => setManuelOpen(false)} addManualRow={manuelAddFn} manualRows={manuelRows} isKor={isKor} skuMasterdata={skuMasterdata} lokasyonlar={lokasyonlar} />
         )}
       </div>
     )
@@ -700,6 +701,8 @@ export default function SayimciEkran({ mode = 'self' }) {
             addManualRow={manuelAddFn}
             manualRows={manuelRows}
             isKor={isKor}
+            skuMasterdata={skuMasterdata}
+            lokasyonlar={lokasyonlar}
           />
         )}
       </Shell>
@@ -797,22 +800,40 @@ function DurumRozet({ durum }) {
 
 const MANUEL_BOS = { kod: '', ad: '', adres: '', miktar: '', birim: '' }
 
-function ManuelModal({ onClose, addManualRow, manualRows, isKor }) {
+function ManuelModal({ onClose, addManualRow, manualRows, isKor, skuMasterdata, lokasyonlar }) {
   const [form, setForm] = useState(MANUEL_BOS)
   const [saving, setSaving] = useState(false)
 
+  const skuOptions = useMemo(
+    () => skuMasterdata.map(s => ({ value: s.kod, label: s.ad ? `${s.kod} — ${s.ad}` : s.kod })),
+    [skuMasterdata]
+  )
+  const lokasyonOptions = useMemo(() => lokasyonlar.map(l => ({ value: l, label: l })), [lokasyonlar])
+
+  const matchedSku = useMemo(
+    () => skuMasterdata.find(s => s.kod.toUpperCase() === form.kod.trim().toUpperCase()),
+    [skuMasterdata, form.kod]
+  )
+  const adresGecerli = form.adres.trim() === '' ||
+    lokasyonlar.some(l => l.toUpperCase() === form.adres.trim().toUpperCase())
+
+  function selectSku(opt) {
+    const sku = skuMasterdata.find(s => s.kod === opt.value)
+    setForm(f => ({ ...f, kod: sku.kod, ad: sku.ad, birim: sku.birim }))
+  }
+
   async function kaydet(e) {
     e.preventDefault()
-    if (!form.kod.trim() || form.miktar === '') return
+    if (!matchedSku || form.miktar === '' || !adresGecerli) return
     setSaving(true)
     await addManualRow({
-      kod:    form.kod.trim().toUpperCase(),
-      ad:     form.ad.trim(),
+      kod:    matchedSku.kod,
+      ad:     matchedSku.ad,
       adres:  form.adres.trim(),
       parti:  '',
       durum:  '',
       miktar: Number(form.miktar),
-      birim:  form.birim.trim(),
+      birim:  matchedSku.birim,
       not:    'Sayımcı tarafından eklendi',
     })
     setForm(MANUEL_BOS)
@@ -837,19 +858,31 @@ function ManuelModal({ onClose, addManualRow, manualRows, isKor }) {
           {isKor ? ' Kör sayım raporu' : ' Stok sayım raporu'}'ndaki manuel listeye eklenir.
         </p>
         <form onSubmit={kaydet} className="flex flex-col gap-3">
-          <input value={form.kod} onChange={e => setForm(f => ({ ...f, kod: e.target.value }))}
-            placeholder="Ürün Kodu *" className="border border-slate-300 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-400" />
-          <input value={form.ad} onChange={e => setForm(f => ({ ...f, ad: e.target.value }))}
-            placeholder="Ürün Adı" className="border border-slate-300 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-400" />
-          <input value={form.adres} onChange={e => setForm(f => ({ ...f, adres: e.target.value }))}
-            placeholder="Raf / Adres" className="border border-slate-300 rounded-xl px-4 py-3 text-slate-900 mono placeholder-slate-400 focus:outline-none focus:border-blue-400" />
+          <ComboBox
+            value={form.kod}
+            onChange={text => setForm(f => ({ ...f, kod: text, ad: '', birim: '' }))}
+            onSelect={selectSku}
+            options={skuOptions}
+            placeholder="Ürün Kodu * (listeden seçin)"
+            invalid={form.kod.trim() !== '' && !matchedSku}
+          />
+          <input value={form.ad} disabled readOnly
+            placeholder="Ürün Adı (otomatik)" className="border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 text-slate-500 placeholder-slate-400" />
+          <ComboBox
+            value={form.adres}
+            onChange={text => setForm(f => ({ ...f, adres: text }))}
+            onSelect={opt => setForm(f => ({ ...f, adres: opt.value }))}
+            options={lokasyonOptions}
+            placeholder="Raf / Adres (opsiyonel, listeden seçin)"
+            invalid={form.adres.trim() !== '' && !adresGecerli}
+          />
           <div className="flex gap-3">
             <input value={form.miktar} onChange={e => setForm(f => ({ ...f, miktar: e.target.value }))}
               type="number" inputMode="decimal" placeholder="Miktar *" className="flex-1 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 mono placeholder-slate-400 focus:outline-none focus:border-blue-400" />
-            <input value={form.birim} onChange={e => setForm(f => ({ ...f, birim: e.target.value }))}
-              placeholder="Birim" className="w-28 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-400" />
+            <input value={form.birim} disabled readOnly
+              placeholder="Birim" className="w-28 border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 text-slate-500 placeholder-slate-400" />
           </div>
-          <button type="submit" disabled={saving || !form.kod.trim() || form.miktar === ''}
+          <button type="submit" disabled={saving || !matchedSku || form.miktar === '' || !adresGecerli}
             className="py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-white font-bold flex items-center justify-center gap-2 mt-1">
             <span className={'ms ' + (saving ? 'animate-spin' : '')} style={{ fontSize: 20 }}>{saving ? 'progress_activity' : 'add'}</span>
             Ekle

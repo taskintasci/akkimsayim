@@ -395,6 +395,62 @@ export async function exportResults(rows, results, session, firma = {}) {
   URL.revokeObjectURL(url)
 }
 
+function downloadWorkbook(buffer, filename) {
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+  const url  = URL.createObjectURL(blob)
+  const a    = document.createElement('a')
+  a.href     = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+export async function exportSkuMasterdataTemplate() {
+  const { default: ExcelJS } = await import('exceljs')
+  const workbook = new ExcelJS.Workbook()
+  workbook.creator = 'Sayım Planı'
+  workbook.created = new Date()
+
+  const ws = workbook.addWorksheet('SKU Masterdata')
+  ws.columns = [
+    { header: 'Kod',   key: 'kod',   width: 20 },
+    { header: 'Ad',    key: 'ad',    width: 40 },
+    { header: 'Birim', key: 'birim', width: 12 },
+  ]
+  ws.getRow(1).eachCell(cell => {
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1A1C1E' } }
+    cell.font = { color: { argb: 'FFFFFFFF' }, bold: true, size: 10 }
+    cell.alignment = { vertical: 'middle', horizontal: 'center' }
+  })
+  ws.getRow(1).height = 18
+  ws.addRow({ kod: 'ORNEK001', ad: 'Örnek Ürün Adı', birim: 'KG' })
+  ws.views = [{ state: 'frozen', ySplit: 1 }]
+
+  const buffer = await workbook.xlsx.writeBuffer()
+  downloadWorkbook(buffer, 'SKU_Masterdata_Sablon.xlsx')
+}
+
+export async function exportLokasyonMasterdataTemplate() {
+  const { default: ExcelJS } = await import('exceljs')
+  const workbook = new ExcelJS.Workbook()
+  workbook.creator = 'Sayım Planı'
+  workbook.created = new Date()
+
+  const ws = workbook.addWorksheet('Lokasyonlar')
+  ws.columns = [{ header: 'Lokasyon', key: 'lokasyon', width: 20 }]
+  ws.getRow(1).eachCell(cell => {
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1A1C1E' } }
+    cell.font = { color: { argb: 'FFFFFFFF' }, bold: true, size: 10 }
+    cell.alignment = { vertical: 'middle', horizontal: 'center' }
+  })
+  ws.getRow(1).height = 18
+  ws.addRow({ lokasyon: '1-A-01-1' })
+  ws.views = [{ state: 'frozen', ySplit: 1 }]
+
+  const buffer = await workbook.xlsx.writeBuffer()
+  downloadWorkbook(buffer, 'Lokasyon_Sablon.xlsx')
+}
+
 export async function exportAntrepoResults(rows, results, session, firma = {}) {
   const { default: ExcelJS } = await import('exceljs')
 

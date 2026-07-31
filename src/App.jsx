@@ -98,6 +98,27 @@ function AuthErrorScreen({ message }) {
   )
 }
 
+function MasterdataEksikScreen() {
+  return (
+    <div className="h-screen flex flex-col items-center justify-center text-center p-10 bg-slate-100 gap-4">
+      <span className="ms text-slate-300" style={{ fontSize: 56 }}>inventory_2</span>
+      <div>
+        <h2 className="text-slate-700 font-semibold text-lg">Firma Kurulumu Tamamlanmadı</h2>
+        <p className="text-slate-400 text-sm mt-1 max-w-sm">
+          Bu firma için SKU Masterdata ve/veya Lokasyon listesi henüz yüklenmedi.
+          Lütfen süper yöneticinizden bu dosyaları yüklemesini isteyin.
+        </p>
+      </div>
+      <button
+        onClick={() => signOut(auth)}
+        className="px-4 py-2 border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-medium transition-colors"
+      >
+        Çıkış Yap
+      </button>
+    </div>
+  )
+}
+
 export default function App() {
   // undefined = henüz kontrol edilmedi, null = giriş yok, object = giriş yapılmış
   const [firebaseUser, setFirebaseUser] = useState(undefined)
@@ -169,6 +190,14 @@ export default function App() {
 
   // Profil/rol henüz yükleniyor
   if (profileLoading || !userRole) return <Spinner />
+
+  // Firma için SKU Masterdata veya Lokasyon listesi yüklenmemişse (zorunlu
+  // kurulum adımı) — süper yönetici hariç herkes engellenir, o Firma
+  // Yönetimi'nden yükleyip düzeltebilir.
+  if (userRole !== 'superadmin' && firmaProfile &&
+      (!firmaProfile.skuMasterdataSayisi || !firmaProfile.lokasyonSayisi)) {
+    return <MasterdataEksikScreen />
+  }
 
   // Sayımcı: oturum seçimi ve sidebar yok — doğrudan tam ekran sayım akışı
   if (userRole === 'sayimci') {
