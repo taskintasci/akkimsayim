@@ -217,13 +217,12 @@ export default function Giris({ onNavigate }) {
               {/* Depo ve tarih */}
               <div className="flex flex-col gap-3 mb-5">
                 <div>
-                  <label className="block text-slate-500 text-xs font-medium mb-1.5">Depo Adı</label>
+                  <label className="block text-slate-500 text-xs font-medium mb-1.5">Depo Kodu / Depo Adı / Blok Numarası</label>
                   <input
                     type="text"
                     value={depoAdi}
                     onChange={e => setDepoAdi(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleCreate()}
-                    placeholder="Depo Kodu / Depo Adı / Blok Numarası"
                     className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>
