@@ -1012,14 +1012,14 @@ function ManuelModal({ onClose, addManualRow, manualRows, isKor, skuMasterdata, 
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-4" onClick={handleClose}>
-      <div className="w-full max-w-md bg-white border border-slate-200 rounded-3xl p-6 shadow-xl" onClick={e => e.stopPropagation()}>
+      <div className="w-full max-w-md bg-white border border-slate-200 rounded-3xl p-6 shadow-xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-slate-900 font-bold text-lg flex items-center gap-2">
             <span className="ms text-amber-500" style={{ fontSize: 22 }}>add_box</span>
             Manuel Fazla Stok
             {isKor && <span className="text-xs font-normal text-amber-700 ml-1">(Kör Sayım)</span>}
           </h3>
-          <button onClick={handleClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100">
+          <button onClick={handleClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 shrink-0">
             <span className="ms" style={{ fontSize: 20 }}>close</span>
           </button>
         </div>
@@ -1028,38 +1028,62 @@ function ManuelModal({ onClose, addManualRow, manualRows, isKor, skuMasterdata, 
           {isKor ? ' Kör sayım raporu' : ' Stok sayım raporu'}'ndaki manuel listeye eklenir.
         </p>
         <form onSubmit={kaydet} className="flex flex-col gap-3">
-          <ComboBox
-            value={form.kod}
-            onChange={text => setForm(f => ({ ...f, kod: text, ad: '', birim: '' }))}
-            onSelect={selectSku}
-            options={skuOptions}
-            placeholder="Ürün Kodu * (listeden seçin)"
-            invalid={form.kod.trim() !== '' && !matchedSku}
-          />
-          <input value={form.ad} disabled readOnly
-            placeholder="Ürün Adı (otomatik)" className="border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 text-slate-500 placeholder-slate-400" />
-          <ComboBox
-            value={form.adres}
-            onChange={text => setForm(f => ({ ...f, adres: text }))}
-            onSelect={opt => setForm(f => ({ ...f, adres: opt.value }))}
-            options={lokasyonOptions}
-            placeholder="Raf / Adres (opsiyonel, listeden seçin)"
-            invalid={form.adres.trim() !== '' && !adresGecerli}
-          />
-          <div className="flex gap-3">
-            <input value={form.parti} onChange={e => setForm(f => ({ ...f, parti: e.target.value }))}
-              type="text" placeholder="Parti" className="flex-1 border border-slate-300 rounded-xl px-4 py-3 mono text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-400" />
-            <input value={form.durum} onChange={e => setForm(f => ({ ...f, durum: e.target.value }))}
-              type="text" placeholder="Durum (Serbest/KK...)" className="flex-1 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-400" />
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">Ürün Kodu *</label>
+            <ComboBox
+              value={form.kod}
+              onChange={text => setForm(f => ({ ...f, kod: text, ad: '', birim: '' }))}
+              onSelect={selectSku}
+              options={skuOptions}
+              placeholder="Kod ara..."
+              invalid={form.kod.trim() !== '' && !matchedSku}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">Ürün Adı</label>
+            <input value={form.ad} disabled readOnly
+              placeholder="Kod seçilince otomatik dolar" className="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 text-slate-500 placeholder-slate-400" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">Raf / Adres</label>
+            <ComboBox
+              value={form.adres}
+              onChange={text => setForm(f => ({ ...f, adres: text }))}
+              onSelect={opt => setForm(f => ({ ...f, adres: opt.value }))}
+              options={lokasyonOptions}
+              placeholder="Opsiyonel, listeden seçin"
+              invalid={form.adres.trim() !== '' && !adresGecerli}
+            />
           </div>
           <div className="flex gap-3">
-            <input value={form.miktar} onChange={e => setForm(f => ({ ...f, miktar: e.target.value }))}
-              type="number" inputMode="decimal" placeholder="Miktar *" className="flex-1 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 mono placeholder-slate-400 focus:outline-none focus:border-blue-400" />
-            <input value={form.birim} disabled readOnly
-              placeholder="Birim" className="w-28 border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 text-slate-500 placeholder-slate-400" />
+            <div className="flex-1">
+              <label className="block text-xs font-medium text-slate-500 mb-1">Parti</label>
+              <input value={form.parti} onChange={e => setForm(f => ({ ...f, parti: e.target.value }))}
+                type="text" placeholder="PT240101" className="w-full border border-slate-300 rounded-xl px-4 py-3 mono text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-400" />
+            </div>
+            <div className="flex-1">
+              <label className="block text-xs font-medium text-slate-500 mb-1">Durum</label>
+              <input value={form.durum} onChange={e => setForm(f => ({ ...f, durum: e.target.value }))}
+                type="text" placeholder="Serbest / KK..." className="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-400" />
+            </div>
           </div>
-          <input value={form.not} onChange={e => setForm(f => ({ ...f, not: e.target.value }))}
-            type="text" placeholder="Not (opsiyonel)" className="border border-slate-300 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-400" />
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label className="block text-xs font-medium text-slate-500 mb-1">Sayılan Miktar *</label>
+              <input value={form.miktar} onChange={e => setForm(f => ({ ...f, miktar: e.target.value }))}
+                type="number" inputMode="decimal" placeholder="0" className="no-spinner w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-900 mono placeholder-slate-400 focus:outline-none focus:border-blue-400" />
+            </div>
+            <div className="w-24">
+              <label className="block text-xs font-medium text-slate-500 mb-1">Birim</label>
+              <input value={form.birim} disabled readOnly
+                placeholder="—" className="w-full border border-slate-200 bg-slate-50 rounded-xl px-3 py-3 text-slate-500 placeholder-slate-400" />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">Not (opsiyonel)</label>
+            <input value={form.not} onChange={e => setForm(f => ({ ...f, not: e.target.value }))}
+              type="text" placeholder="Açıklama..." className="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-400" />
+          </div>
           <button type="submit" disabled={!matchedSku || form.miktar === '' || !adresGecerli}
             className="py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-white font-bold flex items-center justify-center gap-2 mt-1">
             <span className="ms" style={{ fontSize: 20 }}>add</span>
