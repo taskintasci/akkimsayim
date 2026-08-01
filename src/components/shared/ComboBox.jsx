@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 
-const MAX_SUGGESTIONS = 50
+const MAX_SUGGESTIONS = 8
 
 /**
  * Yazdıkça filtrelenen, listeden tek seçim yapılan type-ahead input.
@@ -23,9 +23,12 @@ export default function ComboBox({ value, onChange, options, onSelect, placehold
     return () => document.removeEventListener('mousedown', onDown)
   }, [])
 
+  // Boş sorguda hiç öneri gösterilmiyor — alana dokunur dokunmaz (hiçbir şey
+  // yazmadan) koca bir liste açılması hem mobilde klavye ile çakışıp sayfanın
+  // "zıplamasına" katkı yapıyordu hem de kullanıcı deneyimini bozuyordu.
   const matches = useMemo(() => {
     const q = value.trim().toLowerCase()
-    if (!q) return options.slice(0, MAX_SUGGESTIONS)
+    if (!q) return []
     return options.filter(o => o.label.toLowerCase().includes(q)).slice(0, MAX_SUGGESTIONS)
   }, [value, options])
 
