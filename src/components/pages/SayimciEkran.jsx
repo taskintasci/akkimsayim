@@ -1095,7 +1095,8 @@ function ManuelModal({ onClose, addManualRow, manualRows, isKor, skuMasterdata, 
             <div className="flex-1">
               <label className="block text-xs font-medium text-slate-500 mb-1">Sayılan Miktar *</label>
               <input value={form.miktar} onChange={e => setForm(f => ({ ...f, miktar: e.target.value }))}
-                type="number" inputMode="decimal" placeholder="0" className="no-spinner w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-900 mono placeholder-slate-400 focus:outline-none focus:border-blue-400" />
+                type="number" inputMode="decimal" placeholder="0" style={{ lineHeight: 1.4 }}
+                className="no-spinner w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-900 mono placeholder-slate-400 focus:outline-none focus:border-blue-400" />
             </div>
             <div className="w-24">
               <label className="block text-xs font-medium text-slate-500 mb-1">Birim</label>
