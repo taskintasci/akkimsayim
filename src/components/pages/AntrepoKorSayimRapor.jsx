@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import useStore from '../../store/useStore'
 import { exportAntrepoRaporFarklar } from '../../utils/excelExport'
+import ComboBox from '../shared/ComboBox'
 
 function AntrepoDurumBadge({ durum }) {
   if (durum === 'Normal') return <span className="badge badge-normal">{durum}</span>
@@ -13,30 +14,44 @@ function AntrepoDurumBadge({ durum }) {
 const EMPTY_FORM = { kod: '', ad: '', adres: '', parti: '', miktar: '', birim: '', not: '' }
 
 export default function AntrepoKorSayimRapor({ onNavigate }) {
-  const { korMatched, results, session, setPendingKodFilter, korManualRows, addKorManualRow, removeKorManualRow, firmaProfile, userRole } = useStore()
+  const { korMatched, results, session, setPendingKodFilter, korManualRows, addKorManualRow, removeKorManualRow, firmaProfile, userRole, skuMasterdata, lokasyonlar } = useStore()
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
-  const [saving, setSaving] = useState(false)
   const [onlyBigDiff, setOnlyBigDiff] = useState(false)
 
   const rows = korMatched
   const locked = session.durum === 'Tamamlandı'
 
-  async function handleAddManual(e) {
+  const skuOptions = useMemo(
+    () => skuMasterdata.map(s => ({ value: s.kod, label: s.ad ? `${s.kod} — ${s.ad}` : s.kod })),
+    [skuMasterdata]
+  )
+  const lokasyonOptions = useMemo(() => lokasyonlar.map(l => ({ value: l, label: l })), [lokasyonlar])
+  const matchedSku = useMemo(
+    () => skuMasterdata.find(s => s.kod.toUpperCase() === form.kod.trim().toUpperCase()),
+    [skuMasterdata, form.kod]
+  )
+  const adresGecerli = form.adres.trim() === '' ||
+    lokasyonlar.some(l => l.toUpperCase() === form.adres.trim().toUpperCase())
+
+  function selectSku(opt) {
+    const sku = skuMasterdata.find(s => s.kod === opt.value)
+    setForm(f => ({ ...f, kod: sku.kod, ad: sku.ad, birim: sku.birim }))
+  }
+
+  function handleAddManual(e) {
     e.preventDefault()
-    if (!form.kod.trim() || !form.miktar) return
-    setSaving(true)
-    await addKorManualRow({
-      kod:    form.kod.trim().toUpperCase(),
-      ad:     form.ad.trim(),
+    if (!matchedSku || form.miktar === '' || !adresGecerli) return
+    addKorManualRow({
+      kod:    matchedSku.kod,
+      ad:     matchedSku.ad,
       adres:  form.adres.trim(),
       parti:  form.parti.trim(),
       durum:  '',
       miktar: form.miktar,
-      birim:  form.birim.trim(),
+      birim:  matchedSku.birim,
       not:    form.not.trim(),
     })
-    setSaving(false)
     setForm(EMPTY_FORM)
     setShowForm(false)
   }
@@ -219,14 +234,13 @@ export default function AntrepoKorSayimRapor({ onNavigate }) {
             <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
               <div>
                 <label className="block text-[11px] text-slate-500 mb-1">Stok Kodu *</label>
-                <input
-                  autoFocus
-                  type="text"
+                <ComboBox
                   value={form.kod}
-                  onChange={e => setForm(f => ({ ...f, kod: e.target.value }))}
-                  placeholder="KOD123"
-                  className="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-[12.5px] mono focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
-                  required
+                  onChange={text => setForm(f => ({ ...f, kod: text, ad: '', birim: '' }))}
+                  onSelect={selectSku}
+                  options={skuOptions}
+                  placeholder="Kod ara..."
+                  invalid={form.kod.trim() !== '' && !matchedSku}
                 />
               </div>
               <div className="col-span-2">
@@ -234,19 +248,21 @@ export default function AntrepoKorSayimRapor({ onNavigate }) {
                 <input
                   type="text"
                   value={form.ad}
-                  onChange={e => setForm(f => ({ ...f, ad: e.target.value }))}
-                  placeholder="Ürün adı..."
-                  className="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-[12.5px] focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                  disabled
+                  readOnly
+                  placeholder="Kod seçilince otomatik dolar"
+                  className="w-full border border-slate-200 bg-slate-50 rounded-lg px-2.5 py-1.5 text-[12.5px] text-slate-500 placeholder-slate-400"
                 />
               </div>
               <div>
                 <label className="block text-[11px] text-slate-500 mb-1">Adres</label>
-                <input
-                  type="text"
+                <ComboBox
                   value={form.adres}
-                  onChange={e => setForm(f => ({ ...f, adres: e.target.value }))}
-                  placeholder="1-S-05-5"
-                  className="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-[12.5px] mono focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                  onChange={text => setForm(f => ({ ...f, adres: text }))}
+                  onSelect={opt => setForm(f => ({ ...f, adres: opt.value }))}
+                  options={lokasyonOptions}
+                  placeholder="1-S-05-5 (opsiyonel)"
+                  invalid={form.adres.trim() !== '' && !adresGecerli}
                 />
               </div>
               <div>
@@ -275,9 +291,10 @@ export default function AntrepoKorSayimRapor({ onNavigate }) {
                   <input
                     type="text"
                     value={form.birim}
-                    onChange={e => setForm(f => ({ ...f, birim: e.target.value }))}
-                    placeholder="Adet"
-                    className="w-16 border border-slate-300 rounded-lg px-2 py-1.5 text-[12.5px] mono focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                    disabled
+                    readOnly
+                    placeholder="Birim"
+                    className="w-16 border border-slate-200 bg-slate-50 rounded-lg px-2 py-1.5 text-[12.5px] mono text-slate-500 placeholder-slate-400"
                   />
                 </div>
               </div>
@@ -294,10 +311,10 @@ export default function AntrepoKorSayimRapor({ onNavigate }) {
               <div className="flex items-end">
                 <button
                   type="submit"
-                  disabled={saving || !form.kod.trim() || !form.miktar}
+                  disabled={!matchedSku || form.miktar === '' || !adresGecerli}
                   className="w-full px-4 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[12.5px] font-semibold disabled:opacity-40"
                 >
-                  {saving ? '…' : 'Ekle'}
+                  Ekle
                 </button>
               </div>
             </div>
