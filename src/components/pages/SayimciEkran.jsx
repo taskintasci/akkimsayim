@@ -960,7 +960,7 @@ function DurumRozet({ durum }) {
   return <span className={'px-2 py-0.5 rounded-full text-xs font-medium ' + d.cls}>{d.label}</span>
 }
 
-const MANUEL_BOS = { kod: '', ad: '', adres: '', miktar: '', birim: '' }
+const MANUEL_BOS = { kod: '', ad: '', adres: '', parti: '', durum: '', miktar: '', birim: '', not: '' }
 
 function ManuelModal({ onClose, addManualRow, manualRows, isKor, skuMasterdata, lokasyonlar }) {
   const [form, setForm] = useState(MANUEL_BOS)
@@ -981,7 +981,8 @@ function ManuelModal({ onClose, addManualRow, manualRows, isKor, skuMasterdata, 
   // Form'da girilmiş veri varken kaza sonucu (arka plana dokunma vb.) kapatma
   // olasılığına karşı onay iste — yazım sırasında yanlışlıkla dokunma kayıp
   // vermesin diye.
-  const isDirty = form.kod.trim() !== '' || form.adres.trim() !== '' || form.miktar !== ''
+  const isDirty = form.kod.trim() !== '' || form.adres.trim() !== '' || form.miktar !== '' ||
+    form.parti.trim() !== '' || form.durum.trim() !== '' || form.not.trim() !== ''
   function handleClose() {
     if (isDirty && !window.confirm('Girdiğiniz bilgiler kaybolacak. Kapatmak istediğinize emin misiniz?')) return
     onClose()
@@ -999,13 +1000,14 @@ function ManuelModal({ onClose, addManualRow, manualRows, isKor, skuMasterdata, 
       kod:    matchedSku.kod,
       ad:     matchedSku.ad,
       adres:  form.adres.trim(),
-      parti:  '',
-      durum:  '',
+      parti:  form.parti.trim(),
+      durum:  form.durum.trim(),
       miktar: Number(form.miktar),
       birim:  matchedSku.birim,
-      not:    'Sayımcı tarafından eklendi',
+      not:    form.not.trim() || 'Sayımcı tarafından eklendi',
     })
     setForm(MANUEL_BOS)
+    onClose()
   }
 
   return (
@@ -1045,11 +1047,19 @@ function ManuelModal({ onClose, addManualRow, manualRows, isKor, skuMasterdata, 
             invalid={form.adres.trim() !== '' && !adresGecerli}
           />
           <div className="flex gap-3">
+            <input value={form.parti} onChange={e => setForm(f => ({ ...f, parti: e.target.value }))}
+              type="text" placeholder="Parti" className="flex-1 border border-slate-300 rounded-xl px-4 py-3 mono text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-400" />
+            <input value={form.durum} onChange={e => setForm(f => ({ ...f, durum: e.target.value }))}
+              type="text" placeholder="Durum (Serbest/KK...)" className="flex-1 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-400" />
+          </div>
+          <div className="flex gap-3">
             <input value={form.miktar} onChange={e => setForm(f => ({ ...f, miktar: e.target.value }))}
               type="number" inputMode="decimal" placeholder="Miktar *" className="flex-1 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 mono placeholder-slate-400 focus:outline-none focus:border-blue-400" />
             <input value={form.birim} disabled readOnly
               placeholder="Birim" className="w-28 border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 text-slate-500 placeholder-slate-400" />
           </div>
+          <input value={form.not} onChange={e => setForm(f => ({ ...f, not: e.target.value }))}
+            type="text" placeholder="Not (opsiyonel)" className="border border-slate-300 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-400" />
           <button type="submit" disabled={!matchedSku || form.miktar === '' || !adresGecerli}
             className="py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-white font-bold flex items-center justify-center gap-2 mt-1">
             <span className="ms" style={{ fontSize: 20 }}>add</span>
