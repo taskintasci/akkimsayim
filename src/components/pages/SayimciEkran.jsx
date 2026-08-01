@@ -965,6 +965,16 @@ const MANUEL_BOS = { kod: '', ad: '', adres: '', parti: '', durum: '', miktar: '
 function ManuelModal({ onClose, addManualRow, manualRows, isKor, skuMasterdata, lokasyonlar }) {
   const [form, setForm] = useState(MANUEL_BOS)
 
+  // Arka plan sayfası kaydırılabilir kaldıkça mobilde bir input'a dokununca
+  // klavye açılırken tarayıcı input'u görünür kılmak için sayfayı yukarı
+  // kaydırıyor, bu da sabit (fixed) modalın "zıplamış" gibi görünmesine yol
+  // açıyordu. Modal açıkken arka planı kaydırılamaz yaparak bunu önlüyoruz.
+  useEffect(() => {
+    const original = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = original }
+  }, [])
+
   const skuOptions = useMemo(
     () => skuMasterdata.map(s => ({ value: s.kod, label: s.ad ? `${s.kod} — ${s.ad}` : s.kod })),
     [skuMasterdata]
@@ -1035,7 +1045,7 @@ function ManuelModal({ onClose, addManualRow, manualRows, isKor, skuMasterdata, 
               onChange={text => setForm(f => ({ ...f, kod: text, ad: '', birim: '' }))}
               onSelect={selectSku}
               options={skuOptions}
-              placeholder="Kod ara..."
+              placeholder="Kod / Ad Ara"
               invalid={form.kod.trim() !== '' && !matchedSku}
             />
           </div>

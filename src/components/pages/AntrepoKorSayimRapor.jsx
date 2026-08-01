@@ -239,7 +239,7 @@ export default function AntrepoKorSayimRapor({ onNavigate }) {
                   onChange={text => setForm(f => ({ ...f, kod: text, ad: '', birim: '' }))}
                   onSelect={selectSku}
                   options={skuOptions}
-                  placeholder="Kod ara..."
+                  placeholder="Kod / Ad Ara"
                   invalid={form.kod.trim() !== '' && !matchedSku}
                 />
               </div>
