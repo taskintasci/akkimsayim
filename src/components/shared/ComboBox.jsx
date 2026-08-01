@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 
-const MAX_SUGGESTIONS = 8
+const MAX_SUGGESTIONS = 10
 
 /**
  * Yazdıkça filtrelenen, listeden tek seçim yapılan type-ahead input.
