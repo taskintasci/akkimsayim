@@ -968,11 +968,20 @@ function ManuelModal({ onClose, addManualRow, manualRows, isKor, skuMasterdata, 
   // Arka plan sayfası kaydırılabilir kaldıkça mobilde bir input'a dokununca
   // klavye açılırken tarayıcı input'u görünür kılmak için sayfayı yukarı
   // kaydırıyor, bu da sabit (fixed) modalın "zıplamış" gibi görünmesine yol
-  // açıyordu. Modal açıkken arka planı kaydırılamaz yaparak bunu önlüyoruz.
+  // açıyordu. Modal açıkken arka planı kaydırılamaz yapıyoruz — html/body
+  // ikisinde birden (sadece body'de kilitlemek Chrome'da yetmiyor, standart
+  // modda gerçek "scrolling element" genellikle <html> oluyor).
   useEffect(() => {
-    const original = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = original }
+    const html = document.documentElement
+    const body = document.body
+    const prevHtml = html.style.overflow
+    const prevBody = body.style.overflow
+    html.style.overflow = 'hidden'
+    body.style.overflow = 'hidden'
+    return () => {
+      html.style.overflow = prevHtml
+      body.style.overflow = prevBody
+    }
   }, [])
 
   const skuOptions = useMemo(
