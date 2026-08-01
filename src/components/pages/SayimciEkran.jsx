@@ -1030,8 +1030,13 @@ function ManuelModal({ onClose, addManualRow, manualRows, isKor, skuMasterdata, 
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-4" onClick={handleClose}>
-      <div className="w-full max-w-md bg-white border border-slate-200 rounded-3xl p-6 shadow-xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+    // items-start (alttan değil üstten sabit): form uzun ve klavye sık
+    // kullanıldığı için alt sayfa (bottom-sheet) deseni klavye açılınca
+    // modalın "sonunu" öne çıkarıp odaklanılan alanı gizliyordu — üstten
+    // sabitlemek klavye ne kadar yer kaplarsa kaplasın üst alanların
+    // (ve az önce dokunulan alanın) yerinde kalmasını sağlıyor.
+    <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/40 p-4 overflow-y-auto" onClick={handleClose}>
+      <div className="w-full max-w-md bg-white border border-slate-200 rounded-3xl p-6 shadow-xl mt-8 sm:mt-0 mb-8 sm:mb-0" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-slate-900 font-bold text-lg flex items-center gap-2">
             <span className="ms text-amber-500" style={{ fontSize: 22 }}>add_box</span>
