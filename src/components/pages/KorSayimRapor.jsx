@@ -12,6 +12,7 @@ export default function KorSayimRapor({ onNavigate }) {
   const [onlyBigDiff, setOnlyBigDiff] = useState(false)
 
   const rows = korMatched
+  const locked = session.durum === 'Tamamlandı'
 
   async function handleAddManual(e) {
     e.preventDefault()
@@ -193,7 +194,7 @@ export default function KorSayimRapor({ onNavigate }) {
               {korManualRows.length > 0 && <span className="badge bg-amber-100 text-amber-700 ml-2">{korManualRows.length}</span>}
             </p>
           </div>
-          {userRole !== 'kontrolcu' && (
+          {userRole !== 'kontrolcu' && !locked && (
             <button
               onClick={() => { setShowForm(f => !f); setForm(EMPTY_FORM) }}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[12.5px] font-semibold no-print"
@@ -345,7 +346,7 @@ export default function KorSayimRapor({ onNavigate }) {
                     </td>
                     <td className="px-3 py-1.5 text-slate-500 text-[12px]">{row.not || '—'}</td>
                     <td className="px-3 py-1.5 text-center no-print">
-                      {userRole !== 'kontrolcu' && (
+                      {userRole !== 'kontrolcu' && !locked && (
                         <button
                           onClick={() => removeKorManualRow(row.id)}
                           className="text-slate-400 hover:text-red-500 transition-colors"

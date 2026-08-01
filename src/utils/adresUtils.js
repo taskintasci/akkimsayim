@@ -1,3 +1,32 @@
+const FILTRE_ETIKETLERI = {
+  filterSearch:   'Ara',
+  filterDurum:    'Durum',
+  filterKategori: 'Kategori',
+  filterUrunTipi: 'Ürün Tipi',
+  filterPalet:    'Palet',
+  filterRaf:      'Raf',
+  filterSira:     'Sıra',
+  filterKolon:    'Kolon',
+  filterGoz:      'Göz',
+  filterGirisGun: 'Giriş Günü',
+}
+
+/** Sayım sayfalarındaki aktif filtreleri "Raf: A, B · Sıra: 1" gibi okunabilir
+ *  bir özete çevirir — görev atarken hangi kritere göre gönderildiğini
+ *  görev kartında gösterebilmek için. Aktif filtre yoksa boş string döner. */
+export function buildFiltreOzeti(filters) {
+  const parts = []
+  for (const [key, label] of Object.entries(FILTRE_ETIKETLERI)) {
+    const val = filters[key]
+    if (key === 'filterSearch') {
+      if (val && val.trim()) parts.push(`${label}: "${val.trim()}"`)
+      continue
+    }
+    if (Array.isArray(val) && val.length > 0) parts.push(`${label}: ${val.join(', ')}`)
+  }
+  return parts.join(' · ')
+}
+
 export function parseAdres(adres) {
   const parts = String(adres || '').split('-')
   return { raf: parts[0] || '', sira: parts[1] || '', kolon: parts[2] || '', goz: parts[3] || '' }

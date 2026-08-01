@@ -9,7 +9,7 @@ function formatTime(date) {
 }
 
 export default function Panel({ onNavigate }) {
-  const { rows, results, session, events, importFormat, clearRows, userRole, finishCounting } = useStore(
+  const { rows, results, session, events, importFormat, clearRows, userRole, finishCounting, updateSessionNote } = useStore(
     useShallow(s => ({
       rows:        s.rows,
       results:     s.results,
@@ -19,11 +19,13 @@ export default function Panel({ onNavigate }) {
       clearRows:   s.clearRows,
       userRole:    s.userRole,
       finishCounting: s.finishCounting,
+      updateSessionNote: s.updateSessionNote,
     }))
   )
   const [confirmClear, setConfirmClear] = useState(false)
   const [finishing, setFinishing] = useState(false)
   const isYonetici = userRole === 'yonetici' || userRole === 'superadmin'
+  const locked = session.durum === 'Tamamlandı'
 
   async function handleClearRows() {
     await clearRows()
@@ -146,6 +148,21 @@ export default function Panel({ onNavigate }) {
         </div>
       </div>
 
+      {/* Not — oturum kilitli olsa bile düzenlenebilir, sadece bir açıklama alanı */}
+      <div className="bg-white rounded-xl border border-slate-200 p-4">
+        <p className="text-[13px] font-semibold text-slate-700 mb-2 flex items-center gap-2">
+          <span className="ms text-amber-500" style={{ fontSize: 16 }}>sticky_note_2</span>
+          Not
+        </p>
+        <textarea
+          value={session.sayimNotu || ''}
+          onChange={e => updateSessionNote(e.target.value)}
+          placeholder="Bu sayımla ilgili not ekleyin…"
+          rows={3}
+          className="w-full border border-slate-200 rounded-lg px-3 py-2 text-[13px] text-slate-700 placeholder-slate-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 resize-none"
+        />
+      </div>
+
       {/* Hızlı Başlat */}
       <div>
         <p className="text-[13px] font-semibold text-slate-700 mb-3">Hızlı Başlat</p>
@@ -169,7 +186,7 @@ export default function Panel({ onNavigate }) {
                 </div>
                 <p className="text-[13.5px] font-semibold text-slate-800">RAPOR5 Yönetimi</p>
                 <p className="text-[12px] text-slate-400 mt-0.5">{rows.length.toLocaleString('tr')} kalem · {importFormat === 'rapor5' ? 'RAPOR5' : importFormat === 'sku' ? 'SKU Listesi' : 'Bilinmiyor'}</p>
-                {!confirmClear ? (
+                {locked ? null : !confirmClear ? (
                   <button
                     onClick={() => setConfirmClear(true)}
                     className="mt-3 flex items-center gap-1 text-[11.5px] text-red-500 hover:text-red-700 font-medium"

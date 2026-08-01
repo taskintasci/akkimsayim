@@ -3,7 +3,7 @@ import useStore from '../../store/useStore'
 
 // Yöneticinin seçili satırları bir sayımcıya görev olarak atadığı modal.
 // `rows` = atanacak satırlar (filtrelenmiş liste). onClose = kapat.
-export default function GorevAtaModal({ rows, onClose, sayimTipi = 'stok' }) {
+export default function GorevAtaModal({ rows, onClose, sayimTipi = 'stok', filtreOzeti = '' }) {
   const { users, usersLoading, loadUsers, assignGorev } = useStore()
   const [selected, setSelected] = useState(null)
   const [saving, setSaving]     = useState(false)
@@ -17,7 +17,7 @@ export default function GorevAtaModal({ rows, onClose, sayimTipi = 'stok' }) {
     if (!selected || rows.length === 0) return
     setSaving(true)
     try {
-      await assignGorev({ sayimci: selected, atananRows: rows.map(r => r.id), sayimTipi })
+      await assignGorev({ sayimci: selected, atananRows: rows.map(r => r.id), sayimTipi, filtreOzeti })
       setDone(true)
       setTimeout(onClose, 1400)
     } catch (err) {
@@ -39,9 +39,16 @@ export default function GorevAtaModal({ rows, onClose, sayimTipi = 'stok' }) {
             <span className="ms" style={{ fontSize: 20 }}>close</span>
           </button>
         </div>
-        <p className="text-slate-500 text-sm mb-5">
-          <span className="font-semibold text-slate-700">{rows.length}</span> kalem seçili sayımcıya görev olarak gönderilecek.
-        </p>
+        <div className="mb-5">
+          <p className="text-slate-500 text-sm mb-1">
+            <span className="font-semibold text-slate-700">{rows.length}</span> kalem seçili sayımcıya görev olarak gönderilecek.
+          </p>
+          {filtreOzeti && (
+            <p className="text-[12px] text-blue-600 bg-blue-50 rounded-lg px-2.5 py-1.5 mt-1.5 flex items-center gap-1.5">
+              <span className="ms" style={{ fontSize: 14 }}>filter_alt</span> {filtreOzeti}
+            </p>
+          )}
+        </div>
 
         {done ? (
           <div className="flex flex-col items-center text-center py-6">

@@ -1,7 +1,7 @@
 import { useState, useRef, useMemo, useEffect } from 'react'
 import { useReactToPrint } from 'react-to-print'
 import useStore from '../../store/useStore'
-import { sortRows, computeFilterOptions, parseAdres, getUrunTipi } from '../../utils/adresUtils'
+import { sortRows, computeFilterOptions, parseAdres, getUrunTipi, buildFiltreOzeti } from '../../utils/adresUtils'
 import { exportResults } from '../../utils/excelExport'
 import PrintSheet from '../print/PrintSheet'
 import MultiSelect from '../shared/MultiSelect'
@@ -34,6 +34,7 @@ function PaletStatusBadge({ counted, total, hasDiff }) {
 export default function MembranSayim({ onNavigate }) {
   const { rows, results, session, updateResult, fillFromSistem, clearMiktarlar, pendingKodFilter, clearPendingKodFilter, firmaProfile, sortType, setSortType } = useStore()
   const printRef = useRef()
+  const locked = session.durum === 'Tamamlandı'
 
   const [hideSistem, setHideSistem]   = useState(false)
   const [hideSayilan, setHideSayilan] = useState(false)
@@ -175,7 +176,7 @@ export default function MembranSayim({ onNavigate }) {
               <span className="ms" style={{ fontSize: 16 }}>{hideSayilan ? 'edit' : 'edit_off'}</span>
               <span>{hideSayilan ? 'Sayılanı Göster' : 'Sayılanı Gizle'}</span>
             </button>
-            {(() => {
+            {!locked && (() => {
               const allFilled = filtered.length > 0 && filtered.every(r => { const m = results[r.id]?.miktar; return m !== undefined && m !== '' && String(m) === String(r.sayim) })
               return (
                 <button
@@ -333,6 +334,7 @@ export default function MembranSayim({ onNavigate }) {
                               value={res.miktar ?? ''}
                               onChange={e => updateResult(row.id, { miktar: e.target.value })}
                               placeholder="—"
+                              disabled={locked}
                               className={'input-count ' + (isDiff ? 'input-diff' : hasValue ? 'input-ok' : '')}
                             />
                             {isDiff && <span className="ms text-red-400" style={{ fontSize: 14 }}>warning</span>}
@@ -345,7 +347,8 @@ export default function MembranSayim({ onNavigate }) {
                             value={res.notlar ?? ''}
                             onChange={e => updateResult(row.id, { notlar: e.target.value })}
                             placeholder="not..."
-                            className="w-full bg-transparent border-none text-[12px] text-slate-400 placeholder-slate-300 outline-none"
+                            disabled={locked}
+                            className="w-full bg-transparent border-none text-[12px] text-slate-400 placeholder-slate-300 outline-none disabled:cursor-not-allowed"
                           />
                         </td>
                       </tr>
@@ -389,7 +392,14 @@ export default function MembranSayim({ onNavigate }) {
         <PrintSheet ref={printRef} rows={filtered} results={results} session={session} mode="sayim" hideSayilan={hideSayilan} sayimTuru="Membran Sayımı" paletGrouped firmaUnvani={firmaProfile?.unvan} />
       </div>
 
-      {gorevModal && <GorevAtaModal rows={filtered} onClose={() => setGorevModal(false)} sayimTipi="membran" />}
+      {gorevModal && (
+        <GorevAtaModal
+          rows={filtered}
+          onClose={() => setGorevModal(false)}
+          sayimTipi="membran"
+          filtreOzeti={buildFiltreOzeti({ filterSearch, filterDurum, filterPalet, filterUrunTipi, filterRaf, filterSira, filterKolon, filterGoz })}
+        />
+      )}
     </div>
   )
 }

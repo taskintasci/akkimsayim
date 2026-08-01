@@ -1,7 +1,7 @@
 import { useState, useRef, useMemo, useEffect } from 'react'
 import { useReactToPrint } from 'react-to-print'
 import useStore from '../../store/useStore'
-import { sortRows, computeFilterOptions, parseAdres, getUrunTipi } from '../../utils/adresUtils'
+import { sortRows, computeFilterOptions, parseAdres, getUrunTipi, buildFiltreOzeti } from '../../utils/adresUtils'
 import { exportResults } from '../../utils/excelExport'
 import PrintSheet from '../print/PrintSheet'
 import MultiSelect from '../shared/MultiSelect'
@@ -21,6 +21,7 @@ function DurumBadge({ durum }) {
 export default function KorSayim({ onNavigate }) {
   const { rows, results, session, updateResult, fillFromSistem, clearMiktarlar, korCodes, korMatched, addKorCodes, removeKorCode, clearKor, pendingKodFilter, clearPendingKodFilter, firmaProfile, sortType, setSortType } = useStore()
   const printRef = useRef()
+  const locked = session.durum === 'Tamamlandı'
 
   const [codeInput, setCodeInput]     = useState('')
   const [hideSistem, setHideSistem]   = useState(false)
@@ -143,7 +144,7 @@ export default function KorSayim({ onNavigate }) {
               <span className="ms" style={{ fontSize: 16 }}>{hideSayilan ? 'edit' : 'edit_off'}</span>
               <span>{hideSayilan ? 'Sayılanı Göster' : 'Sayılanı Gizle'}</span>
             </button>
-            {(() => {
+            {!locked && (() => {
               const allFilled = filtered.length > 0 && filtered.every(r => { const m = results[r.id]?.miktar; return m !== undefined && m !== '' && String(m) === String(r.sayim) })
               return (
                 <button
@@ -156,7 +157,7 @@ export default function KorSayim({ onNavigate }) {
                 </button>
               )
             })()}
-            {korCodes.length > 0 && (
+            {!locked && korCodes.length > 0 && (
               <button onClick={clearKor} className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 border border-red-200 text-red-600 rounded-lg text-[12.5px] font-medium hover:bg-red-100">
                 <span className="ms" style={{ fontSize: 15 }}>delete_sweep</span> Temizle
               </button>
@@ -165,6 +166,7 @@ export default function KorSayim({ onNavigate }) {
         </div>
 
         {/* Satır 2: Kod ekleme */}
+        {!locked && (
         <div className="flex items-center gap-2 mb-2">
           <div className="flex-1 relative">
             <span className="ms absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" style={{ fontSize: 15 }}>qr_code_scanner</span>
@@ -185,6 +187,7 @@ export default function KorSayim({ onNavigate }) {
             <span className="ms" style={{ fontSize: 15 }}>add</span> Ekle
           </button>
         </div>
+        )}
 
         {/* Satır 3: Eklenen kodlar chip listesi */}
         {korCodes.length > 0 && (
@@ -342,6 +345,7 @@ export default function KorSayim({ onNavigate }) {
                           value={res.miktar ?? ''}
                           onChange={e => updateResult(row.id, { miktar: e.target.value })}
                           placeholder="—"
+                          disabled={locked}
                           className={'input-count ' + (isDiff ? 'input-diff' : hasValue ? 'input-ok' : '')}
                         />
                         {isDiff && <span className="ms text-red-400" style={{ fontSize: 14 }}>warning</span>}
@@ -354,7 +358,8 @@ export default function KorSayim({ onNavigate }) {
                         value={res.notlar ?? ''}
                         onChange={e => updateResult(row.id, { notlar: e.target.value })}
                         placeholder="not..."
-                        className="w-full bg-transparent border-none text-[12px] text-slate-400 placeholder-slate-300 outline-none"
+                        disabled={locked}
+                        className="w-full bg-transparent border-none text-[12px] text-slate-400 placeholder-slate-300 outline-none disabled:cursor-not-allowed"
                       />
                     </td>
                   </tr>
@@ -443,7 +448,14 @@ export default function KorSayim({ onNavigate }) {
         <PrintSheet ref={printRef} rows={filtered} results={results} session={session} mode="kor" hideSistem={hideSistem} hideSayilan={hideSayilan} sayimTuru="Kör Sayım" firmaUnvani={firmaProfile?.unvan} />
       </div>
 
-      {gorevModal && <GorevAtaModal rows={filtered} onClose={() => setGorevModal(false)} sayimTipi="kor" />}
+      {gorevModal && (
+        <GorevAtaModal
+          rows={filtered}
+          onClose={() => setGorevModal(false)}
+          sayimTipi="kor"
+          filtreOzeti={buildFiltreOzeti({ filterSearch, filterDurum, filterKategori, filterUrunTipi, filterRaf, filterSira, filterKolon, filterGoz })}
+        />
+      )}
     </div>
   )
 }

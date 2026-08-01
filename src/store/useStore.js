@@ -98,7 +98,7 @@ const useStore = create((set, get) => ({
           type: 'Yıl Sonu Sayımı', depoAdi: '',
           sayimBasligi: 'YIL SONU SAYIM',
           tarih: new Date().toISOString().slice(0, 10),
-          sorumlu: '', durum: 'Devam',
+          sorumlu: '', durum: 'Devam', sayimNotu: '',
         },
       })
       return
@@ -273,7 +273,7 @@ const useStore = create((set, get) => ({
   gorevlerLoading: false,
 
   // Yönetici: aktif session'daki seçili satırları bir sayımcıya ata
-  assignGorev: async ({ sayimci, atananRows, sayimTipi = 'stok' }) => {
+  assignGorev: async ({ sayimci, atananRows, sayimTipi = 'stok', filtreOzeti = '' }) => {
     const { activeSessionId, session, currentUser, activeFirma } = get()
     if (!activeSessionId) throw new Error('Aktif oturum yok')
     const data = {
@@ -285,6 +285,7 @@ const useStore = create((set, get) => ({
       depoAdi:      session.depoAdi || '',
       atananRows,                       // array<rowId>
       sayimTipi:    sayimTipi || 'stok', // 'stok' | 'kor' | 'hareketlilik' | 'membran' | 'antrepo' | 'antrepokor'
+      filtreOzeti:  filtreOzeti || '',   // görev atanırken aktif filtrelerin okunabilir özeti (ör. "Raf: A, B")
       firma:        activeFirma,
       durum:        'bekliyor',
       createdAt:    serverTimestamp(),
@@ -306,19 +307,26 @@ const useStore = create((set, get) => ({
       const all = snap.docs.map(d => ({ id: d.id, ref: d.ref, ...d.data() }))
 
       // Oturumu silinmiş (yönetici "Sayımı Sil" dediğinde alt koleksiyon
-      // otomatik silinmediği için öksüz kalan) görevleri ayıkla ve temizle
+      // otomatik silinmediği için öksüz kalan) görevleri ayıkla ve temizle;
+      // aynı sorguda oturumun durum/tarih bilgisini de yakalayıp göreve
+      // ekliyoruz (Tamamlandı oturumları listede gizlemek + başlık/tarihe
+      // göre gruplamak için — ekstra bir okuma gerektirmiyor).
       const sessionIds = [...new Set(all.map(g => g.sessionId).filter(Boolean))]
-      const existing = new Set()
+      const sessionInfo = new Map()
       await Promise.all(sessionIds.map(async sid => {
         const sDoc = await getDoc(doc(db, 'sessions', sid))
-        if (sDoc.exists()) existing.add(sid)
+        if (sDoc.exists()) sessionInfo.set(sid, sDoc.data())
       }))
 
-      const valid   = all.filter(g => existing.has(g.sessionId))
-      const orphans = all.filter(g => !existing.has(g.sessionId))
+      const valid   = all.filter(g => sessionInfo.has(g.sessionId))
+      const orphans = all.filter(g => !sessionInfo.has(g.sessionId))
       orphans.forEach(g => deleteDoc(g.ref).catch(() => {}))
 
-      const list = valid.map(({ ref, ...g }) => g)
+      const list = valid.map(({ ref, ...g }) => ({
+        ...g,
+        sessionDurum: sessionInfo.get(g.sessionId)?.durum || null,
+        sessionTarih: sessionInfo.get(g.sessionId)?.tarih || null,
+      }))
       list.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))
       set({ gorevler: list })
     } catch (err) {
@@ -390,6 +398,7 @@ const useStore = create((set, get) => ({
     tarih: new Date().toISOString().slice(0, 10),
     sorumlu: '',
     durum: 'Devam',
+    sayimNotu: '',
   },
 
   // ── Sıralama tercihi ────────────────────────────────────────────────────
@@ -452,6 +461,7 @@ const useStore = create((set, get) => ({
           tarih:        sessionData.tarih || new Date().toISOString().slice(0, 10),
           sorumlu:      '',
           durum:        sessionData.durum || 'Devam',
+          sayimNotu:    sessionData.sayimNotu || '',
         },
       })
 
@@ -659,6 +669,27 @@ const useStore = create((set, get) => ({
   setSession: (partial) =>
     set(state => ({ session: { ...state.session, ...partial } })),
 
+  // Panel'deki "Not" kartı — debounced Firestore write (updateResult ile aynı
+  // desen). Oturum Tamamlandı olsa bile bu alan kasıtlı olarak kilitli
+  // DEĞİL (bkz. firestore.rules) — onaydan sonra da açıklama eklenebilsin diye.
+  updateSessionNote: (sayimNotu) => {
+    set(state => ({ session: state.session ? { ...state.session, sayimNotu } : state.session }))
+
+    const { activeSessionId, currentUser } = get()
+    if (!activeSessionId) return
+
+    const key = 'sessionNote_' + activeSessionId
+    if (writeTimers.has(key)) clearTimeout(writeTimers.get(key))
+    writeTimers.set(key, setTimeout(async () => {
+      await updateDoc(doc(db, 'sessions', activeSessionId), {
+        sayimNotu,
+        updatedBy: currentUser?.uid || null,
+        updatedAt: serverTimestamp(),
+      })
+      writeTimers.delete(key)
+    }, 600))
+  },
+
   bulkSetStatus: (ids, status) =>
     set(state => {
       const next = { ...state.results }
@@ -753,53 +784,61 @@ const useStore = create((set, get) => ({
     })
   },
 
-  addManualRow: async (row) => {
+  // Not: bu 4 aksiyon KASITLI olarak ağ yazmasını beklemiyor (fire-and-forget).
+  // Yerel state `set()` ile anında güncellenip arayüz hemen tepki veriyor;
+  // Firestore yazması arka planda tamamlanıyor. Önceden `await updateDoc(...)`
+  // ile "Ekle" butonu sunucu onayı gelene kadar bekletiliyordu — depoda
+  // WiFi zayıf/aralıklıysa bu "ciddi uzun bekleme" olarak yaşanıyordu.
+  // `updateResult`/`updateSessionNote` zaten aynı arkaplan-yazma desenini
+  // kullanıyor; veri kaybı riski yok, Firestore'un offline kuyruğu (
+  // persistentLocalCache) bağlantı geri gelince senkronu garanti ediyor.
+  addManualRow: (row) => {
     const { activeSessionId, manualRows } = get()
     const newRow = { ...row, id: 'manual_' + Date.now() }
     const updated = [...manualRows, newRow]
     set({ manualRows: updated })
     if (activeSessionId) {
-      await updateDoc(doc(db, 'sessions', activeSessionId), {
+      updateDoc(doc(db, 'sessions', activeSessionId), {
         manualRows: updated,
         updatedAt: serverTimestamp(),
-      })
+      }).catch(err => devErr('Manuel satır kaydedilemedi:', err))
     }
   },
 
-  removeManualRow: async (id) => {
+  removeManualRow: (id) => {
     const { activeSessionId, manualRows } = get()
     const updated = manualRows.filter(r => r.id !== id)
     set({ manualRows: updated })
     if (activeSessionId) {
-      await updateDoc(doc(db, 'sessions', activeSessionId), {
+      updateDoc(doc(db, 'sessions', activeSessionId), {
         manualRows: updated,
         updatedAt: serverTimestamp(),
-      })
+      }).catch(err => devErr('Manuel satır silinemedi:', err))
     }
   },
 
-  addKorManualRow: async (row) => {
+  addKorManualRow: (row) => {
     const { activeSessionId, korManualRows } = get()
     const newRow  = { ...row, id: 'kormanual_' + Date.now() }
     const updated = [...korManualRows, newRow]
     set({ korManualRows: updated })
     if (activeSessionId) {
-      await updateDoc(doc(db, 'sessions', activeSessionId), {
+      updateDoc(doc(db, 'sessions', activeSessionId), {
         korManualRows: updated,
         updatedAt: serverTimestamp(),
-      })
+      }).catch(err => devErr('Kör manuel satır kaydedilemedi:', err))
     }
   },
 
-  removeKorManualRow: async (id) => {
+  removeKorManualRow: (id) => {
     const { activeSessionId, korManualRows } = get()
     const updated = korManualRows.filter(r => r.id !== id)
     set({ korManualRows: updated })
     if (activeSessionId) {
-      await updateDoc(doc(db, 'sessions', activeSessionId), {
+      updateDoc(doc(db, 'sessions', activeSessionId), {
         korManualRows: updated,
         updatedAt: serverTimestamp(),
-      })
+      }).catch(err => devErr('Kör manuel satır silinemedi:', err))
     }
   },
 

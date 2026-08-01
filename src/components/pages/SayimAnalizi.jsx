@@ -163,11 +163,11 @@ export default function SayimAnalizi() {
           </div>
           <div className="p-4 space-y-3">
             <div className="flex justify-between items-center py-2 border-b border-slate-50">
-              <p className="text-[12.5px] text-slate-500">Toplam Sistem (Kg/Lt)</p>
+              <p className="text-[12.5px] text-slate-500">Toplam Sistem (Kg/Lt/Ad/Mt)</p>
               <p className="text-[13px] font-bold mono text-slate-800">{fmt(sistemToplam)}</p>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-slate-50">
-              <p className="text-[12.5px] text-slate-500">Fiziki Sayılan (Kg/Lt)</p>
+              <p className="text-[12.5px] text-slate-500">Fiziki Sayılan (Kg/Lt/Ad/Mt)</p>
               <p className="text-[13px] font-bold mono text-slate-800">{fmt(fizikiToplam)}</p>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-slate-50">

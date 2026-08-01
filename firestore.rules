@@ -141,12 +141,22 @@ service cloud.firestore {
         || (isYonetici() && sameFirma(request.resource.data.firma));
 
       // 'firma' alanı bir kez damgalanır, sonradan değiştirilemez.
-      allow update: if isSuperAdmin()
+      // Oturum 'Tamamlandı' (mutabakat onaylanmış) ise KİLİTLİ — tek istisna
+      // sayimNotu alanı (onay sonrası da not eklenebilsin diye). approveSession
+      // durum'u 'Mutabakat Bekliyor' → 'Tamamlandı' yaparken resource.data.durum
+      // (eski değer) henüz 'Tamamlandı' olmadığından bu geçiş engellenmiyor —
+      // engellenen, ZATEN Tamamlandı olan bir oturuma sonradan yapılacak yazmalar.
+      allow update: if (
+        isSuperAdmin()
         || (
           isYonetici()
           && sameFirma(resource.data.firma)
           && request.resource.data.firma == resource.data.firma
-        );
+        )
+      ) && (
+        resource.data.durum != 'Tamamlandı'
+        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['sayimNotu', 'updatedBy', 'updatedAt'])
+      );
 
       allow delete: if isSuperAdmin() || (isYonetici() && sameFirma(resource.data.firma));
 
@@ -168,11 +178,19 @@ service cloud.firestore {
         // sorgu yapmadan bulamıyoruz (get() sadece sabit path alır). Bu,
         // gorev dokümanlarına deterministik bir id şeması (ör.
         // `${sessionId}_${sayimciUid}`) eklenerek ileride sıkılaştırılabilir.
-        allow write: if isSuperAdmin()
-          || (
-            isSignedIn()
-            && sameFirma(get(/databases/$(database)/documents/sessions/$(sessionId)).data.firma)
-            && userRole() in ['yonetici', 'sayimci']
+        // Oturum 'Tamamlandı' ise sayım sonucu artık HERKES için (süper
+        // yönetici dahil) salt-okunur — "tüm inputlar kilitlensin" isteği.
+        // approveSession() bu satırları TAMAMLANDI'ya geçmeden HEMEN ÖNCE
+        // (durum hâlâ 'Mutabakat Bekliyor'ken) yazdığı için onay akışı bundan
+        // etkilenmiyor.
+        allow write: if get(/databases/$(database)/documents/sessions/$(sessionId)).data.durum != 'Tamamlandı'
+          && (
+            isSuperAdmin()
+            || (
+              isSignedIn()
+              && sameFirma(get(/databases/$(database)/documents/sessions/$(sessionId)).data.firma)
+              && userRole() in ['yonetici', 'sayimci']
+            )
           );
       }
 

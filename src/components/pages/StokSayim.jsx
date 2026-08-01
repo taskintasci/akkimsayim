@@ -1,7 +1,7 @@
 import { useState, useRef, useMemo, useEffect } from 'react'
 import { useReactToPrint } from 'react-to-print'
 import useStore from '../../store/useStore'
-import { sortRows, computeFilterOptions, parseAdres, getUrunTipi } from '../../utils/adresUtils'
+import { sortRows, computeFilterOptions, parseAdres, getUrunTipi, buildFiltreOzeti } from '../../utils/adresUtils'
 import { exportResults } from '../../utils/excelExport'
 import PrintSheet from '../print/PrintSheet'
 import MultiSelect from '../shared/MultiSelect'
@@ -21,6 +21,7 @@ function DurumBadge({ durum }) {
 export default function StokSayim({ onNavigate }) {
   const { rows, results, session, updateResult, fillFromSistem, clearMiktarlar, pendingKodFilter, clearPendingKodFilter, rowsLoading, firmaProfile, sortType, setSortType } = useStore()
   const printRef = useRef()
+  const locked = session.durum === 'Tamamlandı'
 
   const [hideSistem, setHideSistem] = useState(false)
   const [hideSayilan, setHideSayilan] = useState(false)
@@ -134,14 +135,16 @@ export default function StokSayim({ onNavigate }) {
               <span className="ms" style={{ fontSize: 16 }}>{hideSayilan ? 'edit' : 'edit_off'}</span>
               <span>{hideSayilan ? 'Sayılanı Göster' : 'Sayılanı Gizle'}</span>
             </button>
-            <button
-              onClick={() => allFilled ? clearMiktarlar(filtered) : fillFromSistem(filtered)}
-              disabled={filtered.length === 0}
-              className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-[12.5px] font-medium disabled:opacity-40 ${allFilled ? 'bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'}`}
-            >
-              <span className="ms" style={{ fontSize: 15 }}>{allFilled ? 'backspace' : 'content_copy'}</span>
-              {allFilled ? 'Sayılanı Temizle' : 'Sistemden Doldur'}
-            </button>
+            {!locked && (
+              <button
+                onClick={() => allFilled ? clearMiktarlar(filtered) : fillFromSistem(filtered)}
+                disabled={filtered.length === 0}
+                className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-[12.5px] font-medium disabled:opacity-40 ${allFilled ? 'bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'}`}
+              >
+                <span className="ms" style={{ fontSize: 15 }}>{allFilled ? 'backspace' : 'content_copy'}</span>
+                {allFilled ? 'Sayılanı Temizle' : 'Sistemden Doldur'}
+              </button>
+            )}
           </div>
         </div>
 
@@ -299,6 +302,7 @@ export default function StokSayim({ onNavigate }) {
                           value={res.miktar ?? ''}
                           onChange={e => updateResult(row.id, { miktar: e.target.value })}
                           placeholder="—"
+                          disabled={locked}
                           className={'input-count ' + (isDiff ? 'input-diff' : hasValue ? 'input-ok' : '')}
                         />
                         {isDiff && <span className="ms text-red-400" style={{ fontSize: 14 }}>warning</span>}
@@ -311,7 +315,8 @@ export default function StokSayim({ onNavigate }) {
                         value={res.notlar ?? ''}
                         onChange={e => updateResult(row.id, { notlar: e.target.value })}
                         placeholder="not..."
-                        className="w-full bg-transparent border-none text-[12px] text-slate-400 placeholder-slate-300 outline-none"
+                        disabled={locked}
+                        className="w-full bg-transparent border-none text-[12px] text-slate-400 placeholder-slate-300 outline-none disabled:cursor-not-allowed"
                       />
                     </td>
                   </tr>
@@ -409,7 +414,14 @@ export default function StokSayim({ onNavigate }) {
         <PrintSheet ref={printRef} rows={filtered} results={results} session={session} mode="sayim" hideSayilan={hideSayilan} sayimTuru="Tüm Stok Sayımı" firmaUnvani={firmaProfile?.unvan} />
       </div>
 
-      {gorevModal && <GorevAtaModal rows={filtered} onClose={() => setGorevModal(false)} sayimTipi="stok" />}
+      {gorevModal && (
+        <GorevAtaModal
+          rows={filtered}
+          onClose={() => setGorevModal(false)}
+          sayimTipi="stok"
+          filtreOzeti={buildFiltreOzeti({ filterSearch, filterDurum, filterKategori, filterUrunTipi, filterRaf, filterSira, filterKolon, filterGoz })}
+        />
+      )}
     </div>
   )
 }

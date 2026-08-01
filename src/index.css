@@ -98,6 +98,7 @@ body { -webkit-tap-highlight-color: transparent; }
   transition: border-color .15s;
 }
 .input-count:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px #bfdbfe44; }
+.input-count:disabled { background: #f1f5f9; color: #94a3b8; cursor: not-allowed; opacity: 0.7; }
 .input-diff { border-color: #f87171; color: #dc2626; font-weight: 600; }
 .input-ok { border-color: #86efac; }
 
