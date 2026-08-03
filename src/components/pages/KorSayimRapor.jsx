@@ -14,6 +14,13 @@ export default function KorSayimRapor({ onNavigate }) {
   const rows = korMatched
   const locked = session.durum === 'Tamamlandı'
 
+  // Bir farklılık satırının kodu manuel eklenen kalemlerde de varsa
+  // (aynı ürün başka bir yerde fazla bulunup manuel girilmiş olabilir) —
+  // eksik/fazla birbirini tamamlıyor olabilir, önce buna bakılmalı.
+  function manuelVarMi(kod) {
+    return korManualRows.some(r => r.kod?.toUpperCase() === kod?.toUpperCase())
+  }
+
   const skuOptions = useMemo(
     () => skuMasterdata.map(s => ({ value: s.kod, label: s.ad ? `${s.kod} — ${s.ad}` : s.kod })),
     [skuMasterdata]
@@ -186,6 +193,13 @@ export default function KorSayimRapor({ onNavigate }) {
                       {row.fark > 0 ? '+' : ''}{row.fark.toLocaleString('tr', { maximumFractionDigits: 2 })} <span className="opacity-60 text-[11px]">{row.birim}</span>
                     </td>
                     <td className="px-3 py-1.5 text-center">
+                      {manuelVarMi(row.kod) && (
+                        <div className="mb-1">
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-semibold whitespace-nowrap">
+                            <span className="ms" style={{ fontSize: 11 }}>warning</span> Manuel Stok Var
+                          </span>
+                        </div>
+                      )}
                       <button
                         onClick={() => { setPendingKodFilter(row.kod); onNavigate('kor') }}
                         className="text-[12px] text-blue-600 hover:underline font-medium"

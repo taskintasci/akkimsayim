@@ -31,6 +31,13 @@ export default function AntrepoRapor({ onNavigate }) {
   ]
   const locked = session.durum === 'Tamamlandı'
 
+  // Bir farklılık satırının kodu manuel eklenen kalemlerde de varsa
+  // (aynı ürün başka bir yerde fazla bulunup manuel girilmiş olabilir) —
+  // eksik/fazla birbirini tamamlıyor olabilir, önce buna bakılmalı.
+  function manuelVarMi(kod) {
+    return allManualRows.some(r => r.kod?.toUpperCase() === kod?.toUpperCase())
+  }
+
   const [approving, setApproving] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
@@ -242,6 +249,13 @@ export default function AntrepoRapor({ onNavigate }) {
                     </td>
                     <td className="px-3 py-1.5 text-[12px] text-slate-500">{row.not || '—'}</td>
                     <td className="px-3 py-1.5 text-center no-print">
+                      {manuelVarMi(row.kod) && (
+                        <div className="mb-1">
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-semibold whitespace-nowrap">
+                            <span className="ms" style={{ fontSize: 11 }}>warning</span> Manuel Stok Var
+                          </span>
+                        </div>
+                      )}
                       <button
                         onClick={() => { setPendingKodFilter(row.kod); onNavigate('antreposayim') }}
                         className="text-[12px] text-blue-600 hover:underline font-medium"
